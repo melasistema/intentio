@@ -105,6 +105,23 @@ INTENTIO treats:
 
 You are not organizing files. You are teaching the system _what matters_.
 
+### The Cognitive Space & Categories
+
+A "knowledge root" in INTENTIO is a **designed cognitive space**. The filesystem structure within this space is not arbitrary; it **carries meaning**:
+
+-   **Folders are signals.**
+-   **Names matter.**
+-   **Depth matters.**
+
+INTENTIO explicitly leverages this structure to define **Canonical Cognitive Categories**. These are conceptual distinctions that help organize knowledge and inform the AI's interpretation:
+
+-   **Memory** — personal, subjective, experiential.
+-   **Reference** — factual, external, stable.
+-   **Opinion** — interpretive, contextual, non-authoritative.
+-   **Value** — normative, guiding principles.
+
+The system is designed to respect these distinctions, allowing for more precise retrieval and tailored AI responses. You are not just storing files; you are shaping the AI's understanding by structuring its cognitive environment.
+
 ----------
 
 ### 2. Structure Creates Trust
