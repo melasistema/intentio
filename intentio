@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+// intentio - A local, private, CLI-based cognitive environment.
+
+require __DIR__ . '/vendor/autoload.php';
+
+use Intentio\Kernel;
+use Intentio\Cli\Output;
+use Intentio\Cli\Input;
+
+// Exit gracefully if not run from the command line.
+if (PHP_SAPI !== 'cli') {
+    Output::writeln("INTENTIO is a command-line tool.");
+    exit(1);
+}
+
+// Load configuration
+$config = require __DIR__ . '/config.php';
+
+// Parse CLI arguments
+$input = new Input($argv);
+
+try {
+    $kernel = new Kernel($config, $input);
+    $kernel->run();
+} catch (\Throwable $e) {
+    Output::writeln("An unexpected error occurred: " . $e->getMessage());
+    exit(1);
+}
+

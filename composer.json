@@ -1,0 +1,22 @@
+{
+    "name": "intentio/core",
+    "description": "A local, private, CLI-based cognitive environment.",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Luca Visciola",
+            "email": "info@melasistema.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Intentio\\": "src/"
+        }
+    }
+}
+
