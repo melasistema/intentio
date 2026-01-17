@@ -165,6 +165,81 @@ Your data stays where it belongs.
 
 ----------
 
+## Getting Started
+
+To fully utilize INTENTIO, you need to set up a local model server and prepare your knowledge spaces.
+
+### 1. Prerequisites: Install Ollama and Download Models
+
+INTENTIO uses [Ollama](https://ollama.com) to run local Large Language Models (LLMs) and embedding models.
+
+**a. Install Ollama:**
+   - Go to [https://ollama.com](https://ollama.com) and download the application for your operating system.
+   - Install it as you would any other application. The Ollama server typically runs in the background automatically.
+
+**b. Download Required Models:**
+   - Open your terminal and pull the necessary models:
+     ```bash
+     ollama pull nomic-embed-text
+     ollama pull llama3.1
+     ```
+   - Verify installation: `ollama list` should show `nomic-embed-text:latest` and `llama3.1:latest`.
+
+### 2. Organize Your Knowledge Space
+
+INTENTIO treats your filesystem structure as a cognitive space.
+
+-   Create a main `knowledge/` directory in the project root (if you haven't already).
+-   Inside `knowledge/`, create subdirectories for each "cognitive space" you want (e.g., `my_private_notes`, `project_research`).
+-   Within each cognitive space directory, you can further organize your documents (e.g., Markdown files, text files) into "cognitive categories" like `reference/`, `memory/`, `opinion/`. The top-level folder within your space determines the category.
+
+    Example structure:
+    ```
+    knowledge/
+    └── my_private_notes/
+        ├── reference/
+        │   └── article_summary.md
+        ├── opinion/
+        │   └── my_thoughts.txt
+        └── journal/
+            └── day_1.md
+    ```
+
+### 3. Basic Usage
+
+Once Ollama is running and your knowledge is organized, you can use INTENTIO's commands:
+
+**a. Ingest Your Knowledge:**
+   Process your knowledge space to generate embeddings and build the vector store. This must be done for each space you want to use.
+
+   ```bash
+   ./intentio ingest --space=knowledge/my_private_notes
+   ```
+   *Replace `knowledge/my_private_notes` with the path to your specific knowledge space.*
+
+**b. Chat with Your Knowledge:**
+   Interact with a specific cognitive space.
+
+   ```bash
+   ./intentio chat "What are my core values?" --space=knowledge/my_private_notes
+   ```
+   *Replace with your query and knowledge space path.*
+
+**c. Interactive Mode (Recommended for exploration):**
+   Launch a guided interactive session to easily switch between knowledge spaces and chat.
+
+   ```bash
+   ./intentio interact
+   ```
+   *Follow the on-screen prompts to select a space and chat.*
+
+**d. Get Help:**
+   ```bash
+   ./intentio help
+   ```
+
+----------
+
 ## How It Works (Conceptually)
 
 1.  You design a knowledge space
