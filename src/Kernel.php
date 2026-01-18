@@ -8,6 +8,10 @@ use Intentio\Cli\Input;
 use Intentio\Cli\Output;
 use Intentio\Cli\Help;
 use Intentio\Command\ChatCommand;
+use Intentio\Command\IngestCommand;
+use Intentio\Command\InteractCommand;
+use Intentio\Command\StatusCommand;
+use Intentio\Command\ClearCommand;
 use Intentio\Knowledge\Space;
 
 /**
@@ -21,9 +25,10 @@ final class Kernel
 {
     private array $commands = [
         'chat' => ChatCommand::class,
-        'ingest' => \Intentio\Command\IngestCommand::class,
-        'interact' => \Intentio\Command\InteractCommand::class,
-        'status' => \Intentio\Command\StatusCommand::class,
+        'ingest' => IngestCommand::class,
+        'interact' => InteractCommand::class,
+        'status' => StatusCommand::class,
+        'clear' => ClearCommand::class,
     ];
 
     public function __construct(
@@ -44,37 +49,71 @@ final class Kernel
             return;
         }
 
-        // Determine the knowledge space to use
-        $knowledgeSpacePath = $this->input->getOption('space');
-        if (empty($knowledgeSpacePath)) {
-            $knowledgeSpacePath = $this->config['knowledge_base_path'];
-        }
+        $knowledgeBasePath = $this->config['knowledge_base_path'];
+        $spaceOption = $this->input->getOption('space');
+        
+        // --- Command-specific handling of knowledge space ---
+        switch ($commandName) {
+            case 'chat':
+            case 'ingest':
+            case 'clear':
+                // These commands require a specific cognitive space, not the base container.
+                if (empty($spaceOption)) {
+                    Output::error("Error: Command '{$commandName}' requires a specific cognitive space.");
+                    Output::error("Please use --space=<path/to/your/space> (e.g., --space=knowledge/my_personal_agent).");
+                    exit(1);
+                }
+                
+                $fullSpacePath = $spaceOption;
+                // Ensure the provided space path is within the configured knowledge_base_path for safety/consistency
+                if (!str_starts_with(realpath($fullSpacePath), realpath($knowledgeBasePath))) {
+                     Output::error("Error: The specified knowledge space '{$spaceOption}' is not within the configured knowledge base path '{$knowledgeBasePath}'.");
+                     exit(1);
+                }
 
-        $knowledgeSpace = null;
-        try {
-            $knowledgeSpace = new Space($knowledgeSpacePath);
-        } catch (\InvalidArgumentException $e) {
-            Output::error("Error initializing knowledge space: " . $e->getMessage());
-            Output::error("Please ensure the path '{$knowledgeSpacePath}' is valid.");
-            exit(1);
+                try {
+                    $knowledgeSpace = new Space($fullSpacePath);
+                } catch (\InvalidArgumentException $e) {
+                    Output::error("Error initializing cognitive space '{$fullSpacePath}': " . $e->getMessage());
+                    exit(1);
+                }
+                $commandArgs = [
+                    'input' => $this->input,
+                    'config' => $this->config,
+                    'knowledgeSpace' => $knowledgeSpace
+                ];
+                break;
+
+            case 'interact':
+            case 'status':
+                // These commands need the base knowledge path to list available spaces.
+                $commandArgs = [
+                    'input' => $this->input,
+                    'config' => $this->config,
+                    'knowledgeBasePath' => $knowledgeBasePath // Pass base path directly
+                ];
+                break;
+
+            default:
+                Output::writeln("Unknown command: '{$commandName}'.");
+                Help::display();
+                exit(1);
         }
+        // --- End command-specific handling ---
 
         if (isset($this->commands[$commandName])) {
             $commandClass = $this->commands[$commandName];
             // Instantiate the command and execute it
-            $command = new $commandClass(
-                input: $this->input,
-                config: $this->config,
-                knowledgeSpace: $knowledgeSpace
-            );
+            $command = new $commandClass(...$commandArgs); // Use spread operator for args
             $exitCode = $command->execute();
             exit($exitCode);
         } else {
+            // This case should ideally not be reached due to the switch above
             Output::writeln("Unknown command: '{$commandName}'.");
             Help::display();
             exit(1);
         }
 
-        Output::writeln("INTENTIO session ended.");
+        // Output::writeln("INTENTIO session ended."); // This line is now redundant as commands exit directly
     }
 }

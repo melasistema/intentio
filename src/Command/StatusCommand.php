@@ -19,7 +19,7 @@ final class StatusCommand
     public function __construct(
         private readonly Input $input,
         private readonly array $config,
-        private readonly Space $knowledgeSpace // The default knowledge space is passed here
+        private readonly string $knowledgeBasePath // Changed from Space to string
     ) {
     }
 

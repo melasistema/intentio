@@ -24,9 +24,23 @@ final class InteractCommand
     public function __construct(
         private readonly Input $input,
         private readonly array $config,
-        private readonly Space $knowledgeSpace
+        private readonly string $knowledgeBasePath // Changed from Space to string
     ) {
-        $this->currentKnowledgeSpace = $knowledgeSpace;
+        // Initially, no specific space is selected, or use a default if desired.
+        // For interact, it's better to let the user select first.
+        // Or, if --space was provided to interact, try to set it.
+        $initialSpaceOption = $this->input->getOption('space');
+        if (!empty($initialSpaceOption)) {
+             try {
+                $this->currentKnowledgeSpace = new Space($initialSpaceOption);
+            } catch (\InvalidArgumentException $e) {
+                Output::error("Failed to initialize space from --space option: " . $e->getMessage());
+                $this->currentKnowledgeSpace = null; // Fallback to no space selected
+            }
+        } else {
+            $this->currentKnowledgeSpace = null; // Start with no space selected by default
+        }
+        
         // Initialize with default template from config
         $this->currentPromptTemplateName = $this->config['interpreter']['default_prompt_template_name'];
     }
@@ -79,11 +93,10 @@ final class InteractCommand
     {
         Output::writeln("\n--- Select Knowledge Space ---");
         
-        $knowledgeBasePath = $this->config['knowledge_base_path'];
-        $availableSpaces = Space::getAvailableSpaces($knowledgeBasePath);
+        $availableSpaces = Space::getAvailableSpaces($this->knowledgeBasePath); // Use local knowledgeBasePath
 
         if (empty($availableSpaces)) {
-            Output::writeln("No knowledge spaces found in '{$knowledgeBasePath}'.");
+            Output::writeln("No knowledge spaces found in '{$this->knowledgeBasePath}'.");
             Output::writeln("Please create subdirectories in this path to define knowledge spaces.");
             return;
         }
@@ -103,7 +116,7 @@ final class InteractCommand
 
         if (isset($availableSpaces[$selection - 1])) {
             $selectedSpaceName = $availableSpaces[$selection - 1];
-            $selectedSpacePath = $knowledgeBasePath . DIRECTORY_SEPARATOR . $selectedSpaceName;
+            $selectedSpacePath = $this->knowledgeBasePath . DIRECTORY_SEPARATOR . $selectedSpaceName; // Use local knowledgeBasePath
             try {
                 $this->currentKnowledgeSpace = new Space($selectedSpacePath);
                 Output::writeln(sprintf("Knowledge space set to: %s", $this->currentKnowledgeSpace->getRootPath()));
