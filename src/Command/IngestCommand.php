@@ -18,7 +18,7 @@ use Intentio\Ingestion\FileProcessor;
  * to extract content and metadata, generates embeddings for the content,
  * and stores them in a vector store for later retrieval.
  */
-final class IngestCommand
+final class IngestCommand implements CommandInterface
 {
     public function __construct(
         private readonly Input $input,
@@ -47,9 +47,8 @@ final class IngestCommand
             $this->config['ollama']
         );
         
-        $vectorStoreDbPath = $this->config['vector_store_db_path']; // Updated config key
-        $knowledgeSpaceName = basename($this->knowledgeSpace->getRootPath());
-        $vectorStore = new SQLiteVectorStore($knowledgeSpaceName, $vectorStoreDbPath); // Updated class name
+        $vectorStoreDbPath = $this->config['vector_store_db_path'];
+        $vectorStore = new SQLiteVectorStore($this->knowledgeSpace->getRootPath(), $vectorStoreDbPath);
 
         // 3. Process each file
         foreach ($files as $asset) {

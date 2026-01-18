@@ -17,12 +17,12 @@ use SQLite3; // Use the native SQLite3 extension
 final class SQLiteVectorStore
 {
     private SQLite3 $db;
-    private string $knowledgeSpaceName;
-    private string $dbDirectory; // Directory where the DB file will reside
+    private string $fullCognitiveSpacePath; // Changed from knowledgeSpaceName
+    private string $dbDirectory;
 
-    public function __construct(string $knowledgeSpaceName, string $basePath)
+    public function __construct(string $fullCognitiveSpacePath, string $basePath) // Updated parameter name
     {
-        $this->knowledgeSpaceName = $knowledgeSpaceName;
+        $this->fullCognitiveSpacePath = $fullCognitiveSpacePath;
         $this->dbDirectory = $basePath;
         
         // Ensure the database directory exists
@@ -31,7 +31,9 @@ final class SQLiteVectorStore
             mkdir($this->dbDirectory, 0755, true);
         }
 
-        $dbFilePath = $this->dbDirectory . DIRECTORY_SEPARATOR . $this->knowledgeSpaceName . '.sqlite';
+        // Use MD5 hash of the full cognitive space path for a unique and safe filename
+        $dbFileName = md5($this->fullCognitiveSpacePath) . '.sqlite';
+        $dbFilePath = $this->dbDirectory . DIRECTORY_SEPARATOR . $dbFileName;
         
         try {
             $this->db = new SQLite3($dbFilePath);
@@ -39,7 +41,7 @@ final class SQLiteVectorStore
             $this->createSchema();
         } catch (\Exception $e) {
             Output::error("Failed to open or create SQLite database: " . $e->getMessage());
-            throw new \RuntimeException("Could not initialize SQLiteVectorStore.", 0, $e);
+            throw new \RuntimeException("Could not initialize SQLiteVectorStore for '{$this->fullCognitiveSpacePath}'.", 0, $e);
         }
     }
 

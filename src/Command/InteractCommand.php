@@ -17,7 +17,7 @@ use Intentio\Command\IngestCommand; // Added use statement for IngestCommand
  * with the cognitive environment in a guided loop, providing a more
  * intuitive user experience.
  */
-final class InteractCommand
+final class InteractCommand implements CommandInterface
 {
     private ?Space $currentKnowledgeSpace = null;
     private string $currentPromptTemplateName; // New property
@@ -124,9 +124,33 @@ final class InteractCommand
 
                 // --- Check Ingestion Status ---
                 $vectorStoreDbPath = $this->config['vector_store_db_path'];
-                $dbFilePath = $vectorStoreDbPath . DIRECTORY_SEPARATOR . $selectedSpaceName . '.sqlite';
+                $dbFilePath = $vectorStoreDbPath . DIRECTORY_SEPARATOR . md5($this->currentKnowledgeSpace->getRootPath()) . '.sqlite'; // Use MD5 hash for filename
 
-                if (!file_exists($dbFilePath)) {
+                $ingestionStatus = $this->isIngestionNeeded($this->currentKnowledgeSpace->getRootPath(), $dbFilePath);
+                
+                if ($ingestionStatus === 'needed') {
+                    Output::writeln("\nNOTICE: This cognitive space needs to be ingested or re-ingested (source files are newer).");
+                    $confirmIngest = readline("Would you like to ingest it now? (yes/no): ");
+                    if (trim(strtolower($confirmIngest)) === 'yes') {
+                        // Create a temporary Input object for IngestCommand
+                        $tempArgv = [
+                            'intentio',
+                            'ingest',
+                            '--space=' . $this->currentKnowledgeSpace->getRootPath(),
+                        ];
+                        $ingestInput = new Input($tempArgv);
+
+                        $ingestCommand = new IngestCommand( // Use IngestCommand
+                            input: $ingestInput,
+                            config: $this->config,
+                            knowledgeSpace: $this->currentKnowledgeSpace
+                        );
+                        $ingestCommand->execute();
+                        Output::writeln("Ingestion process completed.");
+                    } else {
+                        Output::writeln("Ingestion skipped. You may experience outdated or limited responses.");
+                    }
+                } elseif ($ingestionStatus === 'missing') {
                     Output::writeln("\nNOTICE: This cognitive space does not appear to be ingested.");
                     $confirmIngest = readline("Would you like to ingest it now? (yes/no): ");
                     if (trim(strtolower($confirmIngest)) === 'yes') {
@@ -221,5 +245,46 @@ final class InteractCommand
             knowledgeSpace: $this->currentKnowledgeSpace
         );
         $chatCommand->execute();
+    }
+
+    /**
+     * Checks if ingestion is needed for a given cognitive space.
+     *
+     * @param string $spacePath The root path of the cognitive space (e.g., knowledge/my_space).
+     * @param string $dbFilePath The full path to the SQLite database file for this space.
+     * @return string 'needed', 'missing', or 'up-to-date'.
+     */
+    private function isIngestionNeeded(string $spacePath, string $dbFilePath): string
+    {
+        if (!file_exists($dbFilePath)) {
+            return 'missing';
+        }
+
+        $dbLastModified = filemtime($dbFilePath);
+        if ($dbLastModified === false) {
+            // Should not happen if file_exists is true, but handle defensively
+            return 'needed'; // Assume needed if can't get mtime
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($spacePath, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isDir()) {
+                continue;
+            }
+            $fileLastModified = $file->getMTime();
+            if ($fileLastModified === false) {
+                // If a file's mtime cannot be read, assume ingestion is needed
+                return 'needed';
+            }
+            if ($fileLastModified > $dbLastModified) {
+                return 'needed'; // A source file is newer than the database
+            }
+        }
+
+        return 'up-to-date'; // No source files are newer than the database
     }
 }

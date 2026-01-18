@@ -7,11 +7,8 @@ namespace Intentio;
 use Intentio\Cli\Input;
 use Intentio\Cli\Output;
 use Intentio\Cli\Help;
-use Intentio\Command\ChatCommand;
-use Intentio\Command\IngestCommand;
-use Intentio\Command\InteractCommand;
-use Intentio\Command\StatusCommand;
-use Intentio\Command\ClearCommand;
+use Intentio\Command\CommandArgumentResolver;
+use Intentio\Command\CommandDispatcher;
 use Intentio\Knowledge\Space;
 
 /**
@@ -23,14 +20,6 @@ use Intentio\Knowledge\Space;
  */
 final class Kernel
 {
-    private array $commands = [
-        'chat' => ChatCommand::class,
-        'ingest' => IngestCommand::class,
-        'interact' => InteractCommand::class,
-        'status' => StatusCommand::class,
-        'clear' => ClearCommand::class,
-    ];
-
     public function __construct(
         private readonly array $config,
         private readonly Input $input
@@ -49,71 +38,54 @@ final class Kernel
             return;
         }
 
+        // Initialize the argument resolver and dispatcher
+        $argumentResolver = new CommandArgumentResolver($this->input, $this->config);
+        $commandDispatcher = new CommandDispatcher($argumentResolver, $this->config, $this->input);
+
         $knowledgeBasePath = $this->config['knowledge_base_path'];
         $spaceOption = $this->input->getOption('space');
         
-        // --- Command-specific handling of knowledge space ---
-        switch ($commandName) {
-            case 'chat':
-            case 'ingest':
-            case 'clear':
-                // These commands require a specific cognitive space, not the base container.
-                if (empty($spaceOption)) {
-                    Output::error("Error: Command '{$commandName}' requires a specific cognitive space.");
-                    Output::error("Please use --space=<path/to/your/space> (e.g., --space=knowledge/my_personal_agent).");
-                    exit(1);
-                }
-                
-                $fullSpacePath = $spaceOption;
-                // Ensure the provided space path is within the configured knowledge_base_path for safety/consistency
-                if (!str_starts_with(realpath($fullSpacePath), realpath($knowledgeBasePath))) {
-                     Output::error("Error: The specified knowledge space '{$spaceOption}' is not within the configured knowledge base path '{$knowledgeBasePath}'.");
-                     exit(1);
-                }
+        $commandConfig = []; // Collect command-specific arguments for resolver
 
-                try {
-                    $knowledgeSpace = new Space($fullSpacePath);
-                } catch (\InvalidArgumentException $e) {
-                    Output::error("Error initializing cognitive space '{$fullSpacePath}': " . $e->getMessage());
-                    exit(1);
-                }
-                $commandArgs = [
-                    'input' => $this->input,
-                    'config' => $this->config,
-                    'knowledgeSpace' => $knowledgeSpace
-                ];
-                break;
+        // --- Command-specific handling of knowledge space (moved to CommandDispatcher) ---
+        // This logic is still here in Kernel because Kernel decides *what* to pass to CommandDispatcher.
+        // CommandDispatcher handles *how* to construct the command using what Kernel gives it.
+        $commandsRequiringSpecificSpace = ['chat', 'ingest', 'clear'];
+        $commandsUsingBaseKnowledgePath = ['interact', 'status'];
 
-            case 'interact':
-            case 'status':
-                // These commands need the base knowledge path to list available spaces.
-                $commandArgs = [
-                    'input' => $this->input,
-                    'config' => $this->config,
-                    'knowledgeBasePath' => $knowledgeBasePath // Pass base path directly
-                ];
-                break;
-
-            default:
-                Output::writeln("Unknown command: '{$commandName}'.");
-                Help::display();
+        if (in_array($commandName, $commandsRequiringSpecificSpace)) {
+            if (empty($spaceOption)) {
+                Output::error("Error: Command '{$commandName}' requires a specific cognitive space.");
+                Output::error("Please use --space=<path/to/your/space> (e.g., --space=knowledge/my_personal_agent).");
                 exit(1);
+            }
+            
+            $fullSpacePath = $spaceOption;
+            // Ensure the provided space path is within the configured knowledge_base_path for safety/consistency
+            if (!str_starts_with(realpath($fullSpacePath), realpath($knowledgeBasePath))) {
+                 Output::error("Error: The specified knowledge space '{$spaceOption}' is not within the configured knowledge base path '{$knowledgeBasePath}'.");
+                 exit(1);
+            }
+
+            try {
+                $knowledgeSpace = new Space($fullSpacePath);
+            } catch (\InvalidArgumentException $e) {
+                Output::error("Error initializing cognitive space '{$fullSpacePath}': " . $e->getMessage());
+                exit(1);
+            }
+            $commandConfig['knowledgeSpace'] = $knowledgeSpace;
+
+        } elseif (in_array($commandName, $commandsUsingBaseKnowledgePath)) {
+            $commandConfig['knowledgeBasePath'] = $knowledgeBasePath;
         }
         // --- End command-specific handling ---
-
-        if (isset($this->commands[$commandName])) {
-            $commandClass = $this->commands[$commandName];
-            // Instantiate the command and execute it
-            $command = new $commandClass(...$commandArgs); // Use spread operator for args
-            $exitCode = $command->execute();
+        
+        try {
+            $exitCode = $commandDispatcher->dispatch($commandName, $commandConfig);
             exit($exitCode);
-        } else {
-            // This case should ideally not be reached due to the switch above
-            Output::writeln("Unknown command: '{$commandName}'.");
-            Help::display();
+        } catch (\RuntimeException $e) {
+            Output::error("An error occurred during command dispatch: " . $e->getMessage());
             exit(1);
         }
-
-        // Output::writeln("INTENTIO session ended."); // This line is now redundant as commands exit directly
     }
 }

@@ -19,7 +19,7 @@ use Intentio\Orchestration\LlamaInterpreter;
  * retrieving the query, processing the knowledge space, performing retrieval,
  * and interpreting the context to generate a response.
  */
-final class ChatCommand
+final class ChatCommand implements CommandInterface
 {
     public function __construct(
         private readonly Input $input,
@@ -50,9 +50,8 @@ final class ChatCommand
         // --- Core Chat Logic ---
 
         // 1. Load Vector Store
-        $vectorStoreDbPath = $this->config['vector_store_db_path']; // Updated config key
-        $knowledgeSpaceName = basename($this->knowledgeSpace->getRootPath());
-        $vectorStore = new SQLiteVectorStore($knowledgeSpaceName, $vectorStoreDbPath); // Updated class name
+        $vectorStoreDbPath = $this->config['vector_store_db_path'];
+        $vectorStore = new SQLiteVectorStore($this->knowledgeSpace->getRootPath(), $vectorStoreDbPath);
 
         // 2. Embed the user query
         Output::writeln("Embedding your query...");

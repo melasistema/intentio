@@ -14,7 +14,7 @@ use Intentio\Knowledge\Space; // Added this use statement
  * This command provides information about configured paths, available knowledge
  * spaces, and the connectivity status of the Ollama server and models.
  */
-final class StatusCommand
+final class StatusCommand implements CommandInterface
 {
     public function __construct(
         private readonly Input $input,

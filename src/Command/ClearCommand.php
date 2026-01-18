@@ -15,7 +15,7 @@ use Intentio\Knowledge\Space;
  * This effectively "resets" the knowledge for that space, allowing for
  * fresh ingestion.
  */
-final class ClearCommand
+final class ClearCommand implements CommandInterface
 {
     public function __construct(
         private readonly Input $input,
@@ -33,11 +33,12 @@ final class ClearCommand
             return 1;
         }
 
-        $knowledgeSpaceName = basename($this->knowledgeSpace->getRootPath());
+        $knowledgeSpacePath = $this->knowledgeSpace->getRootPath();
         $vectorStoreDbPath = $this->config['vector_store_db_path'];
-        $dbFilePath = $vectorStoreDbPath . DIRECTORY_SEPARATOR . $knowledgeSpaceName . '.sqlite';
+        $dbFileName = md5($knowledgeSpacePath) . '.sqlite'; // Derive filename as in SQLiteVectorStore
+        $dbFilePath = $vectorStoreDbPath . DIRECTORY_SEPARATOR . $dbFileName;
 
-        Output::writeln(sprintf("Attempting to clear data for space: %s (%s)", $knowledgeSpaceName, $dbFilePath));
+        Output::writeln(sprintf("Attempting to clear data for space: %s (%s)", $knowledgeSpacePath, $dbFilePath));
 
         if (!file_exists($dbFilePath)) {
             Output::writeln("No existing data found for this space. Nothing to clear.");
