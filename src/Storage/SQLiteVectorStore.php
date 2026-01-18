@@ -36,9 +36,12 @@ final class SQLiteVectorStore
         $dbFilePath = $this->dbDirectory . DIRECTORY_SEPARATOR . $dbFileName;
         
         try {
+            // Output::writeln(sprintf("Opening SQLite database for '%s' at '%s'...", $this->fullCognitiveSpacePath, $dbFilePath)); // Removed debug output
             $this->db = new SQLite3($dbFilePath);
             $this->db->busyTimeout(5000); // Set a busy timeout for concurrent access safety
-            $this->createSchema();
+            // Output::writeln("SQLite database opened successfully."); // Removed debug output
+            $this->createSchema(); // Corrected typo here
+            // Output::writeln("SQLite schema ensured."); // Removed debug output
         } catch (\Exception $e) {
             Output::error("Failed to open or create SQLite database: " . $e->getMessage());
             throw new \RuntimeException("Could not initialize SQLiteVectorStore for '{$this->fullCognitiveSpacePath}'.", 0, $e);
@@ -47,12 +50,16 @@ final class SQLiteVectorStore
 
     private function createSchema(): void
     {
-        $this->db->exec('CREATE TABLE IF NOT EXISTS chunks (
+        $result = $this->db->exec('CREATE TABLE IF NOT EXISTS chunks (
             id TEXT PRIMARY KEY,
             content TEXT NOT NULL,
             metadata_json TEXT NOT NULL,
             vector_json TEXT NOT NULL
         )');
+        if ($result === false) {
+            Output::error("Failed to create SQLite schema: " . $this->db->lastErrorMsg());
+            throw new \RuntimeException("Failed to create SQLite schema.");
+        }
     }
 
     /**
@@ -78,10 +85,12 @@ final class SQLiteVectorStore
         
         $result = $stmt->execute();
         if ($result === false) {
+            Output::error("Failed to add chunk '{$id}' to SQLite database: " . $this->db->lastErrorMsg());
             throw new \RuntimeException("Failed to add chunk to SQLite database: " . $this->db->lastErrorMsg());
         }
         $result->finalize();
-    }
+        // Output::writeln("Chunk '{$id}' added/updated successfully."); // Removed debug output
+    } // Missing brace added here
 
     /**
      * Finds similar content chunks based on a query vector.

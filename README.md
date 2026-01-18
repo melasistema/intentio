@@ -1,3 +1,4 @@
+![image README-banner.png](/resources/images/intentio-header-image.png)
 
 # INTENTIO
 
@@ -51,7 +52,7 @@ Private AI is not a feature. It is an architectural decision.
 
 -   ❌ A chatbot trained on the internet
 
--   ❌ A "chat with your PDFs" demo
+-   ❌ A "chat with your DOCs" demo
 
 -   ❌ An autonomous agent pretending to think
 

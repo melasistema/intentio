@@ -46,6 +46,8 @@ final class ChatCommand implements CommandInterface
         }
 
         Output::writeln("Using knowledge space: " . $this->knowledgeSpace->getRootPath());
+        $templateName = $this->input->getOption('template') ?? $this->config['interpreter']['default_prompt_template_name']; // Moved definition
+        Output::writeln(sprintf("Using prompt template: %s", $templateName));
 
         // --- Core Chat Logic ---
 
@@ -68,6 +70,18 @@ final class ChatCommand implements CommandInterface
         $context = [];
         if (!empty($retrievedChunks)) {
             Output::writeln("Found relevant context!");
+            
+            // --- DEBUGGING OUTPUT (Removed for final code) ---
+            // Output::writeln("\n--- Retrieved Chunks (for debugging) ---");
+            // foreach ($retrievedChunks as $chunk) {
+            //     Output::writeln("Score: " . round($chunk['score'], 4));
+            //     Output::writeln("Content: " . substr($chunk['content'], 0, 100) . "...");
+            //     Output::writeln("Source: " . $chunk['metadata']['filename'] . " (Category: " . $chunk['metadata']['category'] . ")");
+            //     Output::writeln("---");
+            // }
+            // Output::writeln("---------------------------------------\n");
+            // --- END DEBUGGING OUTPUT ---
+
             foreach ($retrievedChunks as $chunk) {
                 $context[] = $chunk['content'];
             }
@@ -77,7 +91,7 @@ final class ChatCommand implements CommandInterface
         }
 
         // 4. Construct the prompt for the Interpreter (LLM)
-        $templateName = $this->input->getOption('template') ?? $this->config['interpreter']['default_prompt_template_name'];
+        // $templateName is already defined above
 
         $promptBuilder = new Prompt(
             templateName: $templateName,

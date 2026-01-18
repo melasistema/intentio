@@ -19,6 +19,16 @@ use Intentio\Command\IngestCommand; // Added use statement for IngestCommand
  */
 final class InteractCommand implements CommandInterface
 {
+    private const LOGO_ASCII = " 
+ ___  ________   _________  _______   ________   _________  ___  ________     
+|\  \|\   ___  \|\___   ___\\  ___ \ |\   ___  \|\___   ___\\  \|\   __  \    
+\ \  \ \  \\ \  \|___ \  \_\ \   __/|\ \  \\ \  \|___ \  \_\ \  \ \  \|\  \   
+ \ \  \ \  \\ \  \   \ \  \ \ \  \_|/_\ \  \\ \  \   \ \  \ \ \  \ \  \\\  \  
+  \ \  \ \  \\ \  \   \ \  \ \ \  \_|\ \ \  \\ \  \   \ \  \ \ \  \ \  \\\  \ 
+   \ \__\ \__\\ \__\   \ \__\ \ \_______\ \__\\ \__\   \ \__\ \ \__\ \_______\
+    \|__|\|__| \|__|    \|__|  \|_______|\|__| \|__|    \|__|  \|__|\|_______|
+";
+
     private ?Space $currentKnowledgeSpace = null;
     private string $currentPromptTemplateName; // New property
 
@@ -48,6 +58,7 @@ final class InteractCommand implements CommandInterface
 
     public function execute(): int
     {
+        Output::writeln(self::LOGO_ASCII); // Display logo
         Output::writeln("Starting interactive mode. Type 'exit' to quit, 'space' to change knowledge space, 'template' to change prompt template."); // Updated help message
 
         // Main interactive loop
