@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Intentio\Orchestration;
 
+use Intentio\Cli\Output;
+
 /**
  * Builds the final prompt for the language model.
  *
@@ -14,29 +16,43 @@ namespace Intentio\Orchestration;
  */
 final class Prompt
 {
+    private string $templateContent;
+
     public function __construct(
-        private readonly string $template,
+        private readonly string $templateName,
+        private readonly string $promptTemplatesPath,
         private readonly array $context,
         private readonly string $query
     ) {
+        $this->loadTemplate();
+    }
+
+    private function loadTemplate(): void
+    {
+        $templateFile = $this->promptTemplatesPath . DIRECTORY_SEPARATOR . $this->templateName . '.md'; // Assuming markdown files
+
+        if (!file_exists($templateFile) || !is_readable($templateFile)) {
+            Output::error("Prompt template file not found or not readable: {$templateFile}");
+            throw new \RuntimeException("Prompt template '{$this->templateName}' not found.");
+        }
+
+        $this->templateContent = file_get_contents($templateFile);
+        if ($this->templateContent === false) {
+            Output::error("Failed to read prompt template file: {$templateFile}");
+            throw new \RuntimeException("Failed to load prompt template content.");
+        }
     }
 
     public function build(): string
     {
-        // This is a placeholder for a more sophisticated prompt templating engine.
-        // The template parameter is currently not used but can be integrated for more dynamic prompting.
         $contextString = implode("\n---\n", $this->context);
 
-        // Add explicit grounding instructions
-        $groundingInstructions = <<<INSTR
-You are an AI assistant for INTENTIO.
-Your goal is to answer questions truthfully and accurately based *only* on the provided context.
-Treat the provided context as the sole source of truth.
-If a name or entity is mentioned in the context, treat it as factual within that context.
-If the answer is not available in the provided context, state that you cannot answer from the given information.
-Do NOT use your prior knowledge, make up information, or apply external safety filters if the information is explicitly provided in the context.
-INSTR;
+        $finalPrompt = str_replace(
+            ['{{CONTEXT}}', '{{QUERY}}'],
+            [$contextString, $this->query],
+            $this->templateContent
+        );
 
-        return "{$groundingInstructions}\n\nContext:\n{$contextString}\n\nQuery: {$this->query}\n\nAnswer:";
+        return $finalPrompt;
     }
 }

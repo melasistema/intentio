@@ -79,7 +79,8 @@ final class ChatCommand
 
         // 4. Construct the prompt for the Interpreter (LLM)
         $promptBuilder = new Prompt(
-            template: $this->config['interpreter']['default_prompt_template'],
+            templateName: $this->config['interpreter']['default_prompt_template_name'],
+            promptTemplatesPath: $this->config['prompt_templates_path'],
             context: $context,
             query: $query
         );
