@@ -8,7 +8,7 @@ use Intentio\Cli\Input;
 use Intentio\Cli\Output;
 use Intentio\Knowledge\Space;
 use Intentio\Embedding\NomicEmbedder;
-use Intentio\Storage\VectorStore;
+use Intentio\Storage\SQLiteVectorStore; // Updated use statement
 use Intentio\Ingestion\FileProcessor;
 
 /**
@@ -47,9 +47,9 @@ final class IngestCommand
             $this->config['ollama']
         );
         
-        $vectorStorePath = $this->config['vector_store_path'];
+        $vectorStoreDbPath = $this->config['vector_store_db_path']; // Updated config key
         $knowledgeSpaceName = basename($this->knowledgeSpace->getRootPath());
-        $vectorStore = new VectorStore($knowledgeSpaceName, $vectorStorePath);
+        $vectorStore = new SQLiteVectorStore($knowledgeSpaceName, $vectorStoreDbPath); // Updated class name
 
         // 3. Process each file
         foreach ($files as $asset) {
@@ -73,9 +73,9 @@ final class IngestCommand
             }
         }
 
-        // 4. Save the vector store
-        $vectorStore->save();
-        Output::writeln("Ingestion complete. Vector store saved.");
+        // 4. Save the vector store - No longer needed with SQLite
+        // $vectorStore->save();
+        Output::writeln("Ingestion complete. Vector store updated (SQLite)."); // Updated message
 
         return 0; // Indicate success
     }

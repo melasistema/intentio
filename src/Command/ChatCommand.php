@@ -8,7 +8,7 @@ use Intentio\Cli\Input;
 use Intentio\Cli\Output;
 use Intentio\Knowledge\Space;
 use Intentio\Embedding\NomicEmbedder;
-use Intentio\Storage\VectorStore;
+use Intentio\Storage\SQLiteVectorStore; // Updated use statement
 use Intentio\Orchestration\Prompt;
 use Intentio\Orchestration\LlamaInterpreter;
 
@@ -50,9 +50,9 @@ final class ChatCommand
         // --- Core Chat Logic ---
 
         // 1. Load Vector Store
-        $vectorStorePath = $this->config['vector_store_path'];
+        $vectorStoreDbPath = $this->config['vector_store_db_path']; // Updated config key
         $knowledgeSpaceName = basename($this->knowledgeSpace->getRootPath());
-        $vectorStore = new VectorStore($knowledgeSpaceName, $vectorStorePath);
+        $vectorStore = new SQLiteVectorStore($knowledgeSpaceName, $vectorStoreDbPath); // Updated class name
 
         // 2. Embed the user query
         Output::writeln("Embedding your query...");
