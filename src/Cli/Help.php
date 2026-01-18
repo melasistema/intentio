@@ -25,6 +25,7 @@ final class Help
         Output::writeln("  ingest               Process and index the files in a knowledge space.");
         Output::writeln("                       Example: intentio ingest --space=my_private_notes");
         Output::writeln("  interact             Launch a guided interactive mode for conversation.");
+        Output::writeln("  status               Display current INTENTIO system status and configuration.");
         Output::writeln("");
         Output::writeln("Options:");
         Output::writeln("  --space=<path>       Specify the path to the knowledge space to use.");

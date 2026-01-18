@@ -23,6 +23,7 @@ final class Kernel
         'chat' => ChatCommand::class,
         'ingest' => \Intentio\Command\IngestCommand::class,
         'interact' => \Intentio\Command\InteractCommand::class,
+        'status' => \Intentio\Command\StatusCommand::class,
     ];
 
     public function __construct(

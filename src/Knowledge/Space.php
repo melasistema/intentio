@@ -73,4 +73,28 @@ final class Space
 
         return $assets;
     }
+
+    /**
+     * Lists all available cognitive spaces (subdirectories) within a given base path.
+     *
+     * @param string $basePath The root directory where cognitive spaces are stored.
+     * @return array An array of space names.
+     */
+    public static function getAvailableSpaces(string $basePath): array
+    {
+        $spaces = [];
+        if (is_dir($basePath)) {
+            $items = scandir($basePath);
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                $fullPath = $basePath . DIRECTORY_SEPARATOR . $item;
+                if (is_dir($fullPath)) {
+                    $spaces[] = $item;
+                }
+            }
+        }
+        return $spaces;
+    }
 }
