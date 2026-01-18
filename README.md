@@ -173,7 +173,7 @@ Because meaning survives only when it is respected.
 
 -   **Embeddings:** Local, inspectable, deterministic
 
--   **Storage:** Local filesystem + vector index
+-   **Storage:** Local SQLite database (vector index)
 
 
 No cloud calls. No silent training. No external APIs.
@@ -227,7 +227,7 @@ INTENTIO treats your filesystem structure as a cognitive space.
 Once Ollama is running and your knowledge is organized, you can use INTENTIO's commands:
 
 **a. Ingest Your Knowledge:**
-   Process your knowledge space to generate embeddings and build the vector store. This must be done for each space you want to use.
+   Process your knowledge space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use.
 
    ```bash
    ./intentio ingest --space=knowledge/my_private_notes
@@ -235,22 +235,37 @@ Once Ollama is running and your knowledge is organized, you can use INTENTIO's c
    *Replace `knowledge/my_private_notes` with the path to your specific knowledge space.*
 
 **b. Chat with Your Knowledge:**
-   Interact with a specific cognitive space.
+   Interact with a specific cognitive space, optionally choosing a prompt template.
 
    ```bash
-   ./intentio chat "What are my core values?" --space=knowledge/my_private_notes
+   ./intentio chat "What are my core values?" --space=knowledge/my_private_notes --template=analytical
    ```
-   *Replace with your query and knowledge space path.*
+   *Replace with your query, knowledge space path, and optional template name (e.g., `default`, `analytical`, `creative`).*
 
-**c. Interactive Mode (Recommended for exploration):**
-   Launch a guided interactive session to easily switch between knowledge spaces and chat.
+**c. Interactive Mode (Recommended for exploration and guided experience):**
+   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates, and chat. The system will intelligently detect uningested or outdated spaces and offer to ingest/re-ingest them.
 
    ```bash
    ./intentio interact
    ```
-   *Follow the on-screen prompts to select a space and chat.*
+   *Follow the on-screen prompts to select a space, template, and chat.*
 
-**d. Get Help:**
+**d. Clear a Cognitive Space's Data:**
+   Remove the SQLite vector store for a specified cognitive space. This is useful for starting fresh or if you've significantly restructured your source files and want a full re-ingestion.
+
+   ```bash
+   ./intentio clear --space=knowledge/my_private_notes
+   ```
+   *Replace `knowledge/my_private_notes` with the path to the space you wish to clear.*
+
+**e. Get System Status:**
+   View an overview of your INTENTIO setup, including configured paths, available knowledge spaces, and Ollama server/model status.
+
+   ```bash
+   ./intentio status
+   ```
+
+**f. Get General Help:**
    ```bash
    ./intentio help
    ```
