@@ -55,4 +55,29 @@ final class Prompt
 
         return $finalPrompt;
     }
+
+    /**
+     * Lists all available prompt template names (without extensions) from a given path.
+     *
+     * @param string $templatesPath The directory where prompt template files are stored.
+     * @return array An array of template names.
+     */
+    public static function getAvailableTemplates(string $templatesPath): array
+    {
+        $templateNames = [];
+        if (is_dir($templatesPath)) {
+            $items = scandir($templatesPath);
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                $fileInfo = pathinfo($item);
+                if (isset($fileInfo['extension']) && $fileInfo['extension'] === 'md') { // Assuming .md templates
+                    $templateNames[] = $fileInfo['filename'];
+                }
+            }
+        }
+        return $templateNames;
+    }
 }
+

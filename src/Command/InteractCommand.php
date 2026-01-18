@@ -7,6 +7,7 @@ namespace Intentio\Command;
 use Intentio\Cli\Input;
 use Intentio\Cli\Output;
 use Intentio\Knowledge\Space;
+use Intentio\Orchestration\Prompt; // Added use statement for Prompt
 
 /**
  * Handles the 'interact' command, launching a guided interactive mode.
@@ -18,23 +19,26 @@ use Intentio\Knowledge\Space;
 final class InteractCommand
 {
     private ?Space $currentKnowledgeSpace = null;
+    private string $currentPromptTemplateName; // New property
 
     public function __construct(
         private readonly Input $input,
         private readonly array $config,
         private readonly Space $knowledgeSpace
-    )
-    {
+    ) {
         $this->currentKnowledgeSpace = $knowledgeSpace;
+        // Initialize with default template from config
+        $this->currentPromptTemplateName = $this->config['interpreter']['default_prompt_template_name'];
     }
 
     public function execute(): int
     {
-        Output::writeln("Starting interactive mode. Type 'exit' to quit, 'space' to change knowledge space.");
+        Output::writeln("Starting interactive mode. Type 'exit' to quit, 'space' to change knowledge space, 'template' to change prompt template."); // Updated help message
 
         // Main interactive loop
         while (true) {
             $this->displayCurrentSpace();
+            $this->displayCurrentTemplate(); // Display current template
 
             $query = readline("INTENTIO > ");
             $query = trim($query);
@@ -44,10 +48,12 @@ final class InteractCommand
                 break;
             } elseif ($query === 'space') {
                 $this->selectKnowledgeSpace();
+            } elseif ($query === 'template') { // Handle template command
+                $this->selectPromptTemplate();
             } elseif (!empty($query)) {
                 $this->chat($query);
             } else {
-                Output::writeln("Please type your query, 'space', or 'exit'.");
+                Output::writeln("Please type your query, 'space', 'template', or 'exit'."); // Updated help message
             }
         }
 
@@ -61,6 +67,12 @@ final class InteractCommand
         } else {
             Output::writeln("No Knowledge Space selected.");
         }
+    }
+    
+    // New method to display current template
+    private function displayCurrentTemplate(): void
+    {
+        Output::writeln(sprintf("Current Prompt Template: %s", $this->currentPromptTemplateName));
     }
 
     private function selectKnowledgeSpace(): void
@@ -104,6 +116,42 @@ final class InteractCommand
         Output::writeln("----------------------------\n");
     }
 
+    // New method to select prompt template
+    private function selectPromptTemplate(): void
+    {
+        Output::writeln("\n--- Select Prompt Template ---");
+
+        $promptTemplatesPath = $this->config['prompt_templates_path'];
+        $availableTemplates = Prompt::getAvailableTemplates($promptTemplatesPath);
+
+        if (empty($availableTemplates)) {
+            Output::writeln("No prompt templates found in '{$promptTemplatesPath}'.");
+            Output::writeln("Please create .md files in this path to define prompt templates.");
+            return;
+        }
+
+        foreach ($availableTemplates as $index => $templateName) {
+            Output::writeln(sprintf("  [%d] %s", $index + 1, $templateName));
+        }
+        Output::writeln("  [0] Go back / Cancel");
+
+        $selection = readline("Enter number to select a template: ");
+        $selection = (int)trim($selection);
+
+        if ($selection === 0) {
+            Output::writeln("Prompt template selection cancelled.");
+            return;
+        }
+
+        if (isset($availableTemplates[$selection - 1])) {
+            $this->currentPromptTemplateName = $availableTemplates[$selection - 1];
+            Output::writeln(sprintf("Prompt template set to: %s", $this->currentPromptTemplateName));
+        } else {
+            Output::writeln("Invalid selection.");
+        }
+        Output::writeln("----------------------------\n");
+    }
+
     private function chat(string $query): void
     {
         if (!$this->currentKnowledgeSpace) {
@@ -114,7 +162,13 @@ final class InteractCommand
         // Create a temporary Input object for ChatCommand
         // This is a bit of a hack but avoids deep refactoring of ChatCommand
         // to not depend on a Kernel-provided Input.
-        $tempArgv = ['intentio', 'chat', $query, '--space=' . $this->currentKnowledgeSpace->getRootPath()];
+        $tempArgv = [
+            'intentio',
+            'chat',
+            $query,
+            '--space=' . $this->currentKnowledgeSpace->getRootPath(),
+            '--template=' . $this->currentPromptTemplateName // Pass selected template
+        ];
         $chatInput = new Input($tempArgv);
 
         $chatCommand = new ChatCommand(

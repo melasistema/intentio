@@ -30,6 +30,7 @@ final class Help
         Output::writeln("Options:");
         Output::writeln("  --space=<path>       Specify the path to the knowledge space to use.");
         Output::writeln("                       (Default: configured knowledge_base_path)");
+        Output::writeln("  --template=<name>    Specify the prompt template to use for chat. (Default: 'default')");
         Output::writeln("");
         Output::writeln("INTENTIO - A local, private, CLI-based cognitive environment.");
         Output::writeln("For more details, refer to the project's documentation.");

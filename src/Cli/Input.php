@@ -35,10 +35,13 @@ final class Input
 
     public function getOption(string $name): ?string
     {
-        // A very basic option parser (e.g., --option=value)
+        // Support --option=value and --option
         foreach ($this->args as $arg) {
             if (str_starts_with($arg, "--{$name}=")) {
                 return substr($arg, strlen("--{$name}="));
+            }
+            if ($arg === "--{$name}") {
+                return 'true'; // Indicate presence of a boolean flag
             }
         }
         return null;
