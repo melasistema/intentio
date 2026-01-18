@@ -3,6 +3,7 @@
     "description": "A local, private, CLI-based cognitive environment.",
     "type": "project",
     "license": "MIT",
+    "version": "0.0.1",
     "authors": [
         {
             "name": "Luca Visciola",
