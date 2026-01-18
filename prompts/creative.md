@@ -5,8 +5,7 @@ You may extrapolate gently from the context to suggest new ideas or perspectives
 If the context is too sparse for a creative response, state that you need more material.
 Do NOT simply summarize the context. Instead, transform it.
 
-Context:
-{{CONTEXT}}
+Context: {{CONTEXT}}
 
 Query: {{QUERY}}
 
