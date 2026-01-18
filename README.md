@@ -166,6 +166,30 @@ Because meaning survives only when it is respected.
 
 ----------
 
+## Shaping Intent: Designing AI Personas with Prompt Templates
+
+INTENTIO empowers you to go beyond generic AI interactions by designing how your AI "thinks" and "behaves" within a given cognitive space. This is achieved through **configurable prompt templates**.
+
+Prompts are not merely instructions; they are fundamental tools for **agent design**. They act as:
+
+-   **Values**: Guiding principles for interpretation.
+-   **Boundaries**: Defining the scope of acceptable responses.
+-   **Tone Setters**: Influencing the style and persona of the AI.
+
+### How it Works:
+
+1.  **Template Files**: You can find (and create!) prompt templates as simple Markdown (`.md`) files within the `prompts/` directory. Each file defines a distinct "stance" or "persona" for the AI.
+2.  **Flexible Design**: These templates allow you to:
+    *   Guide the LLM to adopt specific personas (e.g., `analytical`, `creative`, `skeptical`).
+    *   Provide task-specific instructions (e.g., summarize, extract facts, generate narratives).
+    *   Enforce strict grounding rules, ensuring responses adhere solely to the provided context.
+3.  **Placeholders**: Each template uses `{{CONTEXT}}` to inject retrieved knowledge and `{{QUERY}}` for the user's question, allowing you to craft precise instructions around this core information.
+4.  **Usage**: Select your desired template using the `--template=<name>` option with the `chat` command, or dynamically switch personas within the `interact` command.
+
+By leveraging configurable prompt templates, you transform INTENTIO into a truly adaptable cognitive instrument, capable of adopting diverse "cognitive stances" to match your specific needs and intentions.
+
+----------
+
 ## Architecture Overview
 
 -   **Language:** PHP (explicit, boring, honest)
