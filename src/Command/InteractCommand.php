@@ -8,6 +8,7 @@ use Intentio\Cli\Input;
 use Intentio\Cli\Output;
 use Intentio\Knowledge\Space;
 use Intentio\Orchestration\Prompt; // Added use statement for Prompt
+use Intentio\Command\IngestCommand; // Added use statement for IngestCommand
 
 /**
  * Handles the 'interact' command, launching a guided interactive mode.
@@ -120,6 +121,36 @@ final class InteractCommand
             try {
                 $this->currentKnowledgeSpace = new Space($selectedSpacePath);
                 Output::writeln(sprintf("Knowledge space set to: %s", $this->currentKnowledgeSpace->getRootPath()));
+
+                // --- Check Ingestion Status ---
+                $vectorStoreDbPath = $this->config['vector_store_db_path'];
+                $dbFilePath = $vectorStoreDbPath . DIRECTORY_SEPARATOR . $selectedSpaceName . '.sqlite';
+
+                if (!file_exists($dbFilePath)) {
+                    Output::writeln("\nNOTICE: This cognitive space does not appear to be ingested.");
+                    $confirmIngest = readline("Would you like to ingest it now? (yes/no): ");
+                    if (trim(strtolower($confirmIngest)) === 'yes') {
+                        // Create a temporary Input object for IngestCommand
+                        $tempArgv = [
+                            'intentio',
+                            'ingest',
+                            '--space=' . $this->currentKnowledgeSpace->getRootPath(),
+                        ];
+                        $ingestInput = new Input($tempArgv);
+
+                        $ingestCommand = new IngestCommand( // Use IngestCommand
+                            input: $ingestInput,
+                            config: $this->config,
+                            knowledgeSpace: $this->currentKnowledgeSpace
+                        );
+                        $ingestCommand->execute();
+                        Output::writeln("Ingestion process completed.");
+                    } else {
+                        Output::writeln("Ingestion skipped. You may experience limited responses without ingested data.");
+                    }
+                }
+                // --- End Check Ingestion Status ---
+
             } catch (\InvalidArgumentException $e) {
                 Output::error("Failed to select knowledge space: " . $e->getMessage());
             }
