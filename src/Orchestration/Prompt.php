@@ -24,8 +24,17 @@ final class Prompt
     public function build(): string
     {
         // This is a placeholder for a more sophisticated prompt templating engine.
+        // The template parameter is currently not used but can be integrated for more dynamic prompting.
         $contextString = implode("\n---\n", $this->context);
 
-        return "Context:\n{$contextString}\n\nQuery: {$this->query}\n\nAnswer:";
+        // Add explicit grounding instructions
+        $groundingInstructions = <<<INSTR
+You are an AI assistant for INTENTIO.
+Your goal is to answer questions truthfully and accurately based *only* on the provided context.
+If the answer is not available in the provided context, state that you cannot answer from the given information.
+Do NOT use your prior knowledge or make up information.
+INSTR;
+
+        return "{$groundingInstructions}\n\nContext:\n{$contextString}\n\nQuery: {$this->query}\n\nAnswer:";
     }
 }
