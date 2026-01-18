@@ -332,6 +332,12 @@ This repository represents:
 
 ----------
 
+## Credits
+
+INTENTIO is an open-source project created and maintained by [Luca Visciola](https://github.com/melasistema).
+
+----------
+
 ## Final Note
 
 INTENTIO will not shout. It will not promise enlightenment. It will not pretend to be alive.
