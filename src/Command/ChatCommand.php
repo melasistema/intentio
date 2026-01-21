@@ -95,9 +95,10 @@ final class ChatCommand implements CommandInterface
 
         $promptBuilder = new Prompt(
             templateName: $templateName,
-            promptTemplatesPath: $this->config['prompt_templates_path'],
+            globalPromptTemplatesPath: $this->config['prompt_templates_path'], // Use the renamed config key
             context: $context,
-            query: $query
+            query: $query,
+            packageName: $this->config['active_package'] ?? null // Pass the active package name
         );
         $finalPrompt = $promptBuilder->build();
 

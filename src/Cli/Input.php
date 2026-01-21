@@ -12,14 +12,36 @@ namespace Intentio\Cli;
  */
 final class Input
 {
-    private array $args;
-    private ?string $command;
+    private ?string $command = null;
+    private array $options = [];
+    private array $arguments = [];
 
     public function __construct(array $argv)
     {
-        // The first argument is the script name, so we discard it.
-        $this->args = array_slice($argv, 1);
-        $this->command = $this->args[0] ?? null;
+        // Remove script name
+        $cliArgs = array_slice($argv, 1);
+
+        if (empty($cliArgs)) {
+            return; // No command or arguments provided
+        }
+
+        // The first non-option argument is the command
+        $commandFound = false;
+        foreach ($cliArgs as $arg) {
+            if (str_starts_with($arg, '--')) {
+                // This is an option
+                $parts = explode('=', $arg, 2);
+                $optionName = substr($parts[0], 2);
+                $this->options[$optionName] = $parts[1] ?? 'true';
+            } elseif (!$commandFound) {
+                // This is the command
+                $this->command = $arg;
+                $commandFound = true;
+            } else {
+                // This is a positional argument
+                $this->arguments[] = $arg;
+            }
+        }
     }
 
     public function getCommand(): ?string
@@ -29,21 +51,11 @@ final class Input
 
     public function getArgument(int $index): ?string
     {
-        // Adjust index to account for the command being arg 0.
-        return $this->args[$index + 1] ?? null;
+        return $this->arguments[$index] ?? null;
     }
 
     public function getOption(string $name): ?string
     {
-        // Support --option=value and --option
-        foreach ($this->args as $arg) {
-            if (str_starts_with($arg, "--{$name}=")) {
-                return substr($arg, strlen("--{$name}="));
-            }
-            if ($arg === "--{$name}") {
-                return 'true'; // Indicate presence of a boolean flag
-            }
-        }
-        return null;
+        return $this->options[$name] ?? null;
     }
 }

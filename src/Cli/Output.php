@@ -25,6 +25,22 @@ final class Output
      */
     public static function error(string $message): void
     {
-        file_put_contents('php://stderr', $message . PHP_EOL);
+        file_put_contents('php://stderr', "Error: " . $message . PHP_EOL);
+    }
+
+    /**
+     * Writes a success message to the standard output.
+     */
+    public static function success(string $message): void
+    {
+        echo "Success: " . $message . PHP_EOL;
+    }
+
+    /**
+     * Writes an informational message to the standard output.
+     */
+    public static function info(string $message): void
+    {
+        echo "Info: " . $message . PHP_EOL;
     }
 }

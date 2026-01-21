@@ -22,6 +22,7 @@ final class CommandDispatcher
         'interact' => InteractCommand::class,
         'status' => StatusCommand::class,
         'clear' => ClearCommand::class,
+        'init' => InitCommand::class,
         // Add other commands here
     ];
 

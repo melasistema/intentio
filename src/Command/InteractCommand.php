@@ -200,30 +200,68 @@ final class InteractCommand implements CommandInterface
     {
         Output::writeln("\n--- Select Prompt Template ---");
 
-        $promptTemplatesPath = $this->config['prompt_templates_path'];
-        $availableTemplates = Prompt::getAvailableTemplates($promptTemplatesPath);
+        $globalPromptTemplatesPath = $this->config['prompt_templates_path'];
+        $activePackageName = $this->config['active_package'] ?? null;
 
-        if (empty($availableTemplates)) {
-            Output::writeln("No prompt templates found in '{$promptTemplatesPath}'.");
-            Output::writeln("Please create .md files in this path to define prompt templates.");
-            return;
+        $templatesToDisplay = [];
+        $templateSource = 'global'; // Track if we are showing global or package-specific initially
+
+        if ($activePackageName !== null) {
+            $packagePromptPath = $_SERVER['PWD'] . '/packages/' . $activePackageName . '/prompts';
+            $packageTemplates = \Intentio\Orchestration\Prompt::scanTemplatesInPath($packagePromptPath);
+
+            if (!empty($packageTemplates)) {
+                Output::writeln("Prompts for active package '{$activePackageName}':");
+                $templatesToDisplay = $packageTemplates;
+                $templateSource = 'package';
+            }
         }
 
-        foreach ($availableTemplates as $index => $templateName) {
+        // If no package templates, or if no active package, default to combined list
+        if (empty($templatesToDisplay)) {
+            Output::writeln("Available Prompts (Combined):");
+            $templatesToDisplay = \Intentio\Orchestration\Prompt::getAvailableTemplates($globalPromptTemplatesPath, $activePackageName);
+            $templateSource = 'combined';
+        }
+
+        // Display templates based on current $templatesToDisplay
+        foreach ($templatesToDisplay as $index => $templateName) {
             Output::writeln(sprintf("  [%d] %s", $index + 1, $templateName));
         }
-        Output::writeln("  [0] Go back / Cancel");
 
+        // Offer option to see global templates if currently showing only package ones
+        if ($templateSource === 'package') {
+            Output::writeln("  [0] Show all available prompts (including global)");
+        } else {
+            Output::writeln("  [0] Go back / Cancel");
+        }
+        
         $selection = readline("Enter number to select a template: ");
         $selection = (int)trim($selection);
 
-        if ($selection === 0) {
+        // Handle 'Show all available prompts' option
+        if ($templateSource === 'package' && $selection === 0) {
+            Output::writeln("\n--- Select Prompt Template (All Available) ---");
+            $templatesToDisplay = \Intentio\Orchestration\Prompt::getAvailableTemplates($globalPromptTemplatesPath, $activePackageName);
+             foreach ($templatesToDisplay as $index => $templateName) {
+                Output::writeln(sprintf("  [%d] %s", $index + 1, $templateName));
+            }
+            Output::writeln("  [0] Go back / Cancel");
+
+            $selection = readline("Enter number to select a template: ");
+            $selection = (int)trim($selection);
+            // If user still selects 0, then cancel. Otherwise proceed with selection from all templates.
+            if ($selection === 0) {
+                Output::writeln("Prompt template selection cancelled.");
+                return;
+            }
+        } elseif ($selection === 0) { // Regular cancel
             Output::writeln("Prompt template selection cancelled.");
             return;
         }
 
-        if (isset($availableTemplates[$selection - 1])) {
-            $this->currentPromptTemplateName = $availableTemplates[$selection - 1];
+        if (isset($templatesToDisplay[$selection - 1])) {
+            $this->currentPromptTemplateName = $templatesToDisplay[$selection - 1];
             Output::writeln(sprintf("Prompt template set to: %s", $this->currentPromptTemplateName));
         } else {
             Output::writeln("Invalid selection.");

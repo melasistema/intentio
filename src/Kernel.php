@@ -60,7 +60,7 @@ final class Kernel
                 exit(1);
             }
             
-            $fullSpacePath = $spaceOption;
+            $fullSpacePath = $_SERVER['PWD'] . '/' . $spaceOption;
             // Ensure the provided space path is within the configured knowledge_base_path for safety/consistency
             if (!str_starts_with(realpath($fullSpacePath), realpath($knowledgeBasePath))) {
                  Output::error("Error: The specified knowledge space '{$spaceOption}' is not within the configured knowledge base path '{$knowledgeBasePath}'.");
