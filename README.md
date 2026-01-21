@@ -106,6 +106,29 @@ INTENTIO treats:
 
 You are not organizing files. You are teaching the system _what matters_.
 
+---
+
+### Knowledge Packages: Ready-Made Cognitive Instruments
+
+To make starting with INTENTIO even more effortless, we've introduced **Knowledge Packages**. These are pre-composed, ready-to-use cognitive environments designed with opinionated structures. Think of them as templates or extensions for your INTENTIO experience.
+
+**Why Packages?**
+INTENTIO values intentional design, but creating a nuanced cognitive space from scratch can be a cognitive burden. Packages solve this by providing:
+
+-   **Instant Value:** Jump straight into a specialized cognitive task without initial setup.
+-   **Opinionated Structure:** Best practices for knowledge organization, prompts, and generators are built-in.
+-   **Reduced Overhead:** No need to invent structures or deeply understand orchestration from day one.
+
+**How to Use Packages:**
+Discover and activate a package with a single command:
+
+```bash
+./intentio init <package_name>
+```
+Once initialized, the package's specific knowledge, prompts, and generators become available for immediate use.
+
+---
+
 ### The Cognitive Space & Categories
 
 A "knowledge root" in INTENTIO is a **designed cognitive space**. The filesystem structure within this space is not arbitrary; it **carries meaning**:
@@ -209,7 +232,7 @@ Your data stays where it belongs.
 
 ## Getting Started
 
-To fully utilize INTENTIO, you need to set up a local model server and prepare your knowledge spaces.
+To fully utilize INTENTIO, you need to set up a local model server and prepare your cognitive environment.
 
 ### 1. Prerequisites: Install Ollama and Download Models
 
@@ -227,7 +250,20 @@ INTENTIO uses [Ollama](https://ollama.com) to run local Large Language Models (L
      ```
    - Verify installation: `ollama list` should show `nomic-embed-text:latest` and `llama3.1:latest`.
 
-### 2. Organize Your Knowledge Space
+### 2. Initialize a Knowledge Package (Recommended First Step)
+
+Start with a pre-configured cognitive environment. This is the quickest way to experience INTENTIO's capabilities.
+
+```bash
+./intentio init hook_analyzer
+# Or choose from available packages interactively:
+# ./intentio init
+```
+This command will deploy the `hook_analyzer` package, setting up its knowledge space, specialized prompts (like `analyze_hook`), and generators in your INTENTIO environment. The package you initialize will become your `active_package`.
+
+### 3. Organize Your Custom Knowledge Space (Optional, for Advanced Users)
+
+While packages provide ready-made structures, you can still create and manage your own custom cognitive spaces.
 
 INTENTIO treats your filesystem structure as a cognitive space.
 
@@ -235,7 +271,7 @@ INTENTIO treats your filesystem structure as a cognitive space.
 -   Inside `knowledge/`, create subdirectories for each "cognitive space" you want (e.g., `my_private_notes`, `project_research`).
 -   Within each cognitive space directory, you can further organize your documents (e.g., Markdown files, text files) into "cognitive categories" like `reference/`, `memory/`, `opinion/`. The top-level folder within your space determines the category.
 
-    Example structure:
+    Example structure for a custom space:
     ```
     knowledge/
     └── my_private_notes/
@@ -247,28 +283,30 @@ INTENTIO treats your filesystem structure as a cognitive space.
             └── day_1.md
     ```
 
-### 3. Basic Usage
+### 4. Basic Usage
 
-Once Ollama is running and your knowledge is organized, you can use INTENTIO's commands:
+Once Ollama is running and your knowledge environment (either package-initialized or custom) is ready, you can use INTENTIO's commands:
 
-**a. Ingest Your Knowledge:**
+**a. Ingest Your Knowledge (for Custom Spaces or after package updates):**
    Process your knowledge space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use.
 
    ```bash
    ./intentio ingest --space=knowledge/my_private_notes
+   # Or for a package-initialized space:
+   # ./intentio ingest --space=knowledge/hook_analyzer
    ```
    *Replace `knowledge/my_private_notes` with the path to your specific knowledge space.*
 
 **b. Chat with Your Knowledge:**
-   Interact with a specific cognitive space, optionally choosing a prompt template.
+   Interact with a specific cognitive space, optionally choosing a prompt template. If an `active_package` is set, package-specific templates will be prioritized.
 
    ```bash
-   ./intentio chat "What are my core values?" --space=knowledge/my_private_notes --template=analytical
+   ./intentio chat "Analyze this hook: 'Most tools fail due to busyness.'" --space=knowledge/hook_analyzer --template=analyze_hook
    ```
-   *Replace with your query, knowledge space path, and optional template name (e.g., `default`, `analytical`, `creative`).*
+   *Replace with your query, knowledge space path, and optional template name (e.g., `default`, `analyze_hook`, `creative`).*
 
 **c. Interactive Mode (Recommended for exploration and guided experience):**
-   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates, and chat. The system will intelligently detect uningested or outdated spaces and offer to ingest/re-ingest them.
+   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates, and chat. The system will intelligently detect uningested or outdated spaces and offer to ingest/re-ingest them. Prompt templates from your `active_package` will be intelligently prioritized in the selection menu.
 
    ```bash
    ./intentio interact
