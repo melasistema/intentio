@@ -191,7 +191,7 @@ Because meaning survives only when it is respected.
 
 ## Shaping Intent: Designing AI Personas with Prompt Templates
 
-INTENTIO empowers you to go beyond generic AI interactions by designing how your AI "thinks" and "behaves" within a given cognitive space. This is achieved through **configurable prompt templates**.
+INTENTIO empowers you to go beyond generic AI interactions by designing how your AI "thinks" and "behaves" within a given cognitive space. This is achieved through **configurable prompt templates**, which function as self-contained "commands" for your cognitive environment.
 
 Prompts are not merely instructions; they are fundamental tools for **agent design**. They act as:
 
@@ -201,13 +201,14 @@ Prompts are not merely instructions; they are fundamental tools for **agent desi
 
 ### How it Works:
 
-1.  **Template Files**: You can find (and create!) prompt templates as simple Markdown (`.md`) files within the `prompts/` directory. Each file defines a distinct "stance" or "persona" for the AI.
-2.  **Flexible Design**: These templates allow you to:
+1.  **Template Files**: Prompt templates are simple Markdown (`.md`) files located within the `prompts/` directory of your **specific knowledge package** (e.g., `packages/hook_analyzer/prompts/`). Each file defines a distinct "stance" or "command" for the AI.
+2.  **Self-Describing Commands**: Each prompt template can include YAML front matter at the top to provide a user-facing `instruction` (e.g., `--- instruction: "Enter the hook you want to analyze:" ---`). This instruction is automatically displayed in interactive mode to guide your input.
+3.  **Flexible Design**: These templates allow you to:
     *   Guide the LLM to adopt specific personas (e.g., `analytical`, `creative`, `skeptical`).
     *   Provide task-specific instructions (e.g., summarize, extract facts, generate narratives).
     *   Enforce strict grounding rules, ensuring responses adhere solely to the provided context.
-3.  **Placeholders**: Each template uses `{{CONTEXT}}` to inject retrieved knowledge and `{{QUERY}}` for the user's question, allowing you to craft precise instructions around this core information.
-4.  **Usage**: Select your desired template using the `--template=<name>` option with the `chat` command, or dynamically switch personas within the `interact` command.
+4.  **Placeholders**: Each template uses `{{CONTEXT}}` to inject retrieved knowledge and `{{QUERY}}` for the user's question, allowing you to craft precise instructions around this core information.
+5.  **Usage**: Select your desired template using the `--template=<name>` option with the `chat` command, or dynamically switch personas within the `interact` command. The system will provide clear guidance on what input is expected.
 
 By leveraging configurable prompt templates, you transform INTENTIO into a truly adaptable cognitive instrument, capable of adopting diverse "cognitive stances" to match your specific needs and intentions.
 
@@ -270,17 +271,21 @@ INTENTIO treats your filesystem structure as a cognitive space.
 -   Create a main `knowledge/` directory in the project root (if you haven't already).
 -   Inside `knowledge/`, create subdirectories for each "cognitive space" you want (e.g., `my_private_notes`, `project_research`).
 -   Within each cognitive space directory, you can further organize your documents (e.g., Markdown files, text files) into "cognitive categories" like `reference/`, `memory/`, `opinion/`. The top-level folder within your space determines the category.
+-   **If you want to define custom commands (prompts) for your space, create a `prompts/` subdirectory within your space's root (e.g., `knowledge/my_private_notes/prompts/`) and add your `.md` prompt files there.**
 
     Example structure for a custom space:
     ```
     knowledge/
     └── my_private_notes/
-        ├── reference/
-        │   └── article_summary.md
-        ├── opinion/
-        │   └── my_thoughts.txt
-        └── journal/
-            └── day_1.md
+        ├── knowledge/        # All files here are ingested for RAG
+        │   ├── reference/
+        │   │   └── article_summary.md
+        │   ├── opinion/
+        │   │   └── my_thoughts.txt
+        │   └── journal/
+        │       └── day_1.md
+        └── prompts/          # Your custom commands (prompts) for this space
+            └── my_question_answering.md
     ```
 
 ### 4. Basic Usage
@@ -288,7 +293,7 @@ INTENTIO treats your filesystem structure as a cognitive space.
 Once Ollama is running and your knowledge environment (either package-initialized or custom) is ready, you can use INTENTIO's commands:
 
 **a. Ingest Your Knowledge (for Custom Spaces or after package updates):**
-   Process your knowledge space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use.
+   Process your knowledge space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use. **Only content within the `knowledge/` subdirectory of your space will be ingested.**
 
    ```bash
    ./intentio ingest --space=knowledge/my_private_notes
@@ -298,15 +303,15 @@ Once Ollama is running and your knowledge environment (either package-initialize
    *Replace `knowledge/my_private_notes` with the path to your specific knowledge space.*
 
 **b. Chat with Your Knowledge:**
-   Interact with a specific cognitive space, optionally choosing a prompt template. If an `active_package` is set, package-specific templates will be prioritized.
+   Interact with a specific cognitive space, choosing a prompt template (command) defined within that space.
 
    ```bash
    ./intentio chat "Analyze this hook: 'Most tools fail due to busyness.'" --space=knowledge/hook_analyzer --template=analyze_hook
    ```
-   *Replace with your query, knowledge space path, and optional template name (e.g., `default`, `analyze_hook`, `creative`).*
+   *Replace with your query, knowledge space path, and the name of a template available in that space (e.g., `analyze_hook`, `default`).*
 
 **c. Interactive Mode (Recommended for exploration and guided experience):**
-   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates, and chat. The system will intelligently detect uningested or outdated spaces and offer to ingest/re-ingest them. Prompt templates from your `active_package` will be intelligently prioritized in the selection menu.
+   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates (commands), and chat. The system will intelligently detect uningested or outdated spaces and offer to ingest/re-ingest them. All prompt templates are loaded exclusively from the `prompts/` directory of the currently active knowledge package/space.
 
    ```bash
    ./intentio interact

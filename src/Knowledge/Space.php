@@ -39,15 +39,21 @@ final class Space
      */
     public function scan(): array
     {
-        Output::writeln("Scanning knowledge space: " . $this->getRootPath());
+        $knowledgePath = $this->getRootPath() . '/knowledge';
+        Output::writeln("Scanning for knowledge in: " . $knowledgePath);
         
+        if (!is_dir($knowledgePath)) {
+            Output::writeln("Warning: 'knowledge' subdirectory not found in this space. No files to ingest.");
+            return [];
+        }
+
         $assets = [];
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->rootPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+            new \RecursiveDirectoryIterator($knowledgePath, \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST
         );
 
-        $rootPathStrLen = strlen($this->getRootPath()) + 1; // +1 for the trailing slash
+        $rootPathStrLen = strlen($knowledgePath) + 1; // +1 for the trailing slash
 
         foreach ($iterator as $file) {
             if ($file->isDir()) {
@@ -59,9 +65,9 @@ final class Space
             
             $parts = explode(DIRECTORY_SEPARATOR, $relativePath);
             
-            $category = 'general'; // Default category for files in the root
+            $category = 'general'; // Default category for files in the root of 'knowledge'
             if (count($parts) > 1) {
-                // The category is the name of the first-level directory
+                // The category is the name of the first-level directory inside 'knowledge'
                 $category = $parts[0];
             }
 

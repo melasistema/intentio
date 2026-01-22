@@ -71,14 +71,14 @@ final class ChatCommand implements CommandInterface
             Output::writeln("Found relevant context!");
             
             // --- DEBUGGING OUTPUT (Removed for final code) ---
-            // Output::writeln("\n--- Retrieved Chunks (for debugging) ---");
-            // foreach ($retrievedChunks as $chunk) {
-            //     Output::writeln("Score: " . round($chunk['score'], 4));
-            //     Output::writeln("Content: " . substr($chunk['content'], 0, 100) . "...");
-            //     Output::writeln("Source: " . $chunk['metadata']['filename'] . " (Category: " . $chunk['metadata']['category'] . ")");
-            //     Output::writeln("---");
-            // }
-            // Output::writeln("---------------------------------------\n");
+            Output::writeln("\n--- Retrieved Chunks (for debugging) ---");
+            foreach ($retrievedChunks as $chunk) {
+                Output::writeln("Score: " . round($chunk['score'], 4));
+                Output::writeln("Content: " . substr($chunk['content'], 0, 100) . "...");
+                Output::writeln("Source: " . $chunk['metadata']['filename'] . " (Category: " . $chunk['metadata']['category'] . ")");
+                Output::writeln("---");
+            }
+            Output::writeln("---------------------------------------\n");
             // --- END DEBUGGING OUTPUT ---
 
             foreach ($retrievedChunks as $chunk) {
@@ -92,9 +92,8 @@ final class ChatCommand implements CommandInterface
         // 4. Construct the prompt for the Interpreter (LLM)
         // $templateName is already defined above
 
-        $promptBuilder = new Prompt(
+        $promptBuilder = Prompt::fromTemplateFile(
             templateName: $templateName,
-            globalPromptTemplatesPath: $this->config['prompt_templates_path'], // Use the renamed config key
             context: $context,
             query: $query,
             packageName: $this->config['active_package'] ?? null // Pass the active package name

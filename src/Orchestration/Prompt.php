@@ -16,48 +16,77 @@ use Intentio\Cli\Output;
  */
 final class Prompt
 {
-    private string $templateContent;
+    public readonly string $templateBody;
+    public readonly ?string $instruction;
 
     public function __construct(
         private readonly string $templateName,
-        private readonly string $globalPromptTemplatesPath, // Renamed for clarity
+        string $templateBody,
+        ?string $instruction,
         private readonly array $context,
         private readonly string $query,
-        private readonly ?string $packageName = null // New optional parameter
+        private readonly ?string $packageName = null
     ) {
-        $this->loadTemplate();
+        $this->templateBody = $templateBody;
+        $this->instruction = $instruction;
     }
 
-    private function loadTemplate(): void
-    {
-        $templateFile = null;
-
-        // 1. Try to load from the package-specific prompts directory
-        if ($this->packageName !== null) {
-            $packagePromptPath = $_SERVER['PWD'] . '/packages/' . $this->packageName . '/prompts/' . $this->templateName . '.md';
-            if (file_exists($packagePromptPath) && is_readable($packagePromptPath)) {
-                $templateFile = $packagePromptPath;
-            }
+    /**
+     * Factory method to create a Prompt instance from a template file.
+     */
+    public static function fromTemplateFile(
+        string $templateName,
+        array $context,
+        string $query,
+        ?string $packageName = null
+    ): self {
+        if ($packageName === null) {
+            Output::error("Cannot load prompt template '{$templateName}': No package is active.");
+            throw new \RuntimeException("Cannot load prompt: No package/space is active.");
         }
 
-        // 2. If not found in package, fall back to global prompts directory
-        if ($templateFile === null) {
-            $globalTemplateFile = $this->globalPromptTemplatesPath . DIRECTORY_SEPARATOR . $this->templateName . '.md';
-            if (file_exists($globalTemplateFile) && is_readable($globalTemplateFile)) {
-                $templateFile = $globalTemplateFile;
-            }
+        $templateFile = $_SERVER['PWD'] . '/packages/' . $packageName . '/prompts/' . $templateName . '.md';
+
+        if (!file_exists($templateFile) || !is_readable($templateFile)) {
+            Output::error("Prompt template '{$templateName}' not found in package '{$packageName}'.");
+            throw new \RuntimeException("Prompt template '{$templateName}' not found in '{$packageName}'.");
         }
 
-        if ($templateFile === null) {
-            Output::error("Prompt template '{$this->templateName}' not found in package '{$this->packageName}' or global prompts directory.");
-            throw new \RuntimeException("Prompt template '{$this->templateName}' not found.");
-        }
-
-        $this->templateContent = file_get_contents($templateFile);
-        if ($this->templateContent === false) {
+        $rawContent = file_get_contents($templateFile);
+        if ($rawContent === false) {
             Output::error("Failed to read prompt template file: {$templateFile}");
             throw new \RuntimeException("Failed to load prompt template content.");
         }
+
+        return self::parseFileContent($templateName, $rawContent, $context, $query, $packageName);
+    }
+
+    /**
+     * Static method to parse front matter and content from a raw string.
+     * Returns a new Prompt instance.
+     */
+    private static function parseFileContent(
+        string $templateName,
+        string $rawContent,
+        array $context,
+        string $query,
+        ?string $packageName = null
+    ): self {
+        $instruction = null;
+        $templateBody = $rawContent;
+
+        $pattern = '/^---\s*\R(.*?)\R---\s*\R/s';
+        if (preg_match($pattern, $rawContent, $matches)) {
+            $frontMatter = $matches[1];
+            $templateBody = str_replace($matches[0], '', $rawContent);
+
+            // Simple regex to parse 'instruction' key
+            if (preg_match('/^instruction:\s*("?)(.*?)\1\s*$/m', $frontMatter, $instructionMatches)) {
+                $instruction = $instructionMatches[2];
+            }
+        }
+
+        return new self($templateName, $templateBody, $instruction, $context, $query, $packageName);
     }
 
     public function build(): string
@@ -67,7 +96,7 @@ final class Prompt
         $finalPrompt = str_replace(
             ['{{CONTEXT}}', '{{QUERY}}'],
             [$contextString, $this->query],
-            $this->templateContent
+            $this->templateBody
         );
 
         return $finalPrompt;
@@ -81,24 +110,19 @@ final class Prompt
      * @param ?string $packageName Optional. The name of the active package to also scan for templates.
      * @return array An array of unique template names.
      */
-    public static function getAvailableTemplates(string $globalTemplatesPath, ?string $packageName = null): array
+    public static function getAvailableTemplates(?string $packageName = null): array
     {
-        $allTemplates = [];
-
-        // Scan global templates
-        $global = self::scanTemplatesInPath($globalTemplatesPath);
-        foreach ($global as $template) {
-            $allTemplates[$template] = $template; // Use name as key to handle uniqueness
+        if ($packageName === null) {
+            return []; // No package, no templates
         }
 
-        // Scan package-specific templates if packageName is provided
-        if ($packageName !== null) {
-            $packageTemplatesPath = $_SERVER['PWD'] . '/packages/' . $packageName . '/prompts';
-            if (is_dir($packageTemplatesPath)) {
-                $package = self::scanTemplatesInPath($packageTemplatesPath);
-                foreach ($package as $template) {
-                    $allTemplates[$template] = $template; // Package templates overwrite global ones if names conflict
-                }
+        $allTemplates = [];
+
+        $packageTemplatesPath = $_SERVER['PWD'] . '/packages/' . $packageName . '/prompts';
+        if (is_dir($packageTemplatesPath)) {
+            $package = self::scanTemplatesInPath($packageTemplatesPath);
+            foreach ($package as $template) {
+                $allTemplates[$template] = $template;
             }
         }
         

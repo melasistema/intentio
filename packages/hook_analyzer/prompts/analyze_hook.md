@@ -1,3 +1,6 @@
+---
+instruction: "Enter the hook you want to analyze:"
+---
 # Analyze Hook
 
 Analyze the following hook for:

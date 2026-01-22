@@ -1,3 +1,6 @@
+---
+instruction: "Enter the hook you want to improve:"
+---
 # Improve Hook
 
 Review the following hook and provide specific, actionable suggestions for improvement. Focus on enhancing:

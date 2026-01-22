@@ -30,7 +30,7 @@ final class InteractCommand implements CommandInterface
 ";
 
     private ?Space $currentKnowledgeSpace = null;
-    private string $currentPromptTemplateName; // New property
+    private ?string $currentPromptTemplateName = null;
 
     public function __construct(
         private readonly Input $input,
@@ -52,8 +52,7 @@ final class InteractCommand implements CommandInterface
             $this->currentKnowledgeSpace = null; // Start with no space selected by default
         }
         
-        // Initialize with default template from config
-        $this->currentPromptTemplateName = $this->config['interpreter']['default_prompt_template_name'];
+
     }
 
     public function execute(): int
@@ -98,7 +97,11 @@ final class InteractCommand implements CommandInterface
     // New method to display current template
     private function displayCurrentTemplate(): void
     {
-        Output::writeln(sprintf("Current Prompt Template: %s", $this->currentPromptTemplateName));
+        if ($this->currentPromptTemplateName !== null) {
+            Output::writeln(sprintf("Current Prompt Template: %s", $this->currentPromptTemplateName));
+        } else {
+            Output::writeln("No Prompt Template selected.");
+        }
     }
 
     private function selectKnowledgeSpace(): void
@@ -200,69 +203,63 @@ final class InteractCommand implements CommandInterface
     {
         Output::writeln("\n--- Select Prompt Template ---");
 
-        $globalPromptTemplatesPath = $this->config['prompt_templates_path'];
-        $activePackageName = $this->config['active_package'] ?? null;
+        if (!$this->currentKnowledgeSpace) {
+            Output::writeln("Please select a knowledge space first to see available templates.");
+            return;
+        }
 
-        $templatesToDisplay = [];
-        $templateSource = 'global'; // Track if we are showing global or package-specific initially
+        $packageName = basename($this->currentKnowledgeSpace->getRootPath()); // Assuming space name is package name for now
+        $availableTemplates = Prompt::getAvailableTemplates($packageName);
 
-        if ($activePackageName !== null) {
-            $packagePromptPath = $_SERVER['PWD'] . '/packages/' . $activePackageName . '/prompts';
-            $packageTemplates = \Intentio\Orchestration\Prompt::scanTemplatesInPath($packagePromptPath);
-
-            if (!empty($packageTemplates)) {
-                Output::writeln("Prompts for active package '{$activePackageName}':");
-                $templatesToDisplay = $packageTemplates;
-                $templateSource = 'package';
+        if (empty($availableTemplates)) {
+            Output::writeln(sprintf("No prompt templates found for package '%s'.", $packageName));
+            Output::writeln("Please create '.md' files in 'packages/{$packageName}/prompts/' to define templates.");
+            Output::writeln("  [0] Go back / Cancel");
+            $selection = (int)trim(readline("Enter number to select a template: "));
+            if ($selection === 0) {
+                Output::writeln("Prompt template selection cancelled.");
+            } else {
+                Output::writeln("Invalid selection.");
             }
+            Output::writeln("----------------------------\n");
+            return;
         }
 
-        // If no package templates, or if no active package, default to combined list
-        if (empty($templatesToDisplay)) {
-            Output::writeln("Available Prompts (Combined):");
-            $templatesToDisplay = \Intentio\Orchestration\Prompt::getAvailableTemplates($globalPromptTemplatesPath, $activePackageName);
-            $templateSource = 'combined';
-        }
-
-        // Display templates based on current $templatesToDisplay
-        foreach ($templatesToDisplay as $index => $templateName) {
+        foreach ($availableTemplates as $index => $templateName) {
             Output::writeln(sprintf("  [%d] %s", $index + 1, $templateName));
         }
-
-        // Offer option to see global templates if currently showing only package ones
-        if ($templateSource === 'package') {
-            Output::writeln("  [0] Show all available prompts (including global)");
-        } else {
-            Output::writeln("  [0] Go back / Cancel");
-        }
+        Output::writeln("  [0] Go back / Cancel");
         
         $selection = readline("Enter number to select a template: ");
         $selection = (int)trim($selection);
 
-        // Handle 'Show all available prompts' option
-        if ($templateSource === 'package' && $selection === 0) {
-            Output::writeln("\n--- Select Prompt Template (All Available) ---");
-            $templatesToDisplay = \Intentio\Orchestration\Prompt::getAvailableTemplates($globalPromptTemplatesPath, $activePackageName);
-             foreach ($templatesToDisplay as $index => $templateName) {
-                Output::writeln(sprintf("  [%d] %s", $index + 1, $templateName));
-            }
-            Output::writeln("  [0] Go back / Cancel");
-
-            $selection = readline("Enter number to select a template: ");
-            $selection = (int)trim($selection);
-            // If user still selects 0, then cancel. Otherwise proceed with selection from all templates.
-            if ($selection === 0) {
-                Output::writeln("Prompt template selection cancelled.");
-                return;
-            }
-        } elseif ($selection === 0) { // Regular cancel
+        if ($selection === 0) {
             Output::writeln("Prompt template selection cancelled.");
             return;
         }
 
-        if (isset($templatesToDisplay[$selection - 1])) {
-            $this->currentPromptTemplateName = $templatesToDisplay[$selection - 1];
+        if (isset($availableTemplates[$selection - 1])) {
+            $this->currentPromptTemplateName = $availableTemplates[$selection - 1];
             Output::writeln(sprintf("Prompt template set to: %s", $this->currentPromptTemplateName));
+
+            // --- Display instruction for the selected prompt ---
+            try {
+                // Use the static factory method to get the instruction
+                $tempPrompt = Prompt::fromTemplateFile(
+                    templateName: $this->currentPromptTemplateName,
+                    context: [], // Context not needed for just instruction
+                    query: '',   // Query not needed for just instruction
+                    packageName: $packageName
+                );
+                if ($tempPrompt->instruction) {
+                    Output::writeln($tempPrompt->instruction);
+                }
+            } catch (\Throwable $e) {
+                // If parsing fails for any reason, we just don't show an instruction.
+                // The error will be caught properly when the chat command is run.
+            }
+            // --- End display instruction ---
+
         } else {
             Output::writeln("Invalid selection.");
         }
@@ -273,6 +270,10 @@ final class InteractCommand implements CommandInterface
     {
         if (!$this->currentKnowledgeSpace) {
             Output::writeln("Please select a knowledge space first before chatting.");
+            return;
+        }
+        if (!$this->currentPromptTemplateName) {
+            Output::writeln("Please select a prompt template first before chatting. (Type 'template')");
             return;
         }
 

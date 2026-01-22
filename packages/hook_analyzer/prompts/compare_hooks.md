@@ -1,3 +1,6 @@
+---
+instruction: "Enter the two hooks to compare, separated by '||':"
+---
 # Compare Hooks
 
 Compare and contrast the following two hooks. Evaluate them based on:
