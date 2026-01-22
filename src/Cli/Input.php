@@ -36,6 +36,9 @@ final class Input
             } elseif (!$commandFound) {
                 // This is the command
                 $this->command = $arg;
+                if (str_starts_with($this->command, '/')) {
+                    $this->command = ltrim($this->command, '/');
+                }
                 $commandFound = true;
             } else {
                 // This is a positional argument

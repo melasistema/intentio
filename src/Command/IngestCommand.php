@@ -47,8 +47,7 @@ final class IngestCommand implements CommandInterface
             $this->config['ollama']
         );
         
-        $vectorStoreDbPath = $this->config['vector_store_db_path'];
-        $vectorStore = new SQLiteVectorStore($this->knowledgeSpace->getRootPath(), $vectorStoreDbPath);
+        $vectorStore = new SQLiteVectorStore($this->knowledgeSpace->getRootPath(), '.intentio_store');
 
         // 3. Process each file
         foreach ($files as $asset) {
@@ -72,8 +71,6 @@ final class IngestCommand implements CommandInterface
             }
         }
 
-        // 4. Save the vector store - No longer needed with SQLite
-        // $vectorStore->save();
         Output::writeln("Ingestion complete. Vector store updated (SQLite)."); // Updated message
 
         return 0; // Indicate success

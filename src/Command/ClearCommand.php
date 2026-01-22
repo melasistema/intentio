@@ -34,8 +34,8 @@ final class ClearCommand implements CommandInterface
         }
 
         $knowledgeSpacePath = $this->knowledgeSpace->getRootPath();
-        $vectorStoreDbPath = $this->config['vector_store_db_path'];
-        $dbFileName = md5($knowledgeSpacePath) . '.sqlite'; // Derive filename as in SQLiteVectorStore
+        $vectorStoreDbPath = '.intentio_store';
+        $dbFileName = md5($knowledgeSpacePath) . '.sqlite';
         $dbFilePath = $vectorStoreDbPath . DIRECTORY_SEPARATOR . $dbFileName;
 
         Output::writeln(sprintf("Attempting to clear data for space: %s (%s)", $knowledgeSpacePath, $dbFilePath));
@@ -55,7 +55,7 @@ final class ClearCommand implements CommandInterface
         }
 
         if (unlink($dbFilePath)) {
-            Output::writeln(sprintf("Successfully cleared data for cognitive space '%s'.", $knowledgeSpaceName));
+            Output::writeln(sprintf("Successfully cleared data for cognitive space '%s'.", $knowledgeSpacePath));
             Output::writeln("You may now re-ingest this space if needed.");
             return 0;
         } else {

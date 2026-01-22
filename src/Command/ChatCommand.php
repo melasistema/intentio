@@ -52,8 +52,7 @@ final class ChatCommand implements CommandInterface
         // --- Core Chat Logic ---
 
         // 1. Load Vector Store
-        $vectorStoreDbPath = $this->config['vector_store_db_path'];
-        $vectorStore = new SQLiteVectorStore($this->knowledgeSpace->getRootPath(), $vectorStoreDbPath);
+        $vectorStore = new SQLiteVectorStore($this->knowledgeSpace->getRootPath(), '.intentio_store');
 
         // 2. Embed the user query
         Output::writeln("Embedding your query...");

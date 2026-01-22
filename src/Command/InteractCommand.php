@@ -134,7 +134,7 @@ final class InteractCommand implements CommandInterface
                 Output::writeln(sprintf("Knowledge space set to: %s", $this->currentKnowledgeSpace->getRootPath()));
 
                 // --- Check Ingestion Status ---
-                $vectorStoreDbPath = $this->config['vector_store_db_path'];
+                $vectorStoreDbPath = '.intentio_store';
                 $dbFilePath = $vectorStoreDbPath . DIRECTORY_SEPARATOR . md5($this->currentKnowledgeSpace->getRootPath()) . '.sqlite'; // Use MD5 hash for filename
 
                 $ingestionStatus = $this->isIngestionNeeded($this->currentKnowledgeSpace->getRootPath(), $dbFilePath);
