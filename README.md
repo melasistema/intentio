@@ -268,16 +268,16 @@ While packages provide ready-made structures, you can still create and manage yo
 
 INTENTIO treats your filesystem structure as a cognitive space.
 
--   Create a main `knowledge/` directory in the project root (if you haven't already).
--   Inside `knowledge/`, create subdirectories for each "cognitive space" you want (e.g., `my_private_notes`, `project_research`).
+-   Create a main `spaces/` directory in the project root (if you haven't already).
+-   Inside `spaces/`, create subdirectories for each "cognitive space" you want (e.g., `my_private_notes`, `project_research`).
 -   Within each cognitive space directory, you can further organize your documents (e.g., Markdown files, text files) into "cognitive categories" like `reference/`, `memory/`, `opinion/`. The top-level folder within your space determines the category.
--   **If you want to define custom commands (prompts) for your space, create a `prompts/` subdirectory within your space's root (e.g., `knowledge/my_private_notes/prompts/`) and add your `.md` prompt files there.**
+-   **If you want to define custom commands (prompts) for your space, create a `prompts/` subdirectory within your space's root (e.g., `spaces/my_private_notes/prompts/`) and add your `.md` prompt files there.**
 
     Example structure for a custom space:
     ```
-    knowledge/
+    spaces/
     └── my_private_notes/
-        ├── knowledge/        # All files here are ingested for RAG
+        ├── spaces/        # All files here are ingested for RAG
         │   ├── reference/
         │   │   └── article_summary.md
         │   ├── opinion/
@@ -293,20 +293,20 @@ INTENTIO treats your filesystem structure as a cognitive space.
 Once Ollama is running and your knowledge environment (either package-initialized or custom) is ready, you can use INTENTIO's commands:
 
 **a. Ingest Your Knowledge (for Custom Spaces or after package updates):**
-   Process your knowledge space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use. **Only content within the `knowledge/` subdirectory of your space will be ingested.**
+   Process your knowledge space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use. **Only content within the `spaces/` subdirectory of your space will be ingested.**
 
    ```bash
-   ./intentio ingest --space=knowledge/my_private_notes
+   ./intentio ingest --space=spaces/my_private_notes
    # Or for a package-initialized space:
-   # ./intentio ingest --space=knowledge/hook_analyzer
+   # ./intentio ingest --space=spaces/hook_analyzer
    ```
-   *Replace `knowledge/my_private_notes` with the path to your specific knowledge space.*
+   *Replace `spaces/my_private_notes` with the path to your specific knowledge space.*
 
 **b. Chat with Your Knowledge:**
    Interact with a specific cognitive space, choosing a prompt template (command) defined within that space.
 
    ```bash
-   ./intentio chat "Analyze this hook: 'Most tools fail due to busyness.'" --space=knowledge/hook_analyzer --template=analyze_hook
+   ./intentio chat "Analyze this hook: 'Most tools fail due to busyness.'" --space=spaces/hook_analyzer --template=analyze_hook
    ```
    *Replace with your query, knowledge space path, and the name of a template available in that space (e.g., `analyze_hook`, `default`).*
 
@@ -322,9 +322,9 @@ Once Ollama is running and your knowledge environment (either package-initialize
    Remove the SQLite vector store for a specified cognitive space. This is useful for starting fresh or if you've significantly restructured your source files and want a full re-ingestion.
 
    ```bash
-   ./intentio clear --space=knowledge/my_private_notes
+   ./intentio clear --space=spaces/my_private_notes
    ```
-   *Replace `knowledge/my_private_notes` with the path to the space you wish to clear.*
+   *Replace `spaces/my_private_notes` with the path to the space you wish to clear.*
 
 **e. Get System Status:**
    View an overview of your INTENTIO setup, including configured paths, available knowledge spaces, and Ollama server/model status.

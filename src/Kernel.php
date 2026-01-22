@@ -56,7 +56,7 @@ final class Kernel
         if (in_array($commandName, $commandsRequiringSpecificSpace)) {
             if (empty($spaceOption)) {
                 Output::error("Error: Command '{$commandName}' requires a specific cognitive space.");
-                Output::error("Please use --space=<path/to/your/space> (e.g., --space=knowledge/my_personal_agent).");
+                Output::error("Please use --space=<path/to/your/space> (e.g., --space=spaces/my_personal_agent).");
                 exit(1);
             }
             

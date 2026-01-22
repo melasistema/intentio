@@ -32,7 +32,7 @@ config.php
 # Project-specific generated / local data
 # ======================================
 references/
-/knowledge/
+/spaces/
 .intentio_store/
 
 # ======================================

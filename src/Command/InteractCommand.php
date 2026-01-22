@@ -300,7 +300,7 @@ final class InteractCommand implements CommandInterface
     /**
      * Checks if ingestion is needed for a given cognitive space.
      *
-     * @param string $spacePath The root path of the cognitive space (e.g., knowledge/my_space).
+     * @param string $spacePath The root path of the cognitive space (e.g., spaces/my_space).
      * @param string $dbFilePath The full path to the SQLite database file for this space.
      * @return string 'needed', 'missing', or 'up-to-date'.
      */
