@@ -148,8 +148,8 @@ final class InitCommand implements CommandInterface
                 $packagePath = $packagesDir . '/' . $packageName;
 
                 if (file_exists($packagePath . '/manifest.md')) {
-                    // Assuming the base knowledge path is the project's 'knowledge' directory
-                    $destinationBasePath = $_SERVER['PWD'] . '/knowledge';
+                    // Assuming the base spaces path is the project's 'spaces' directory
+                    $destinationBasePath = $_SERVER['PWD'] . '/spaces';
                     $foundPackages[] = new Package($packageName, $packagePath, $destinationBasePath);
                 }
             }
