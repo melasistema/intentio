@@ -32,7 +32,7 @@ final class StatusCommand implements CommandInterface
 
         // 1. Knowledge Base Configuration
         Output::writeln("--- Knowledge Base ---");
-        $knowledgeBasePath = $this->config['knowledge_base_path'];
+        $spacesBasePath = $this->config['spaces_base_path'];
         Output::writeln(sprintf("Configured Path: %s", $knowledgeBasePath));
 
         $availableSpaces = Space::getAvailableSpaces($knowledgeBasePath); // Updated call

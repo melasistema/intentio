@@ -42,7 +42,7 @@ final class Kernel
         $argumentResolver = new CommandArgumentResolver($this->input, $this->config);
         $commandDispatcher = new CommandDispatcher($argumentResolver, $this->config, $this->input);
 
-        $knowledgeBasePath = $this->config['knowledge_base_path'];
+        $spacesBasePath = $this->config['spaces_base_path'];
         $spaceOption = $this->input->getOption('space');
         
         $commandConfig = []; // Collect command-specific arguments for resolver
@@ -61,9 +61,9 @@ final class Kernel
             }
             
             $fullSpacePath = $_SERVER['PWD'] . '/' . $spaceOption;
-            // Ensure the provided space path is within the configured knowledge_base_path for safety/consistency
-            if (!str_starts_with(realpath($fullSpacePath), realpath($knowledgeBasePath))) {
-                 Output::error("Error: The specified knowledge space '{$spaceOption}' is not within the configured knowledge base path '{$knowledgeBasePath}'.");
+            // Ensure the provided space path is within the configured spaces_base_path for safety/consistency
+            if (!str_starts_with(realpath($fullSpacePath), realpath($spacesBasePath))) {
+                 Output::error("Error: The specified knowledge space '{$spaceOption}' is not within the configured knowledge base path '{$spacesBasePath}'.");
                  exit(1);
             }
 
@@ -76,7 +76,7 @@ final class Kernel
             $commandConfig['knowledgeSpace'] = $knowledgeSpace;
 
         } elseif (in_array($commandName, $commandsUsingBaseKnowledgePath)) {
-            $commandConfig['knowledgeBasePath'] = $knowledgeBasePath;
+            $commandConfig['knowledgeBasePath'] = $spacesBasePath;
         }
         // --- End command-specific handling ---
         
