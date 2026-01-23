@@ -12,11 +12,10 @@ use Intentio\Package\PackageInterface;
 
 final class InitCommand implements CommandInterface
 {
-    private Input $input;
-
-    public function __construct(Input $input)
-    {
-        $this->input = $input;
+    public function __construct(
+        private readonly Input $input,
+        private readonly array $config
+    ) {
     }
 
     public function execute(): int
@@ -149,7 +148,7 @@ final class InitCommand implements CommandInterface
 
                 if (file_exists($packagePath . '/manifest.md')) {
                     // Assuming the base spaces path is the project's 'spaces' directory
-                    $destinationBasePath = $_SERVER['PWD'] . '/spaces';
+                    $destinationBasePath = $_SERVER['PWD'] . '/' . $this->config['spaces_base_path'];
                     $foundPackages[] = new Package($packageName, $packagePath, $destinationBasePath);
                 }
             }
