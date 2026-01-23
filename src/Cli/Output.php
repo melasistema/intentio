@@ -5,42 +5,57 @@ declare(strict_types=1);
 namespace Intentio\Cli;
 
 /**
- * A simple, dependency-free helper for writing to the console.
+ * Handles all console output.
  *
- * Adheres to the principle of being "quiet by design".
- * Output should be intentional and clear.
+ * This class centralizes output to ensure consistency across the CLI
+ * and allows for easy formatting (e.g., colors) and suppression.
  */
 final class Output
 {
-    /**
-     * Writes a message to the standard output, followed by a newline.
-     */
-    public static function writeln(string $message): void
+    private static bool $isQuiet = false;
+
+    public static function writeln(string $message = ''): void
     {
-        echo $message . PHP_EOL;
+        if (!self::$isQuiet) {
+            echo $message . PHP_EOL;
+        }
     }
 
-    /**
-     * Writes an error message to the standard error output.
-     */
     public static function error(string $message): void
     {
-        file_put_contents('php://stderr', "Error: " . $message . PHP_EOL);
+        self::writeln(self::colorize($message, 'red'));
     }
 
-    /**
-     * Writes a success message to the standard output.
-     */
-    public static function success(string $message): void
-    {
-        echo "Success: " . $message . PHP_EOL;
-    }
-
-    /**
-     * Writes an informational message to the standard output.
-     */
     public static function info(string $message): void
     {
-        echo "Info: " . $message . PHP_EOL;
+        self::writeln(self::colorize($message, 'blue'));
+    }
+
+    public static function success(string $message): void
+    {
+        self::writeln(self::colorize($message, 'green'));
+    }
+
+    public static function warning(string $message): void
+    {
+        self::writeln(self::colorize($message, 'yellow'));
+    }
+
+    public static function setQuiet(bool $isQuiet): void
+    {
+        self::$isQuiet = $isQuiet;
+    }
+
+    private static function colorize(string $text, string $color): string
+    {
+        $colors = [
+            'red' => "\033[31m",
+            'green' => "\033[32m",
+            'yellow' => "\033[33m",
+            'blue' => "\033[34m",
+            'reset' => "\033[0m",
+        ];
+
+        return ($colors[$color] ?? '') . $text . ($colors['reset'] ?? '');
     }
 }

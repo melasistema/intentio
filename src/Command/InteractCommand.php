@@ -58,27 +58,27 @@ final class InteractCommand implements CommandInterface
     public function execute(): int
     {
         Output::writeln(self::LOGO_ASCII); // Display logo
-        Output::writeln("Starting interactive mode. Type 'exit' to quit, 'space' to change knowledge space, 'template' to change prompt template."); // Updated help message
+        Output::info("Starting interactive mode. Type 'exit' to quit, 'space' to change cognitive space, 'template' to change prompt template.");
 
         // Main interactive loop
         while (true) {
             $this->displayCurrentSpace();
-            $this->displayCurrentTemplate(); // Display current template
+            $this->displayCurrentTemplate();
 
             $query = readline("INTENTIO > ");
             $query = trim($query);
 
             if ($query === 'exit') {
-                Output::writeln("Exiting interactive mode. Goodbye!");
+                Output::info("Exiting interactive mode. Goodbye!");
                 break;
             } elseif ($query === 'space') {
                 $this->selectKnowledgeSpace();
-            } elseif ($query === 'template') { // Handle template command
+            } elseif ($query === 'template') {
                 $this->selectPromptTemplate();
             } elseif (!empty($query)) {
                 $this->chat($query);
             } else {
-                Output::writeln("Please type your query, 'space', 'template', or 'exit'."); // Updated help message
+                Output::info("Please type your query, 'space', 'template', or 'exit'.");
             }
         }
 
@@ -88,31 +88,31 @@ final class InteractCommand implements CommandInterface
     private function displayCurrentSpace(): void
     {
         if ($this->currentKnowledgeSpace) {
-            Output::writeln(sprintf("Current Knowledge Space: %s", $this->currentKnowledgeSpace->getRootPath()));
+            Output::info(sprintf("Current Cognitive Space: %s", $this->currentKnowledgeSpace->getRootPath()));
         } else {
-            Output::writeln("No Knowledge Space selected.");
+            Output::info("No Cognitive Space selected.");
         }
     }
     
-    // New method to display current template
     private function displayCurrentTemplate(): void
     {
         if ($this->currentPromptTemplateName !== null) {
-            Output::writeln(sprintf("Current Prompt Template: %s", $this->currentPromptTemplateName));
+            Output::info(sprintf("Current Prompt Template: %s", $this->currentPromptTemplateName));
         } else {
-            Output::writeln("No Prompt Template selected.");
+            Output::info("No Prompt Template selected.");
         }
     }
 
     private function selectKnowledgeSpace(): void
     {
-        Output::writeln("\n--- Select Knowledge Space ---");
+        Output::info("\n--- Select Cognitive Space ---");
         
         $availableSpaces = Space::getAvailableSpaces($this->knowledgeBasePath); // Use local knowledgeBasePath
 
         if (empty($availableSpaces)) {
-            Output::writeln("No knowledge spaces found in '{$this->knowledgeBasePath}'.");
-            Output::writeln("Please create subdirectories in this path to define knowledge spaces.");
+            Output::warning("No cognitive spaces found in '{$this->knowledgeBasePath}'.");
+            Output::info("Please create subdirectories in this path to define cognitive spaces.");
+            Output::info("----------------------------\n");
             return;
         }
 
@@ -125,7 +125,7 @@ final class InteractCommand implements CommandInterface
         $selection = (int)trim($selection);
 
         if ($selection === 0) {
-            Output::writeln("Knowledge space selection cancelled.");
+            Output::info("Cognitive space selection cancelled.");
             return;
         }
 
@@ -134,7 +134,7 @@ final class InteractCommand implements CommandInterface
             $selectedSpacePath = $this->knowledgeBasePath . DIRECTORY_SEPARATOR . $selectedSpaceName; // Use local knowledgeBasePath
             try {
                 $this->currentKnowledgeSpace = new Space($selectedSpacePath);
-                Output::writeln(sprintf("Knowledge space set to: %s", $this->currentKnowledgeSpace->getRootPath()));
+                Output::success(sprintf("Cognitive space set to: %s", $this->currentKnowledgeSpace->getRootPath()));
 
                 // --- Check Ingestion Status ---
                 $vectorStoreDbPath = '.intentio_store';
@@ -143,7 +143,7 @@ final class InteractCommand implements CommandInterface
                 $ingestionStatus = $this->isIngestionNeeded($this->currentKnowledgeSpace->getRootPath(), $dbFilePath);
                 
                 if ($ingestionStatus === 'needed') {
-                    Output::writeln("\nNOTICE: This cognitive space needs to be ingested or re-ingested (source files are newer).");
+                    Output::warning("\nNOTICE: This cognitive space needs to be ingested or re-ingested (source files are newer).");
                     $confirmIngest = readline("Would you like to ingest it now? (yes/no): ");
                     if (trim(strtolower($confirmIngest)) === 'yes') {
                         // Create a temporary Input object for IngestCommand
@@ -160,12 +160,12 @@ final class InteractCommand implements CommandInterface
                             knowledgeSpace: $this->currentKnowledgeSpace
                         );
                         $ingestCommand->execute();
-                        Output::writeln("Ingestion process completed.");
+                        Output::success("Ingestion process completed.");
                     } else {
-                        Output::writeln("Ingestion skipped. You may experience outdated or limited responses.");
+                        Output::info("Ingestion skipped. You may experience outdated or limited responses.");
                     }
                 } elseif ($ingestionStatus === 'missing') {
-                    Output::writeln("\nNOTICE: This cognitive space does not appear to be ingested.");
+                    Output::warning("\nNOTICE: This cognitive space does not appear to be ingested.");
                     $confirmIngest = readline("Would you like to ingest it now? (yes/no): ");
                     if (trim(strtolower($confirmIngest)) === 'yes') {
                         // Create a temporary Input object for IngestCommand
@@ -182,29 +182,29 @@ final class InteractCommand implements CommandInterface
                             knowledgeSpace: $this->currentKnowledgeSpace
                         );
                         $ingestCommand->execute();
-                        Output::writeln("Ingestion process completed.");
+                        Output::success("Ingestion process completed.");
                     } else {
-                        Output::writeln("Ingestion skipped. You may experience limited responses without ingested data.");
+                        Output::info("Ingestion skipped. You may experience limited responses without ingested data.");
                     }
                 }
                 // --- End Check Ingestion Status ---
 
             } catch (\InvalidArgumentException $e) {
-                Output::error("Failed to select knowledge space: " . $e->getMessage());
+                Output::error("Failed to select cognitive space: " . $e->getMessage());
             }
         } else {
-            Output::writeln("Invalid selection.");
+            Output::error("Invalid selection.");
         }
-        Output::writeln("----------------------------\n");
+        Output::info("----------------------------\n");
     }
 
     // New method to select prompt template
     private function selectPromptTemplate(): void
     {
-        Output::writeln("\n--- Select Prompt Template ---");
+        Output::info("\n--- Select Prompt Template ---");
 
         if (!$this->currentKnowledgeSpace) {
-            Output::writeln("Please select a knowledge space first to see available templates.");
+            Output::warning("Please select a cognitive space first to see available templates.");
             return;
         }
 
@@ -212,16 +212,16 @@ final class InteractCommand implements CommandInterface
         $availableTemplates = Prompt::getAvailableTemplates($packageName);
 
         if (empty($availableTemplates)) {
-            Output::writeln(sprintf("No prompt templates found for package '%s'.", $packageName));
-            Output::writeln("Please create '.md' files in 'packages/{$packageName}/prompts/' to define templates.");
-            Output::writeln("  [0] Go back / Cancel");
+            Output::warning(sprintf("No prompt templates found for package '%s'.", $packageName));
+            Output::info("Please create '.md' files in 'packages/{$packageName}/prompts/' to define templates.");
+            Output::info("  [0] Go back / Cancel");
             $selection = (int)trim(readline("Enter number to select a template: "));
             if ($selection === 0) {
-                Output::writeln("Prompt template selection cancelled.");
+                Output::info("Prompt template selection cancelled.");
             } else {
-                Output::writeln("Invalid selection.");
+                Output::error("Invalid selection.");
             }
-            Output::writeln("----------------------------\n");
+            Output::info("----------------------------\n");
             return;
         }
 
@@ -234,13 +234,13 @@ final class InteractCommand implements CommandInterface
         $selection = (int)trim($selection);
 
         if ($selection === 0) {
-            Output::writeln("Prompt template selection cancelled.");
+            Output::info("Prompt template selection cancelled.");
             return;
         }
 
         if (isset($availableTemplates[$selection - 1])) {
             $this->currentPromptTemplateName = $availableTemplates[$selection - 1];
-            Output::writeln(sprintf("Prompt template set to: %s", $this->currentPromptTemplateName));
+            Output::success(sprintf("Prompt template set to: %s", $this->currentPromptTemplateName));
 
             // --- Display instruction for the selected prompt ---
             try {
@@ -261,19 +261,19 @@ final class InteractCommand implements CommandInterface
             // --- End display instruction ---
 
         } else {
-            Output::writeln("Invalid selection.");
+            Output::error("Invalid selection.");
         }
-        Output::writeln("----------------------------\n");
+        Output::info("----------------------------\n");
     }
 
     private function chat(string $query): void
     {
         if (!$this->currentKnowledgeSpace) {
-            Output::writeln("Please select a knowledge space first before chatting.");
+            Output::warning("Please select a cognitive space first before chatting.");
             return;
         }
         if (!$this->currentPromptTemplateName) {
-            Output::writeln("Please select a prompt template first before chatting. (Type 'template')");
+            Output::warning("Please select a prompt template first before chatting. (Type 'template')");
             return;
         }
 

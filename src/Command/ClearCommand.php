@@ -26,7 +26,7 @@ final class ClearCommand implements CommandInterface
 
     public function execute(): int
     {
-        Output::writeln("--- Clearing Cognitive Space ---");
+        Output::info("--- Clearing Cognitive Space ---");
 
         if (!$this->knowledgeSpace) {
             Output::error("No cognitive space specified. Use --space=<path> to specify which space to clear.");
@@ -38,25 +38,25 @@ final class ClearCommand implements CommandInterface
         $dbFileName = md5($knowledgeSpacePath) . '.sqlite';
         $dbFilePath = $vectorStoreDbPath . DIRECTORY_SEPARATOR . $dbFileName;
 
-        Output::writeln(sprintf("Attempting to clear data for space: %s (%s)", $knowledgeSpacePath, $dbFilePath));
+        Output::info(sprintf("Attempting to clear data for space: %s (%s)", $knowledgeSpacePath, $dbFilePath));
 
         if (!file_exists($dbFilePath)) {
-            Output::writeln("No existing data found for this space. Nothing to clear.");
+            Output::warning("No existing data found for this space. Nothing to clear.");
             return 0;
         }
 
         // Prompt for confirmation
-        Output::writeln("WARNING: This will permanently delete the data for this cognitive space.");
+        Output::warning("WARNING: This will permanently delete the data for this cognitive space.");
         $confirmation = readline("Type 'yes' to confirm deletion: ");
 
         if (trim(strtolower($confirmation)) !== 'yes') {
-            Output::writeln("Deletion cancelled.");
+            Output::info("Deletion cancelled.");
             return 1; // Indicate cancellation
         }
 
         if (unlink($dbFilePath)) {
-            Output::writeln(sprintf("Successfully cleared data for cognitive space '%s'.", $knowledgeSpacePath));
-            Output::writeln("You may now re-ingest this space if needed.");
+            Output::success(sprintf("Successfully cleared data for cognitive space '%s'.", $knowledgeSpacePath));
+            Output::info("You may now re-ingest this space if needed.");
             return 0;
         } else {
             Output::error(sprintf("Failed to delete data file '%s'. Please check permissions.", $dbFilePath));

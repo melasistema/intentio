@@ -30,24 +30,24 @@ final class ChatCommand implements CommandInterface
 
     public function execute(): int
     {
-        Output::writeln("Initiating chat with the cognitive environment...");
+        Output::info("Initiating chat with the cognitive environment...");
 
         $query = $this->input->getArgument(0); // Assuming the query is the first argument after 'chat'
         if (!$query) {
-            Output::writeln("Please provide a query for the chat command.");
+            Output::error("Please provide a query for the chat command.");
             return 1; // Indicate error
         }
 
-        Output::writeln("Your query: \"{$query}\"");
+        Output::info("Your query: \"" . $query . "\"");
 
         if (!$this->knowledgeSpace) {
-            Output::writeln("No specific knowledge space provided. Operating without context.");
+            Output::error("No specific knowledge space provided. Operating without context.");
             return 1; // Exit if no space is provided for chat
         }
 
-        Output::writeln("Using knowledge space: " . $this->knowledgeSpace->getRootPath());
+        Output::info("Using knowledge space: " . $this->knowledgeSpace->getRootPath());
         $templateName = $this->input->getOption('template') ?? $this->config['interpreter']['default_prompt_template_name']; // Moved definition
-        Output::writeln(sprintf("Using prompt template: %s", $templateName));
+        Output::info(sprintf("Using prompt template: %s", $templateName));
 
         // --- Core Chat Logic ---
 
@@ -55,7 +55,7 @@ final class ChatCommand implements CommandInterface
         $vectorStore = new SQLiteVectorStore($this->knowledgeSpace->getRootPath(), '.intentio_store');
 
         // 2. Embed the user query
-        Output::writeln("Embedding your query...");
+        Output::info("Embedding your query...");
         $embedder = new NomicEmbedder(
             $this->config['embedding']['model_name'],
             $this->config['ollama']
@@ -63,12 +63,12 @@ final class ChatCommand implements CommandInterface
         $queryEmbedding = $embedder->embed($query);
 
         // 3. Retrieve relevant context from the Vector Store
-        Output::writeln("Retrieving relevant context...");
+        Output::info("Retrieving relevant context...");
         $retrievedChunks = $vectorStore->findSimilar($queryEmbedding, 3); // Get top 3 chunks
 
         $context = [];
         if (!empty($retrievedChunks)) {
-            Output::writeln("Found relevant context!");
+            Output::success("Found relevant context!");
             
             // --- DEBUGGING OUTPUT (Removed for final code) ---
             Output::writeln("\n--- Retrieved Chunks (for debugging) ---");
@@ -85,7 +85,7 @@ final class ChatCommand implements CommandInterface
                 $context[] = $chunk['content'];
             }
         } else {
-            Output::writeln("No relevant context found in this space.");
+            Output::warning("No relevant context found in this space.");
             $context[] = "No specific information found in the knowledge base related to the query.";
         }
 
@@ -101,7 +101,7 @@ final class ChatCommand implements CommandInterface
         $finalPrompt = $promptBuilder->build();
 
         // 5. Interact with the Interpreter (LLM)
-        Output::writeln("Sending prompt to interpreter...");
+        Output::info("Sending prompt to interpreter...");
         $interpreter = new LlamaInterpreter(
             $this->config['interpreter']['model_name'],
             $this->config['ollama'],

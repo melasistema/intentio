@@ -58,9 +58,9 @@ final class InitCommand implements CommandInterface
             return 1;
         }
 
-        echo "Available Packages:\n";
+        Output::info("Available Packages:");
         foreach ($packages as $i => $package) {
-            echo ($i + 1) . ". {$package->getName()}\n";
+            Output::writeln("  " . ($i + 1) . ". " . $package->getName());
         }
 
         $choice = $this->askForPackageChoice(count($packages));
@@ -73,18 +73,18 @@ final class InitCommand implements CommandInterface
     private function askForPackageChoice(int $numberOfPackages): int
     {
         while (true) {
-            echo "Enter the number of your chosen package:\n";
+            Output::info("Enter the number of your chosen package:");
             $choice = trim(fgets(STDIN));
 
             if (!ctype_digit($choice)) {
-                echo "Invalid choice. Please enter a number.\n";
+                Output::error("Invalid choice. Please enter a number.");
                 continue;
             }
 
             $choice = intval($choice);
 
             if ($choice < 1 || $choice > $numberOfPackages) {
-                echo "Invalid choice. Please choose a package from the list.\n";
+                Output::error("Invalid choice. Please choose a package from the list.");
                 continue;
             }
 
@@ -97,7 +97,7 @@ final class InitCommand implements CommandInterface
         try {
             $result = $package->init();
             if ($result === 0) {
-                // Update config.php with the active package
+                Output::success("Package '" . $chosenPackage->getName() . "' initialized successfully to " . $package->getDestinationPath());                // Update config.php with the active package
                 $configPath = $_SERVER['PWD'] . '/config.php';
                 if (file_exists($configPath) && is_readable($configPath)) {
                     $configContent = file_get_contents($configPath);

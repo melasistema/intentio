@@ -29,16 +29,16 @@ final class IngestCommand implements CommandInterface
 
     public function execute(): int
     {
-        Output::writeln("Initiating ingestion of knowledge space: " . $this->knowledgeSpace->getRootPath());
+        Output::info("Initiating ingestion of knowledge space: " . $this->knowledgeSpace->getRootPath());
 
         // 1. Scan the knowledge space for files
         $files = $this->knowledgeSpace->scan();
         if (empty($files)) {
-            Output::writeln("No files found in the knowledge space to ingest.");
+            Output::warning("No files found in the knowledge space to ingest.");
             return 0;
         }
 
-        Output::writeln(sprintf("Found %d files to process.", count($files)));
+        Output::info(sprintf("Found %d files to process.", count($files)));
 
         // 2. Prepare components for ingestion
         $fileProcessor = new FileProcessor();
@@ -54,7 +54,7 @@ final class IngestCommand implements CommandInterface
             $filePath = $asset['path'];
             $category = $asset['category'];
 
-            Output::writeln(sprintf("Processing file: %s (Category: %s)", basename($filePath), $category));
+            Output::info(sprintf("Processing file: %s (Category: %s)", basename($filePath), $category));
             
             try {
                 // Read and chunk content
@@ -71,7 +71,7 @@ final class IngestCommand implements CommandInterface
             }
         }
 
-        Output::writeln("Ingestion complete. Vector store updated (SQLite)."); // Updated message
+        Output::success("Ingestion complete. Vector store updated (SQLite)."); // Updated message
 
         return 0; // Indicate success
     }

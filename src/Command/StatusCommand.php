@@ -25,55 +25,55 @@ final class StatusCommand implements CommandInterface
 
     public function execute(): int
     {
-        Output::writeln("--- INTENTIO System Status ---");
-        Output::writeln(sprintf("Application Name: %s", $this->config['app_name'] ?? 'INTENTIO'));
-        Output::writeln(sprintf("PHP Version: %s", PHP_VERSION));
-        Output::writeln("");
+        Output::info("--- INTENTIO System Status ---");
+        Output::info(sprintf("Application Name: %s", $this->config['app_name'] ?? 'INTENTIO'));
+        Output::info(sprintf("PHP Version: %s", PHP_VERSION));
+        Output::writeln(""); // Empty line
 
-        // 1. Knowledge Base Configuration
-        Output::writeln("--- Knowledge Base ---");
+        // 1. Cognitive Space Configuration
+        Output::info("--- Cognitive Space Configuration ---");
         $spacesBasePath = $this->config['spaces_base_path'];
-        Output::writeln(sprintf("Configured Path: %s", $knowledgeBasePath));
+        Output::info(sprintf("Configured Path: %s", $spacesBasePath));
 
-        $availableSpaces = Space::getAvailableSpaces($knowledgeBasePath); // Updated call
+        $availableSpaces = Space::getAvailableSpaces($spacesBasePath); // Updated call
         if (empty($availableSpaces)) {
-            Output::writeln("Available Spaces: None found.");
+            Output::warning("Available Spaces: None found.");
         } else {
-            Output::writeln("Available Spaces:");
+            Output::info("Available Spaces:");
             foreach ($availableSpaces as $spaceName) {
-                Output::writeln(sprintf("  - %s", $spaceName));
+                Output::info(sprintf("  - %s", $spaceName));
             }
         }
-        Output::writeln("");
+        Output::writeln(""); // Empty line
 
         // 2. Ollama Server Status
-        Output::writeln("--- Ollama Server ---");
+        Output::info("--- Ollama Server ---");
         $ollamaBaseUrl = $this->config['ollama']['base_url'];
-        Output::writeln(sprintf("Configured URL: %s", $ollamaBaseUrl));
+        Output::info(sprintf("Configured URL: %s", $ollamaBaseUrl));
 
         $ollamaStatus = $this->checkOllamaStatus($ollamaBaseUrl);
         if ($ollamaStatus) {
-            Output::writeln("Status: Connected.");
-            Output::writeln("Installed Models:");
+            Output::success("Status: Connected.");
+            Output::info("Installed Models:");
             $models = $this->getOllamaModels($ollamaBaseUrl);
             if (!empty($models)) {
                 foreach ($models as $model) {
-                    Output::writeln(sprintf("  - %s (%s)", $model['name'], $model['size']));
+                    Output::info(sprintf("  - %s (%s)", $model['name'], $model['size']));
                 }
             } else {
-                Output::writeln("  No models found. Please pull models (e.g., 'ollama pull llama3.1').");
+                Output::warning("  No models found. Please pull models (e.g., 'ollama pull llama3.1').");
             }
         } else {
-            Output::writeln("Status: Disconnected or not reachable.");
+            Output::error("Status: Disconnected or not reachable.");
             Output::error("Please ensure Ollama is running at {$ollamaBaseUrl}.");
         }
-        Output::writeln("");
+        Output::writeln(""); // Empty line
 
         // 3. Configured Models
-        Output::writeln("--- Configured Models ---");
-        Output::writeln(sprintf("LLM (Interpreter): %s", $this->config['interpreter']['model_name']));
-        Output::writeln(sprintf("Embedding Model: %s", $this->config['embedding']['model_name']));
-        Output::writeln("----------------------------");
+        Output::info("--- Configured Models ---");
+        Output::info(sprintf("LLM (Interpreter): %s", $this->config['interpreter']['model_name']));
+        Output::info(sprintf("Embedding Model: %s", $this->config['embedding']['model_name']));
+        Output::info("----------------------------");
 
         return 0;
     }
