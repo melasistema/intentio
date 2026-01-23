@@ -97,27 +97,8 @@ final class InitCommand implements CommandInterface
         try {
             $result = $package->init();
             if ($result === 0) {
-                Output::success("Package '" . $package->getName() . "' initialized successfully to " . $package->getDestinationPath());                // Update config.php with the active package
-                $configPath = $_SERVER['PWD'] . '/config.php';
-                if (file_exists($configPath) && is_readable($configPath)) {
-                    $configContent = file_get_contents($configPath);
-                    // Use eval to parse the PHP array. This assumes config.php returns a simple array.
-                    // This is generally risky, but acceptable for internal config management.
-                    $config = eval('?>' . $configContent);
-                    if (is_array($config)) {
-                        $config['active_package'] = $package->getName();
-                        $newConfigContent = "<?php\n\nreturn " . var_export($config, true) . ";\n";
-                        if (file_put_contents($configPath, $newConfigContent) !== false) {
-                            Output::info("Updated 'active_package' in config.php to '" . $package->getName() . "'");
-                        } else {
-                            Output::error("Failed to update 'active_package' in config.php.");
-                        }
-                    } else {
-                        Output::error("config.php does not return a valid array.");
-                    }
-                } else {
-                    Output::info("config.php not found or not readable. Cannot set active package.");
-                }
+                Output::success("Package '" . $package->getName() . "' initialized successfully to " . $package->getDestinationPath());                // No longer updating config.php active_package as it's been removed
+
             }
             return $result;
         } catch (\Throwable $e) {

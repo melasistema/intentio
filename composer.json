@@ -3,13 +3,20 @@
     "description": "A local, private, CLI-based cognitive environment.",
     "type": "project",
     "license": "MIT",
-    "version": "0.1.1",
+    "version": "0.1.2",
+    "homepage": "https://intentio.melasistema.com",
+    "keywords": ["ai", "cli", "local", "private", "cognitive", "ollama", "php", "rag", "tool"],
     "authors": [
         {
             "name": "Luca Visciola",
-            "email": "info@melasistema.com"
+            "email": "info@melasistema.com",
+            "homepage": "https://lucavisciola.com"
         }
     ],
+    "support": {
+        "issues": "https://github.com/melasistema/intentio/issues",
+        "source": "https://github.com/melasistema/intentio"
+    },
     "minimum-stability": "stable",
     "require": {
         "php": ">=8.2"

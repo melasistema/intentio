@@ -28,12 +28,34 @@ final class NomicEmbedder
      */
     public function embed(string $text): array
     {
-        $url = $this->ollamaConfig['base_url'] . $this->ollamaConfig['api_path_embeddings'];
+        if (!isset($this->ollamaConfig['base_url'])) {
+            throw new \RuntimeException("Ollama configuration missing 'base_url'.");
+        }
+        if (!isset($this->ollamaConfig['api_path_embeddings'])) {
+            throw new \RuntimeException("Ollama configuration missing 'api_path_embeddings'.");
+        }
+
+        $baseUrl = $this->ollamaConfig['base_url'];
+        $apiPath = $this->ollamaConfig['api_path_embeddings'];
+
+        // Ensure baseUrl has a scheme, otherwise stream context might fail
+        if (!is_string($baseUrl) || (!str_starts_with($baseUrl, 'http://') && !str_starts_with($baseUrl, 'https://'))) {
+            Output::error("Ollama base URL must be a string starting with http:// or https://. Current: " . (is_string($baseUrl) ? $baseUrl : gettype($baseUrl)));
+            throw new \RuntimeException("Invalid Ollama base URL scheme or type.");
+        }
+
+        $url = $baseUrl . $apiPath;
         
         $payload = json_encode([
             'model' => $this->modelName,
             'prompt' => $text,
         ]);
+
+        // Ensure payload is not false if json_encode fails (e.g., malformed UTF-8)
+        if ($payload === false) {
+            Output::error("Failed to JSON encode payload for embedding. Check input text.");
+            throw new \RuntimeException("Failed to JSON encode embedding payload.");
+        }
 
         $options = [
             'http' => [
@@ -42,10 +64,16 @@ final class NomicEmbedder
                 'method' => 'POST',
                 'content' => $payload,
                 'ignore_errors' => true, // To handle non-2xx responses gracefully
+                'timeout' => 5, // Add timeout to prevent hangs
             ],
         ];
 
         $context = stream_context_create($options);
+        if ($context === false) {
+            Output::error("NomicEmbedder: Failed to create stream context for Ollama API.");
+            throw new \RuntimeException("Failed to create stream context.");
+        }
+
         $response = file_get_contents($url, false, $context);
         
         if ($response === false) {

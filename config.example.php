@@ -26,5 +26,4 @@ return array (
   array (
     'model_name' => 'nomic-embed-text', // The Ollama model to use for generating embeddings.
   ),
-  'active_package' => '', // The name of the currently active package (set by 'init' command).
 );

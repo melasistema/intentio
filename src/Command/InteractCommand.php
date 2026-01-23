@@ -58,7 +58,7 @@ final class InteractCommand implements CommandInterface
     public function execute(): int
     {
         Output::writeln(self::LOGO_ASCII); // Display logo
-        Output::info("Starting interactive mode. Type 'exit' to quit, 'space' to change cognitive space, 'template' to change prompt template.");
+        Output::info("Starting interactive mode. Type 'space' to choose or change cognitive space, 'template' to change prompt template or 'exit' to quit.");
 
         // Main interactive loop
         while (true) {
