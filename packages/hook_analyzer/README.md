@@ -26,6 +26,10 @@ When you select a prompt template (a "command") in interactive mode, you will be
     *   Allows you to ask a general question about the knowledge contained within this package (e.g., "What is the anchoring bias?").
     *   *Instruction: Ask a question about the knowledge in this space:*
 
+*   **`report`**
+    *   Generates a comprehensive report, including both detailed analysis and actionable improvement suggestions for a given hook.
+    *   *Instruction: Enter the hook for a comprehensive report (analysis + improvement):*
+
 ## Example Usage
 
 1.  Start interactive mode: `./intentio interact`
@@ -33,7 +37,7 @@ When you select a prompt template (a "command") in interactive mode, you will be
 3.  Select the `analyze_hook` template. The system will then prompt you with instructions:
 
 ```
-Current Knowledge Space: /path/to/knowledge/hook_analyzer
+Current Knowledge Space: /path/to/spaces/hook_analyzer
 Current Prompt Template: analyze_hook
 Enter the hook you want to analyze:
 INTENTIO > Most tools fail due to busyness.
