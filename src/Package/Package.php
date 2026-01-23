@@ -29,6 +29,11 @@ class Package implements PackageInterface
         return $this->sourcePath;
     }
 
+    public function getDestinationPath(): string
+    {
+        return $this->destinationPath . '/' . $this->name;
+    }
+
     public function init(): int
     {
         $packageDestinationDir = $this->destinationPath . '/' . $this->name;
@@ -56,7 +61,7 @@ class Package implements PackageInterface
             }
         }
 
-        Output::success("Package '" . $this->name . "' initialized successfully to " . $packageDestinationDir);
+
         return 0;
     }
 

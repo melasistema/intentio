@@ -97,7 +97,7 @@ final class InitCommand implements CommandInterface
         try {
             $result = $package->init();
             if ($result === 0) {
-                Output::success("Package '" . $chosenPackage->getName() . "' initialized successfully to " . $package->getDestinationPath());                // Update config.php with the active package
+                Output::success("Package '" . $package->getName() . "' initialized successfully to " . $package->getDestinationPath());                // Update config.php with the active package
                 $configPath = $_SERVER['PWD'] . '/config.php';
                 if (file_exists($configPath) && is_readable($configPath)) {
                     $configContent = file_get_contents($configPath);
