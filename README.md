@@ -251,7 +251,17 @@ INTENTIO uses [Ollama](https://ollama.com) to run local Large Language Models (L
      ```
    - Verify installation: `ollama list` should show `nomic-embed-text:latest` and `llama3.1:latest`.
 
-### 2. Initialize a Knowledge Package (Recommended First Step)
+### 2. Configure INTENTIO
+
+INTENTIO uses a `config.php` file for core settings. This file is excluded from version control for security and environment-specific reasons.
+
+-   Copy the provided example configuration:
+    ```bash
+    cp config.example.php config.php
+    ```
+-   Open `config.php` and review the settings. You may need to adjust paths or model names to match your local setup.
+
+### 3. Initialize a Knowledge Package (Recommended First Step)
 
 Start with a pre-configured cognitive environment. This is the quickest way to experience INTENTIO's capabilities.
 
@@ -277,7 +287,7 @@ INTENTIO treats your filesystem structure as a cognitive space.
     ```
     spaces/
     └── my_private_notes/
-        ├── spaces/        # All files here are ingested for RAG
+        ├── knowledge/        # All files here are ingested for RAG
         │   ├── reference/
         │   │   └── article_summary.md
         │   ├── opinion/
