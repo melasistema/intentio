@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Special thanks to [Luca Visciola](https://github.com/melasistema) for the original work and ongoing vision.
 
+## [0.1.5] - 2026-01-22
+
+### Added
+-   **Multi-Platform Enhancements (`hook_analyzer`):**
+    -   Introduced platform-specific knowledge assets (e.g., `platform_specs.md`, `viral_patterns.md`) for platforms like LinkedIn and Instagram.
+    -   Added `platform_adapter.md` generator blueprint for platform-aware analysis.
+    -   New `multi_platform_report.md` prompt for generating comprehensive, platform-tailored hook reports.
+
 ## [0.1.4] - 2026-01-24
 
 ### Removed

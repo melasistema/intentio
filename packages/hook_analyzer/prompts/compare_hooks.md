@@ -1,15 +1,12 @@
 ---
-instruction: "Enter the two hooks to compare, separated by '||':"
+instruction: "Enter two hooks separated by '||' (optional: add target platform):"
 ---
-# Compare Hooks
+# Compare Hooks (Strategic)
 
-Compare and contrast the following two hooks. Evaluate them based on:
-- clarity
-- attention capture
-- emotional leverage
-- cognitive bias usage
-- overall effectiveness for a specified goal (if provided).
+Compare these two hooks.
+1. **Universal Strength:** Which one is psychologically more "sticky" regardless of where it's posted?
+2. **Platform Fit:** If a platform is specified in the query, verify which hook respects the truncation limits and engagement signals in `platform_specs.md`.
 
-Identify the stronger hook and explain why.
+Identify the winner and explain the rationale.
 
 Hook: {{QUERY}}

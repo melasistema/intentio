@@ -1,6 +1,6 @@
 # Hook Analyzer Package
 
-A cognitive instrument for analyzing and improving marketing hooks, grounded in a knowledge base of persuasive techniques and cognitive biases.
+A cognitive instrument for analyzing and improving marketing hooks, grounded in a knowledge base of persuasive techniques, cognitive biases, and platform-specific insights.
 
 This package operates as a suite of "commands" that you can run from the INTENTIO interactive mode. Each command is a prompt template designed for a specific task.
 
@@ -29,6 +29,10 @@ When you select a prompt template (a "command") in interactive mode, you will be
 *   **`report`**
     *   Generates a comprehensive report, including both detailed analysis and actionable improvement suggestions for a given hook.
     *   *Instruction: Enter the hook for a comprehensive report (analysis + improvement):*
+
+*   **`multi_platform_report`**
+    *   Generates a comprehensive report, including analysis and improvement suggestions, tailored for a specific platform.
+    *   *Instruction: Enter the hook and target platform (e.g., "My amazing hook || Twitter"):*
 
 ## Example Usage
 

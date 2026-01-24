@@ -1,14 +1,10 @@
 ---
 instruction: "Enter the hook you want to improve:"
 ---
-# Improve Hook
+# Improve Hook (Adaptive)
 
-Review the following hook and provide specific, actionable suggestions for improvement. Focus on enhancing:
-- clarity
-- attention capture
-- emotional leverage
-- cognitive bias usage
-
-Do not rewrite the entire hook from scratch. Instead, suggest targeted modifications and explain the rationale behind each suggestion.
+Review the following hook and provide actionable suggestions.
+- **Universal Improvement:** Enhance clarity and emotional punch.
+- **Contextual Tuning:** If you detect a platform intent, suggest specific formatting (e.g., line breaks for LinkedIn, thread signals for X).
 
 Hook: {{QUERY}}

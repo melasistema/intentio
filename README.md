@@ -82,7 +82,8 @@ The same engine can become:
 
 -   A legal or technical analyst that refuses to speculate
 
--   A creative collaborator shaped by metaphor, not noise
+-   A creative collaborator for platform-aware content generation, shaped by context, not noise
+-   A marketing strategist for multi-platform hook analysis and comprehensive reports
 
 
 Not because the model changes — but because the **context does**.
@@ -116,6 +117,7 @@ To make starting with INTENTIO even more effortless, we've introduced **Knowledg
 INTENTIO values intentional design, but creating a nuanced cognitive space from scratch can be a cognitive burden. Packages solve this by providing:
 
 -   **Instant Value:** Jump straight into a specialized cognitive task without initial setup.
+-   **Highly Specialized Instruments:** Provide the structure for building advanced tools like platform-specific content analysis or multi-faceted reporting.
 -   **Opinionated Structure:** Best practices for knowledge organization, prompts, and generators are built-in.
 -   **Reduced Overhead:** No need to invent structures or deeply understand orchestration from day one.
 

@@ -1,10 +1,11 @@
 # Hook Analyzer – Manifest
 
 name: Hook Analyzer
-version: 0.1
+version: 0.2
 domain: persuasion / marketing
 default_prompt: analyze_hook
 recommended_generators:
+  - platform_adapter
   - analysis_generator
   - improvement_generator
 
