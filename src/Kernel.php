@@ -29,7 +29,7 @@ final class Kernel
     public function run(): void
     {
         $appName = $this->config['app_name'] ?? 'INTENTIO';
-        Output::writeln("Welcome to {$appName}.");
+        Output::orange("Welcome to {$appName}. Type 'help' for available commands.");
 
         $commandName = $this->input->getCommand();
 

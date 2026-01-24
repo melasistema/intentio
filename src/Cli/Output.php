@@ -41,6 +41,11 @@ final class Output
         self::writeln(self::colorize($message, 'yellow'));
     }
 
+    public static function orange(string $message): void
+    {
+        self::writeln(self::colorize($message, 'orange'));
+    }
+
     public static function setQuiet(bool $isQuiet): void
     {
         self::$isQuiet = $isQuiet;
@@ -53,6 +58,7 @@ final class Output
             'green' => "\033[32m",
             'yellow' => "\033[33m",
             'blue' => "\033[34m",
+            'orange' => "\033[33m",
             'reset' => "\033[0m",
         ];
 

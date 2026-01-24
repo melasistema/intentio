@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Special thanks to [Luca Visciola](https://github.com/melasistema) for the original work and ongoing vision.
 
+## [0.1.4] - 2026-01-24
+
+### Removed
+-   **ASCII Welcome**
+    -   Removed ASCII welcome.
+    -   Replaced with simple text welcome message in `InitCommand.php`.
+    -   Simplifies code and improves readability.
+    -   Enhances user experience with cleaner output.
+
 ## [0.1.3] - 2026-01-24
 
 ### Added
