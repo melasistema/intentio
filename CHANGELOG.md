@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Special thanks to [Luca Visciola](https://github.com/melasistema) for the original work and ongoing vision.
 
+## [unreleased]
+
+### fixed
+-   **`hook_analyzer` package readme:** Addressed multi-platform command instructions.
+
 ## [0.1.5] - 2026-01-22
 
 ### Added

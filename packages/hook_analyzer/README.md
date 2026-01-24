@@ -12,7 +12,7 @@ When you select a prompt template (a "command") in interactive mode, you will be
 
 *   **`analyze_hook`**
     *   Analyzes a single hook for clarity, attention capture, emotional leverage, and cognitive bias usage.
-    *   *Instruction: Enter the hook you want to analyze:*
+    *   *Instruction: Enter the hook (optional: add platform name, e.g., ', Linkedin'):*
 
 *   **`improve_hook`**
     *   Provides specific, actionable suggestions to improve an existing hook.
@@ -32,7 +32,7 @@ When you select a prompt template (a "command") in interactive mode, you will be
 
 *   **`multi_platform_report`**
     *   Generates a comprehensive report, including analysis and improvement suggestions, tailored for a specific platform.
-    *   *Instruction: Enter the hook and target platform (e.g., "My amazing hook || Twitter"):*
+    *   *Instruction: Enter the hook or idea for a cross-platform strategy:*
 
 ## Example Usage
 
