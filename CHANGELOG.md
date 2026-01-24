@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Special thanks to [Luca Visciola](https://github.com/melasistema) for the original work and ongoing vision.
 
+## [0.1.3] - 2026-01-24
+
+### Added
+-   **New Package – `exam_prep`:**
+    -   Added *Second Brain Exam Prep* (`version: 0.1`) under `packages/exam_prep`.
+    -   Enables cross-disciplinary exam generation across Biology, Physics, and Chemistry.
+    -   Includes recommended generators: `exam_generator`, `connection_analyst`.
+    -   Default prompt set to `tutor`.
+
 ## [0.1.2] - 2026-01-22
 
 ### Added
