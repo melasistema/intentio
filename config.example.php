@@ -22,8 +22,13 @@ return array (
       'keep_alive' => '15m',
     ),
   ),
-  'embedding' => 
-  array (
-    'model_name' => 'nomic-embed-text', // The Ollama model to use for generating embeddings.
-  ),
-);
+    'embedding' =>
+    array (
+      'model_name' => 'nomic-embed-text', // The Ollama model to use for generating embeddings.
+    ),
+    'rendered_path' => 'rendered', // The directory where generated images will be saved.
+    'renderer' =>
+    array (
+      'model_name' => 'x/flux2-klein', // The model to use for image rendering.
+    ),
+  );
