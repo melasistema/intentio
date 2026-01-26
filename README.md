@@ -126,27 +126,27 @@ Discover and activate a package with a single command:
 
 ```bash
 ./intentio init <package_name>
+# Or choose from available packages interactively:
+# ./intentio init
 ```
-Once initialized, the package's specific knowledge, prompts, and generators become available for immediate use.
+This command will deploy the chosen package, setting up its knowledge space, specialized prompts, and generators in your INTENTIO environment.
 
 ---
 
-### The Cognitive Space & Categories
+### The Cognitive Space Structure
 
-A "knowledge root" in INTENTIO is a **designed cognitive space**. The filesystem structure within this space is not arbitrary; it **carries meaning**:
+A cognitive space in INTENTIO is a **designed, filesystem-driven environment**. Its structure is not arbitrary; it **carries meaning**:
 
 -   **Folders are signals.**
 -   **Names matter.**
 -   **Depth matters.**
 
-INTENTIO explicitly leverages this structure to define **Canonical Cognitive Categories**. These are conceptual distinctions that help organize knowledge and inform the AI's interpretation:
+Within each space, two primary top-level directories are recognized by INTENTIO:
 
--   **Memory** — personal, subjective, experiential.
--   **Reference** — factual, external, stable.
--   **Opinion** — interpretive, contextual, non-authoritative.
--   **Value** — normative, guiding principles.
+-   **`knowledge/`** — This is the root for all your content that will be ingested by the RAG system. You, as the cognitive designer, are free to organize this folder with any subfolder structure (e.g., `knowledge/reference/`, `knowledge/memory/`, `knowledge/domain_specific_data/`). INTENTIO will ingest all supported files (`.md`, `.txt`) found within `knowledge/` and its subdirectories. The subfolder names can be used by prompt templates to provide contextual instructions to the AI.
+-   **`prompts/`** — This fixed directory is where all your prompt templates (`.md` files) for the cognitive space reside. These templates define the "commands" and behaviors of the AI within this space.
 
-The system is designed to respect these distinctions, allowing for more precise retrieval and tailored AI responses. You are not just storing files; you are shaping the AI's understanding by structuring its cognitive environment.
+INTENTIO explicitly leverages this structure. By organizing your `knowledge/` folder intentionally, you are shaping the AI's understanding and guiding its responses. You are not just storing files; you are designing its cognitive environment.
 
 ----------
 
@@ -210,7 +210,11 @@ Prompts are not merely instructions; they are fundamental tools for **agent desi
     *   Provide task-specific instructions (e.g., summarize, extract facts, generate narratives).
     *   Enforce strict grounding rules, ensuring responses adhere solely to the provided context.
 4.  **Placeholders**: Each template uses `{{CONTEXT}}` to inject retrieved knowledge and `{{QUERY}}` for the user's question, allowing you to craft precise instructions around this core information.
-5.  **Usage**: Select your desired template using the `--template=<name>` option with the `chat` command, or dynamically switch personas within the `interact` command. The system will provide clear guidance on what input is expected.
+5.  **Usage**:
+    *   **Default Prompt:** You can define a global default prompt template name in your `config/app.php` file.
+    *   **Package Default:** A `default_prompt` can be specified in a space's `manifest.md` to override the global default for that specific space.
+    *   **Command Line:** Use the `--prompt-key=<name>` option with the `chat` command for a one-off prompt selection.
+    *   **Interactive Mode:** Within the `./intentio interact` session, you will be prompted to select an initial prompt template, and you can dynamically switch between templates using the `switch_prompt` command. The `instruction` from the template's front-matter will guide your input.
 
 By leveraging configurable prompt templates, you transform INTENTIO into a truly adaptable cognitive instrument, capable of adopting diverse "cognitive stances" to match your specific needs and intentions.
 
@@ -255,13 +259,10 @@ INTENTIO uses [Ollama](https://ollama.com) to run local Large Language Models (L
 
 ### 2. Configure INTENTIO
 
-INTENTIO uses a `config.php` file for core settings. This file is excluded from version control for security and environment-specific reasons.
+INTENTIO uses a configuration file located at `config/app.php` for its core settings.
 
--   Copy the provided example configuration:
-    ```bash
-    cp config.example.php config.php
-    ```
--   Open `config.php` and review the settings. You may need to adjust paths or model names to match your local setup.
+-   Review the provided `config/app.php` file. You may need to adjust Ollama server details, default model names, or paths to match your local setup.
+-   For local overrides, you can create a `config/app.local.php` file. This file will be loaded *after* `config/app.php` and its values will override existing ones. `config/app.local.php` is ignored by version control.
 
 ### 3. Initialize a Knowledge Package (Recommended First Step)
 
@@ -274,30 +275,32 @@ Start with a pre-configured cognitive environment. This is the quickest way to e
 ```
 This command will deploy the `hook_analyzer` package, setting up its knowledge space, specialized prompts (like `analyze_hook`), and generators in your INTENTIO environment. The package you initialize will become your `active_package`.
 
-### 3. Organize Your Custom Knowledge Space (Optional, for Advanced Users)
+### 3. Organize Your Custom Cognitive Space (Optional, for Advanced Users)
 
-While packages provide ready-made structures, you can still create and manage your own custom cognitive spaces.
+While packages provide ready-made structures, you can still create and manage your own custom cognitive spaces from scratch.
 
 INTENTIO treats your filesystem structure as a cognitive space.
 
 -   Create a main `spaces/` directory in the project root (if you haven't already).
--   Inside `spaces/`, create subdirectories for each "cognitive space" you want (e.g., `my_private_notes`, `project_research`).
--   Within each cognitive space directory, you can further organize your documents (e.g., Markdown files, text files) into "cognitive categories" like `reference/`, `memory/`, `opinion/`. The top-level folder within your space determines the category.
--   **If you want to define custom commands (prompts) for your space, create a `prompts/` subdirectory within your space's root (e.g., `spaces/my_private_notes/prompts/`) and add your `.md` prompt files there.**
+-   Inside `spaces/`, create a subdirectory for each "cognitive space" you want (e.g., `my_private_notes`, `project_research`).
+-   Within each cognitive space directory, INTENTIO expects the following structure:
+    -   **`knowledge/`**: This directory is the heart of your RAG system. Organize all your Markdown (`.md`) and text (`.txt`) files here. You can create any subfolder structure you desire (e.g., `knowledge/reference/`, `knowledge/memory/`, `knowledge/specific_project_data/`). INTENTIO will recursively scan and ingest all supported files from this directory and its subfolders.
+    -   **`prompts/`**: This fixed directory is where you place all your custom prompt templates (`.md` files) for this specific space. Each `.md` file represents a distinct AI persona or command.
 
-    Example structure for a custom space:
+    Example structure for a custom space (`spaces/my_private_notes/`):
     ```
     spaces/
     └── my_private_notes/
-        ├── knowledge/        # All files here are ingested for RAG
+        ├── knowledge/              # Root for all RAG content
         │   ├── reference/
         │   │   └── article_summary.md
-        │   ├── opinion/
-        │   │   └── my_thoughts.txt
-        │   └── journal/
-        │       └── day_1.md
-        └── prompts/          # Your custom commands (prompts) for this space
-            └── my_question_answering.md
+        │   ├── memory/
+        │   │   └── personal_insights.md
+        │   └── project_data/
+        │       └── meeting_notes.txt
+        └── prompts/                # Your custom commands/prompt templates
+            ├── default.md
+            └── summarize_doc.md
     ```
 
 ### 4. Basic Usage
@@ -305,45 +308,40 @@ INTENTIO treats your filesystem structure as a cognitive space.
 Once Ollama is running and your knowledge environment (either package-initialized or custom) is ready, you can use INTENTIO's commands:
 
 **a. Ingest Your Knowledge (for Custom Spaces or after package updates):**
-   Process your knowledge space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use. **Only content within the `spaces/` subdirectory of your space will be ingested.**
+   Process your cognitive space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use. **All supported files (`.md`, `.txt`) within the `knowledge/` and `prompts/` subdirectories of your space will be ingested.**
 
    ```bash
-   ./intentio ingest --space=spaces/my_private_notes
+   ./intentio ingest --space=my_private_notes
    # Or for a package-initialized space:
-   # ./intentio ingest --space=spaces/hook_analyzer
+   # ./intentio ingest --space=hook_analyzer
    ```
-   *Replace `spaces/my_private_notes` with the path to your specific knowledge space.*
+   *Replace `my_private_notes` with the name of your specific cognitive space. The system will look for it under your configured `spaces_base_path`.*
 
 **b. Chat with Your Knowledge:**
    Interact with a specific cognitive space, choosing a prompt template (command) defined within that space.
 
    ```bash
-   ./intentio chat "Analyze this hook: 'Most tools fail due to busyness.'" --space=spaces/hook_analyzer --template=analyze_hook
+   ./intentio chat "Analyze this hook: 'Most tools fail due to busyness.'" --space=hook_analyzer --prompt-key=analyze_hook
    ```
-   *Replace with your query, knowledge space path, and the name of a template available in that space (e.g., `analyze_hook`, `default`).*
+   *Replace `hook_analyzer` with the name of your cognitive space, and `analyze_hook` with the name of a prompt template available in that space.*
 
 **c. Interactive Mode (Recommended for exploration and guided experience):**
-   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates (commands), and chat. The system will intelligently detect uningested or outdated spaces and offer to ingest/re-ingest them. All prompt templates are loaded exclusively from the `prompts/` directory of the currently active knowledge package/space.
+   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates (commands), and chat. The system will intelligently detect uningested or outdated spaces and offer to ingest/re-ingest them.
 
    ```bash
    ./intentio interact
    ```
-   *Follow the on-screen prompts to select a space, template, and chat.*
+   *Follow the on-screen prompts to select a space and initial prompt template. Once in the session, type `switch_prompt` to change the active prompt template.*
 
 **d. Clear a Cognitive Space's Data:**
    Remove the SQLite vector store for a specified cognitive space. This is useful for starting fresh or if you've significantly restructured your source files and want a full re-ingestion.
 
    ```bash
-   ./intentio clear --space=spaces/my_private_notes
+   ./intentio clear --space=my_private_notes
    ```
-   *Replace `spaces/my_private_notes` with the path to the space you wish to clear.*
+   *Replace `my_private_notes` with the name of the space you wish to clear.*
 
-**e. Get System Status:**
-   View an overview of your INTENTIO setup, including configured paths, available knowledge spaces, and Ollama server/model status.
 
-   ```bash
-   ./intentio status
-   ```
 
 **f. Get General Help:**
    ```bash

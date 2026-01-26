@@ -6,6 +6,8 @@ namespace Intentio\Domain\Cognitive;
 
 use Intentio\Domain\Space\Space;
 use Intentio\Shared\Exceptions\IntentioException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 final class PromptResolver
 {
@@ -58,21 +60,10 @@ final class PromptResolver
         // This regex looks for patterns like `filename.md` or `path/filename.md`
         if (preg_match_all('/`?([a-zA-Z0-9_\-\.\/]+\.md)`?/', $mainContent, $matches)) {
             foreach ($matches[1] as $referencedFile) {
-                // Construct full path for knowledge files (assuming they are in knowledge/ or subdirs)
-                // This logic might need to be more sophisticated if knowledge files can be anywhere
-                $possiblePaths = [
-                    $space->getPath() . '/knowledge/' . $referencedFile,
-                    $space->getPath() . '/knowledge/memory/' . $referencedFile,
-                    $space->getPath() . '/knowledge/reference/' . $referencedFile,
-                    $space->getPath() . '/knowledge/opinion/' . $referencedFile,
-                    // Add more potential knowledge subdirectories as needed
-                ];
-
-                foreach ($possiblePaths as $path) {
-                    if (file_exists($path) && is_readable($path)) {
-                        $contextFiles[basename($path)] = $path; // Store unique basename => full path
-                        break;
-                    }
+                // Search for the referenced file within the knowledge path of the space
+                $foundPath = $this->findFileInKnowledge($space, $referencedFile);
+                if ($foundPath) {
+                    $contextFiles[basename($foundPath)] = $foundPath; // Store unique basename => full path
                 }
             }
         }
@@ -105,5 +96,43 @@ final class PromptResolver
         }
         sort($keys);
         return $keys;
+    }
+
+    /**
+     * Recursively searches for a file within the space's knowledge directory.
+     * @param Space $space The cognitive space.
+     * @param string $filename The name of the file to find (e.g., 'platform_specs.md' or 'memory/past_performance.md').
+     * @return string|null The full path to the file if found, otherwise null.
+     */
+    private function findFileInKnowledge(Space $space, string $filename): ?string
+    {
+        $knowledgePath = $space->getKnowledgePath();
+        if (!is_dir($knowledgePath)) {
+            return null;
+        }
+
+        // Normalize filename for consistent matching
+        $normalizedFilename = str_replace('\\', '/', $filename); // Handle Windows paths if any
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($knowledgePath, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile()) {
+                // Check if the exact filename matches (e.g., "file.md")
+                if ($file->getFilename() === basename($normalizedFilename)) {
+                    // Also ensure that if the referenced filename included a path (e.g., "sub/file.md"),
+                    // the found file's relative path matches that part.
+                    // This is crude, but better than just basename.
+                    $relativePath = str_replace($knowledgePath . '/', '', $file->getPathname());
+                    if (str_ends_with($relativePath, $normalizedFilename)) {
+                         return $file->getPathname();
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

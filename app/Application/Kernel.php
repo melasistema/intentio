@@ -10,7 +10,7 @@ use Intentio\Application\Console\Commands\ClearCommand;
 use Intentio\Application\Console\Commands\IngestCommand;
 use Intentio\Application\Console\Commands\InitCommand;
 use Intentio\Application\Console\Commands\InteractCommand; // Uncommented
-// use Intentio\Application\Console\Commands\StatusCommand;   // Re-evaluate if needed
+use Intentio\Application\Console\Commands\StatusCommand;   // Uncommented
 use Intentio\Application\Console\Commands\SpacesCommand;
 
 // Placeholder for Infrastructure dependencies that will be injected
@@ -106,7 +106,10 @@ final class Kernel
                 $this->config,
                 $promptResolver // Added promptResolver
             ));
-            // $consoleApplication->addCommand(new StatusCommand($cognitiveEngine, $localSpaceRepository));
+            $consoleApplication->addCommand(new StatusCommand( // Uncommented and instantiated
+                $localSpaceRepository,
+                $this->config
+            ));
             $consoleApplication->addCommand(new SpacesCommand($localSpaceRepository)); // New command to list spaces
 
             return $consoleApplication->run();

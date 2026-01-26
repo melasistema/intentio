@@ -15,6 +15,13 @@ if (file_exists($configPath)) {
     $config = require $configPath;
 }
 
+// Load local overrides from config/app.local.php
+$localConfigPath = __DIR__ . '/config/app.local.php';
+if (file_exists($localConfigPath)) {
+    $localConfig = require $localConfigPath;
+    $config = array_replace_recursive($config, $localConfig); // Merge local config over base config
+}
+
 // Ensure essential paths are set in config
 if (!isset($config['spaces_base_path'])) {
     $config['spaces_base_path'] = __DIR__ . '/spaces';

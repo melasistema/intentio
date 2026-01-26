@@ -22,25 +22,13 @@ final class Space
         return $this->path;
     }
 
-    // You can add methods here to access internal paths like reference/, memory/, etc.
-    // e.g., public function getReferencePath(): string { return $this->path . '/reference'; }
-    public function getReferencePath(): string
-    {
-        return $this->path . '/reference';
-    }
-
-    public function getMemoryPath(): string
-    {
-        return $this->path . '/memory';
-    }
-
-    public function getOpinionPath(): string
-    {
-        return $this->path . '/opinion';
-    }
-
     public function getPromptsPath(): string
     {
         return $this->path . '/prompts';
+    }
+
+    public function getKnowledgePath(): string
+    {
+        return $this->path . '/knowledge';
     }
 }
