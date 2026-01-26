@@ -8,8 +8,28 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 
 ## [unreleased]
 
-### fixed
--   **`hook_analyzer` package readme:** Addressed multi-platform command instructions.
+### Added
+-   **System Status Command:** Re-introduced `status` command (`./intentio status`) to display comprehensive system, configuration, and Ollama server/model information for enhanced inspectability.
+
+### Changed
+-   **Architectural Overhaul (CLI-First, Domain-Driven Refactor):**
+    -   Complete refactoring to a layered, domain-driven architecture (`Application`, `Domain`, `Infrastructure`, `Shared`).
+    -   Introduction of explicit `Space` and `Blueprint` domain objects, managed by dedicated repositories and factories.
+    -   Centralization of core cognitive logic within a `CognitiveEngine` orchestrating `IngestionService`, `RetrievalService`, and `PromptResolver`.
+    -   Transition from procedural bootstrapping and static helper classes to dependency injection and formal interfaces for core services.
+    -   Flexible Configuration: Replaced `config.php` with `config/app.php` and support for `config/app.local.php` overrides, and updated `intentio` executable to load config from `config/app.php`.
+    -   Enhanced CLI Commands: `InteractCommand` now features dynamic space/prompt selection, manifest-driven configuration, and automatic ingestion.
+    -   Flexible Cognitive Space Structure: Moved from fixed subdirectories (e.g., `reference/`, `memory/`) to a flexible `knowledge/` root where users define subfolders, while `prompts/` remains fixed.
+    -   Ollama Integration: `LocalEmbeddingAdapter` and `OllamaAdapter` now directly interact with Ollama API for embeddings and LLM generation, using configurable models and API paths.
+    -   Vector Storage: Implemented `SQLiteVectorStore` to manage space-specific vector indexes.
+    -   Updated `README.md` to reflect all architectural changes, new command usages, and the flexible cognitive space structure.
+
+### Removed
+-   **Legacy Codebase:** Eliminated old `src/` directories (Command, Cli, Embedding, Ingestion, Knowledge, Orchestration, Package, Storage) and their contents, along with outdated procedural patterns, global state, and direct filesystem dependencies from core logic.
+
+### Fixed
+-   **Syntax Errors:** Resolved parser errors caused by incorrect namespace separators.
+-   **Typo in 'switch_prompt':** Corrected handling of 'switch_prompt' in interactive mode.
 
 ## [0.1.5] - 2026-01-22
 
