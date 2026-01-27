@@ -1,31 +1,35 @@
 #!/usr/bin/env php
 <?php
 
-// intentio - A local, private, CLI-based cognitive environment.
+declare(strict_types=1);
 
-require __DIR__ . '/vendor/autoload.php';
+use Intentio\Application\Kernel;
 
-use Intentio\Kernel;
-use Intentio\Cli\Output;
-use Intentio\Cli\Input;
+// Autoload Composer dependencies
+require_once __DIR__ . '/vendor/autoload.php';
 
-// Exit gracefully if not run from the command line.
-if (PHP_SAPI !== 'cli') {
-    Output::writeln("INTENTIO is a command-line tool.");
-    exit(1);
+// Load configuration from config/app.php
+$config = [];
+$configPath = __DIR__ . '/config/app.php';
+if (file_exists($configPath)) {
+    $config = require $configPath;
 }
 
-// Load configuration
-$config = require __DIR__ . '/config.php';
-
-// Parse CLI arguments
-$input = new Input($argv);
-
-try {
-    $kernel = new Kernel($config, $input);
-    $kernel->run();
-} catch (\Throwable $e) {
-    Output::writeln("An unexpected error occurred: " . $e->getMessage());
-    exit(1);
+// Load local overrides from config/app.local.php
+$localConfigPath = __DIR__ . '/config/app.local.php';
+if (file_exists($localConfigPath)) {
+    $localConfig = require $localConfigPath;
+    $config = array_replace_recursive($config, $localConfig); // Merge local config over base config
 }
 
+// Ensure essential paths are set in config
+if (!isset($config['spaces_base_path'])) {
+    $config['spaces_base_path'] = __DIR__ . '/spaces';
+}
+if (!isset($config['blueprints_base_path'])) {
+    $config['blueprints_base_path'] = __DIR__ . '/packages';
+}
+
+// Run the application kernel
+$kernel = new Kernel($config);
+exit($kernel->run());

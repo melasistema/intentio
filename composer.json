@@ -19,11 +19,16 @@
     },
     "minimum-stability": "stable",
     "require": {
-        "php": ">=8.2"
+        "php": ">=8.2",
+        "ext-ctype": "*",
+        "ext-readline": "*"
     },
     "autoload": {
         "psr-4": {
-            "Intentio\\": "src/"
+            "Intentio\\Application\\": "app/Application/",
+            "Intentio\\Domain\\": "app/Domain/",
+            "Intentio\\Infrastructure\\": "app/Infrastructure/",
+            "Intentio\\Shared\\": "app/Shared/"
         }
     }
 }
