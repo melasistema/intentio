@@ -149,7 +149,7 @@ final class InitCommand implements CommandInterface
         $this->fileCopier->copyDirectory(
             $blueprint->getPath(),
             $spacePath,
-            ['manifest.md', 'README.md'] // Don't copy manifest or README from blueprint
+            [] // Now copies all files, including manifest.md and README.md
         );
 
         // Create the Space domain object

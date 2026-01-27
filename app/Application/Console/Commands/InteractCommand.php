@@ -224,7 +224,7 @@ final class InteractCommand implements CommandInterface
         $this->fileCopier->copyDirectory(
             $chosenBlueprint->getPath(),
             $spacePath,
-            ['manifest.md', 'README.md']
+            [] // Now copies all files, including manifest.md and README.md
         );
 
         $space = $this->spaceFactory->createSpace($spaceName, $spacePath);
