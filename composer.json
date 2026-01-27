@@ -19,7 +19,9 @@
     },
     "minimum-stability": "stable",
     "require": {
-        "php": ">=8.2"
+        "php": ">=8.2",
+        "ext-ctype": "*",
+        "ext-readline": "*"
     },
     "autoload": {
         "psr-4": {

@@ -130,6 +130,9 @@ final class InitCommand implements CommandInterface
         }
     }
 
+    /**
+     * @throws IntentioException
+     */
     private function initializeSpace(string $blueprintName, string $spaceName): void
     {
         // This relies on the 'spaces_base_path' config being set correctly.

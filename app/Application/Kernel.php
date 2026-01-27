@@ -77,11 +77,9 @@ final class Kernel
 
             $cognitiveEngine = new CognitiveEngine(
                 $ollamaAdapter,
-                $embeddingAdapter,
                 $ingestionService,
                 $retrievalService,
-                $promptResolver,
-                $vectorStore // New
+                $vectorStore
             );
 
             $consoleApplication = new ConsoleApplication($this->config['app_name'] ?? 'INTENTIO', '0.1.0');

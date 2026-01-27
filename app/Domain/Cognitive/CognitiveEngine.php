@@ -6,18 +6,14 @@ namespace Intentio\Domain\Cognitive;
 
 use Intentio\Domain\Space\Space;
 use Intentio\Domain\Model\LLMInterface;
-use Intentio\Domain\Model\EmbeddingInterface;
-use Intentio\Shared\Exceptions\IntentioException;
 
-final class CognitiveEngine
+final readonly class CognitiveEngine
 {
     public function __construct(
-        private readonly LLMInterface         $llmAdapter,
-        private readonly EmbeddingInterface   $embeddingAdapter,
-        private readonly IngestionService     $ingestionService,
-        private readonly RetrievalService     $retrievalService,
-        private readonly PromptResolver       $promptResolver,
-        private readonly VectorStoreInterface $vectorStore
+        private LLMInterface         $llmAdapter,
+        private IngestionService     $ingestionService,
+        private RetrievalService     $retrievalService,
+        private VectorStoreInterface $vectorStore
     )
     {
     }
@@ -41,36 +37,36 @@ final class CognitiveEngine
         $additionalContext = [];
         foreach ($promptContextFiles as $filePath) {
             if (file_exists($filePath) && is_readable($filePath)) {
-                $additionalContext[] = "--- Content from " . basename($filePath) . " ---\\n" . file_get_contents($filePath);
+                $additionalContext[] = "--- Content from " . basename($filePath) . " ---\n" . file_get_contents($filePath);
             }
         }
-        $fullContextContent = implode("\\n\\n", $additionalContext);
+        $fullContextContent = implode("\n\n", $additionalContext);
 
         // Format retrieved context for the LLM
-        $retrievedContextString = implode("\\n\\n", array_map(function ($item) {
-            return "Source: {" . $item['source'] . "}\\nContent: {" . $item['content'] . "}";
+        $retrievedContextString = implode("\n\n", array_map(function ($item) {
+            return "Source: {" . $item['source'] . "}\nContent: {" . $item['content'] . "}";
         }, $retrievedContext));
 
         // Combine all context: additional files + retrieved chunks
         $finalContext = [];
         if (!empty($fullContextContent)) {
-            $finalContext[] = "### Knowledge Base\\n" . $fullContextContent;
+            $finalContext[] = "### Knowledge Base\n" . $fullContextContent;
         }
         if (!empty($retrievedContextString)) {
-            $finalContext[] = "### Retrieved Information\\n" . $retrievedContextString;
+            $finalContext[] = "### Retrieved Information\n" . $retrievedContextString;
         }
-        $finalContextString = implode("\\n\\n", $finalContext);
+        $finalContextString = implode("\n\n", $finalContext);
 
 
         // 3. Construct the full prompt for the LLM
         $fullPrompt = sprintf(
-            "%s\\n%s\\n\\n%s", // Instruction, Context, Main Prompt (content with QUERY placeholder)
+            "%s\n%s\n\n%s", // Instruction, Context, Main Prompt (content with QUERY placeholder)
             empty($promptInstruction) ? '' : "Instruction: " . $promptInstruction, // Add instruction if present
-            empty($finalContextString) ? '' : "Context:\\n" . $finalContextString,
+            empty($finalContextString) ? '' : "Context:\n" . $finalContextString,
             str_replace('{{QUERY}}', $message, $promptContent) // Replace {{QUERY}} placeholder
         );
         // Clean up empty lines that might result from missing instruction or context
-        $fullPrompt = preg_replace("/\\n{2,}/", "\\n\\n", $fullPrompt);
+        $fullPrompt = preg_replace("/\n{2,}/", "\n\n", $fullPrompt);
 
 
         // 4. Get response from LLM
