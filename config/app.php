@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'app_name' => 'INTENTIO',
-    'app_version' => '0.1.0',
+    'app_version' => '0.2.0',
 
     // Base paths for cognitive spaces and blueprints (packages)
     'spaces_base_path' => __DIR__ . '/../spaces',
