@@ -8,6 +8,8 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 
 ## [unreleased]
 
+## [0.2.0] - 2026-01-28
+
 ### Added
 -   **System Status Command:** Re-introduced `status` command (`./intentio status`) to display comprehensive system, configuration, and Ollama server/model information for enhanced inspectability.
 
