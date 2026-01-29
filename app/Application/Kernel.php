@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Intentio\Application;
 
+use Intentio\Application\Console\Commands\RenderCommand;
 use Intentio\Application\Console\ConsoleApplication;
 use Intentio\Application\Console\Commands\ChatCommand;
 use Intentio\Application\Console\Commands\ClearCommand;
@@ -50,7 +51,8 @@ final class Kernel
             $ollamaAdapter = new OllamaAdapter(
                 $ollamaConfig,
                 $llmModel,
-                $llmOptions
+                $llmOptions,
+                $this->config['image_renderer']
             );
             $embeddingAdapter = new LocalEmbeddingAdapter(
                 $ollamaConfig, // Pass ollamaConfig here
@@ -109,6 +111,7 @@ final class Kernel
                 $this->config
             ));
             $consoleApplication->addCommand(new SpacesCommand($localSpaceRepository)); // New command to list spaces
+            $consoleApplication->addCommand(new RenderCommand($cognitiveEngine, $localSpaceRepository, $promptResolver));
 
             return $consoleApplication->run();
         } catch (IntentioException $e) {

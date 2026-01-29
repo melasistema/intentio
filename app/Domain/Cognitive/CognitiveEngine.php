@@ -73,11 +73,16 @@ final readonly class CognitiveEngine
         return $this->llmAdapter->generate($fullPrompt, '', $options['llm_options'] ?? []);
     }
 
+    public function render(Space $space, string $query, array $options): void
+    {
+        // The $query is already the final prompt, extracted by the InteractCommand.
+        $this->llmAdapter->render($query, $options);
+    }
+
     public function clear(Space $space): void
     {
         fwrite(STDOUT, "CognitiveEngine: Clearing ingested data for space '" . $space->getName() . "'." . PHP_EOL);
         $this->vectorStore->clear($space);
         fwrite(STDOUT, "CognitiveEngine: Ingested data cleared for space '" . $space->getName() . "'." . PHP_EOL);
     }
-
 }

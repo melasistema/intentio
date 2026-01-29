@@ -32,6 +32,7 @@ final class PromptResolver
         }
 
         $fileContent = file_get_contents($promptPath);
+        fwrite(STDOUT, "DEBUG: PromptResolver - fileContent type: " . gettype($fileContent) . ", length: " . (is_string($fileContent) ? strlen($fileContent) : 'N/A') . PHP_EOL); // DEBUG
         if ($fileContent === false) {
             throw new IntentioException("Failed to read prompt file: {$promptPath}");
         }
@@ -42,9 +43,10 @@ final class PromptResolver
 
         // Parse YAML front-matter
         if (preg_match('/^---\s*(.*?)\s*---(?s)(.*)$/', $fileContent, $matches)) {
+            fwrite(STDOUT, "DEBUG: PromptResolver - Front-matter matched." . PHP_EOL); // DEBUG
             $frontMatterRaw = $matches[1];
             $mainContent = trim($matches[2]);
-
+            fwrite(STDOUT, "DEBUG: PromptResolver - mainContent after front-matter type: " . gettype($mainContent) . ", length: " . (is_string($mainContent) ? strlen($mainContent) : 'N/A') . PHP_EOL); // DEBUG
             // Simple YAML-like parser for front-matter (key: value)
             $frontMatter = [];
             foreach (explode("\n", $frontMatterRaw) as $line) {
@@ -54,7 +56,10 @@ final class PromptResolver
                 }
             }
             $instruction = $frontMatter['instruction'] ?? '';
+        } else {
+            fwrite(STDOUT, "DEBUG: PromptResolver - Front-matter NOT matched." . PHP_EOL); // DEBUG
         }
+        fwrite(STDOUT, "DEBUG: PromptResolver - Returning content type: " . gettype($mainContent) . PHP_EOL); // DEBUG
 
         // Identify referenced .md files within the prompt content for contextual knowledge
         // This regex looks for patterns like `filename.md` or `path/filename.md`

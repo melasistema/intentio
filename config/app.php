@@ -32,4 +32,10 @@ return [
     'embedding' => [
         'model_name' => 'nomic-embed-text', // From original embedding.model_name
     ],
+
+    // Image renderer configuration
+    'image_renderer' => [
+        'model_name' => 'x/flux2-klein',
+        'renderer_folder' => __DIR__ . '/../renderer_images',
+    ],
 ];

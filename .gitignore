@@ -34,6 +34,7 @@ config.php
 references/
 /spaces/
 .intentio_store/
+rendered_images/
 
 # ======================================
 # Documentation / AI artifacts
