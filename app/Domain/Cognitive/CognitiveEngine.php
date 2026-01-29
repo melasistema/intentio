@@ -6,6 +6,7 @@ namespace Intentio\Domain\Cognitive;
 
 use Intentio\Domain\Space\Space;
 use Intentio\Domain\Model\LLMInterface;
+use Intentio\Domain\Model\ImageRendererInterface; // Import the new interface
 
 final readonly class CognitiveEngine
 {
@@ -13,7 +14,8 @@ final readonly class CognitiveEngine
         private LLMInterface         $llmAdapter,
         private IngestionService     $ingestionService,
         private RetrievalService     $retrievalService,
-        private VectorStoreInterface $vectorStore
+        private VectorStoreInterface $vectorStore,
+        private ImageRendererInterface $imageRenderer // Add the new dependency
     )
     {
     }
@@ -73,10 +75,10 @@ final readonly class CognitiveEngine
         return $this->llmAdapter->generate($fullPrompt, '', $options['llm_options'] ?? []);
     }
 
-    public function render(Space $space, string $query, array $options): void
+    public function render(Space $space, string $query, array $options): string // Changed return type to string
     {
-        // The $query is already the final prompt, extracted by the InteractCommand.
-        $this->llmAdapter->render($query, $options);
+        // Now use the dedicated image renderer
+        return $this->imageRenderer->render($query, $options);
     }
 
     public function clear(Space $space): void

@@ -157,16 +157,15 @@ final class InteractCommand implements CommandInterface
 
                                 $manifestToRender = file_get_contents($requiredContextPath);
 
-                                $chatOptionsForExtraction = $options;
-                                $chatOptionsForExtraction['prompt_key'] = 'extract_render_prompt'; // Use the new prompt for extraction
-                                $chatOptionsForExtraction['prompt_content'] = file_get_contents($space->getPromptsPath() . '/extract_render_prompt.md'); // Load prompt content
-                                $chatOptionsForExtraction['prompt_instruction'] = ''; // No specific instruction needed for this prompt itself
-
-                                fwrite(STDOUT, "DEBUG: Calling LLM to extract master prompt from manifest using template: 'extract_render_prompt'." . PHP_EOL);
-                                $masterPrompt = $this->cognitiveEngine->chat($space, $manifestToRender, $chatOptionsForExtraction);
+                                // Extract master prompt using regex from the manifest content
+                                if (preg_match('/<<<RENDER_PROMPT>>>(.*?)<<<END_RENDER_PROMPT>>>/s', $manifestToRender, $matches)) {
+                                    $masterPrompt = trim($matches[1]);
+                                } else {
+                                    $masterPrompt = '';
+                                }
 
                                 if (empty($masterPrompt)) {
-                                    fwrite(STDERR, "Error: The LLM failed to extract a master prompt from the manifest." . PHP_EOL);
+                                    fwrite(STDERR, "Error: Could not extract master render prompt from the manifest using the expected tags." . PHP_EOL);
                                     break;
                                 }
 
@@ -253,29 +252,6 @@ final class InteractCommand implements CommandInterface
             }
         }
         return $config;
-    }
-
-    private function extractMasterPrompt(string $manifestContent): ?string
-    {
-        // Attempt to find the last quoted string in the entire manifest content
-        // This is a more resilient approach given inconsistent LLM heading output
-        if (preg_match_all('/"(.*?)"/s', $manifestContent, $allQuotedMatches)) {
-            if (!empty($allQuotedMatches[1])) {
-                $lastQuotedString = end($allQuotedMatches[1]);
-                return $lastQuotedString;
-            }
-        }
-        
-        // Fallback to previous regex if no quoted string found, just in case
-        if (preg_match('/(?:###|\*\*)\s*(?:[0-9]\.\s*)?(?:Preliminary Flux-2 Master Prompt|Flux-2 Interpretation Prompt)[\s:]*\n+(.*)/si', $manifestContent, $matches)) {
-            $promptSection = trim($matches[1]);
-            if (preg_match('/"(.*?)"/s', $promptSection, $quotedMatches)) {
-                return trim($quotedMatches[1]);
-            }
-            return $promptSection;
-        }
-
-        return null;
     }
 
     private function selectOrCreateSpace(?string $spaceName): Space

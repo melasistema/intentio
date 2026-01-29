@@ -17,6 +17,11 @@ Translate the Conceptual Core into technical photographic specifications.
 - **CMF:** Consult `textile_dictionary.md` for Material (Color, Material, Finish) interpretation for key elements.
 - **Aesthetics:** Consult `house_style.md` and `aesthetic_rules.md` for Color Palette, Contrast, Composition, and Forbidden Visual Traits.
 
-### 3. Preliminary Flux-2 Master Prompt
-A high-status, descriptive paragraph that avoids clickbait keywords, summarizing the above technical specs.
+### 3. Final Image Render Prompt (x/flux2-klein)
+This is the precise, final prompt for the `x/flux2-klein` image generation model, directly usable without further interpretation.
 Focus on: **Subject -> Action -> Environment -> Lighting -> Technicals.**
+Output ONLY the prompt string, wrapped in `<<<RENDER_PROMPT>>>` and `<<<END_RENDER_PROMPT>>>` tags.
+
+<<<RENDER_PROMPT>>>
+[LLM-generated image render prompt here]
+<<<END_RENDER_PROMPT>>>

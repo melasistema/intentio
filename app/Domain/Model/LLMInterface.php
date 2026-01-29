@@ -15,12 +15,5 @@ interface LLMInterface
      * @return string The generated response from the LLM.
      */
     public function generate(string $prompt, string $context = '', array $options = []): string;
-
-    /**
-     * Renders an image based on a given prompt.
-     *
-     * @param string $prompt The prompt for the image renderer.
-     * @param array $options Model-specific options.
-     */
-    public function render(string $prompt, array $options = []): void;
 }
+
