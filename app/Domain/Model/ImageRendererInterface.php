@@ -13,5 +13,5 @@ interface ImageRendererInterface
      * @param array $options Additional options for rendering (e.g., model name, output format).
      * @return string The path to the rendered image or a unique identifier.
      */
-    public function render(string $prompt, array $options = []): string;
+    public function render(string $prompt, string $rendererFolder, array $options = []): string;
 }

@@ -10,15 +10,13 @@ use Intentio\Shared\Exceptions\IntentioException;
 final class OllamaImageRenderer implements ImageRendererInterface
 {
     private string $imageRendererModel;
-    private string $rendererFolder;
 
     public function __construct(array $imageRendererConfig)
     {
         $this->imageRendererModel = $imageRendererConfig['model_name'] ?? '';
-        $this->rendererFolder = $imageRendererConfig['renderer_folder'] ?? '';
     }
 
-    public function render(string $prompt, array $options = []): string
+    public function render(string $prompt, string $rendererFolder, array $options = []): string
     {
         fwrite(STDOUT, "DEBUG: OllamaImageRenderer->render received prompt: '" . $prompt . "'" . PHP_EOL);
 
@@ -40,15 +38,15 @@ final class OllamaImageRenderer implements ImageRendererInterface
             $ollamaSavedPath = trim($matches[1]);
             
             // Ensure the renderer folder exists
-            if (!is_dir($this->rendererFolder)) {
-                if (!mkdir($this->rendererFolder, 0777, true)) {
-                    throw new IntentioException("Failed to create renderer folder: '{$this->rendererFolder}'.");
+            if (!is_dir($rendererFolder)) {
+                if (!mkdir($rendererFolder, 0777, true)) {
+                    throw new IntentioException("Failed to create renderer folder: '{$rendererFolder}'.");
                 }
             }
 
             // Generate a unique filename for our application
             $filename = 'render_' . time() . '_' . basename($ollamaSavedPath);
-            $targetPath = rtrim($this->rendererFolder, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
+            $targetPath = rtrim($rendererFolder, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
 
             // Move the file to our target renderer folder
             if (copy($ollamaSavedPath, $targetPath)) {

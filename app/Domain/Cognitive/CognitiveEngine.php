@@ -77,8 +77,11 @@ final readonly class CognitiveEngine
 
     public function render(Space $space, string $query, array $options): string // Changed return type to string
     {
+        // Construct space-specific renderer folder path
+        $spaceRendererFolder = $space->getPath() . '/renderer_images';
+
         // Now use the dedicated image renderer
-        return $this->imageRenderer->render($query, $options);
+        return $this->imageRenderer->render($query, $spaceRendererFolder, $options);
     }
 
     public function clear(Space $space): void
