@@ -120,7 +120,10 @@ final class InteractCommand implements CommandInterface
                 }
 
                 // As a fallback for design_intent, which isn't a formal action, we create a pseudo-action
-                if ($actionConfig === null && $currentPromptKey === ($manifestConfig['default_prompt'] ?? null) && $currentPromptKey === 'design_intent') {
+                if ($actionConfig === null
+                    && $currentPromptKey === ($manifestConfig['default_prompt'] ?? null)
+                    && ($manifestConfig['default_prompt'] ?? null) !== null
+                ) {
                     $actionConfig = ['updates_context' => 'lastGeneratedManifest'];
                 }
 
