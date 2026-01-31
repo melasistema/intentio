@@ -6,13 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Special thanks to [Luca Visciola](https://github.com/melasistema) for the original work and ongoing vision.
 
-## [0.2.1] - 2026-01-30
+## [unreleased]
+
+## [0.2.1] - 2026-01-31
 
 ### Added
 -   **Image Generation Capability:** Introduced `OllamaImageRenderer.php` to leverage local image generation models, enabling coherent visual rendering.
--   **Cartoon Universe Blueprint:** Added `@packages/cartoon_universe` as a new blueprint to demonstrate consistent cartoon styling with image generation models.
+-   **Rendering Workflow:** Introduced a streamlined image rendering workflow, allowing manifest generation and subsequent image creation in interactive sessions.
+-   **Cartoon Universe Blueprint:** Introduced the `@packages/cartoon_universe` cognitive environment, a blueprint package demonstrating INTENTIO's ability to deliver coherent and consistent visual rendering in a fun, cartoon style.
 
-## [unreleased]
+### Removed
+-   **"Refine" Interaction:** Eliminated the 'refine' option from interactive manifest processing (including removal from manifest files) to enhance stability and ensure predictable LLM behavior.
+
+### Changed
+-   **Interactive Context Management:** Implemented forced prompt re-selection after *every* LLM response within interactive sessions, ensuring a clean operational context for subsequent queries and preventing unintended LLM state accumulation.
 
 ## [0.2.0] - 2026-01-28
 

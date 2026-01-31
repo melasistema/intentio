@@ -1,7 +1,7 @@
 # Cartoon Universe – Manifest
 
 name: Cartoon Universe
-version: 0.1
+version: 0.2
 domain: cartoon style / visual grammar / consistent aesthetics
 default_prompt: cartoon_scene_intent
 
@@ -22,11 +22,3 @@ actions:
     handler: "image_renderer"
     context_required: "lastGeneratedManifest"
     updates_context: null
-
-  refine:
-    description: "Refine the current cartoon manifest based on new instructions."
-    template: "refine_cartoon_manifest"
-    handler: "manifest_llm_refiner"
-    context_required: "lastGeneratedManifest"
-    query_required: true
-    updates_context: "lastGeneratedManifest"

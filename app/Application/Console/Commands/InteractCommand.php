@@ -143,7 +143,7 @@ final class InteractCommand implements CommandInterface
 
                     if ($renderAction) {
                         while (true) {
-                            fwrite(STDOUT, "\nRender this manifest? (yes/no/refine): ");
+                            fwrite(STDOUT, "\nRender this manifest? (yes/no): ");
                             $choice = trim(fgets(STDIN));
 
                             if (in_array(strtolower($choice), ['yes', 'y'])) {
@@ -174,19 +174,29 @@ final class InteractCommand implements CommandInterface
 
                                 fwrite(STDOUT, "DEBUG: Extracted master prompt: '" . $masterPrompt . "'" . PHP_EOL);
                                 $this->cognitiveEngine->render($space, $masterPrompt, []);
+                                fwrite(STDOUT, "Image rendering complete." . PHP_EOL);
                                 break;
 
                             } elseif (in_array(strtolower($choice), ['no', 'n'])) {
-                                break;
-                            } elseif (in_array(strtolower($choice), ['refine', 'r'])) {
-                                fwrite(STDOUT, "Please provide your refinement instructions." . PHP_EOL);
+                                fwrite(STDOUT, "Rendering skipped." . PHP_EOL);
                                 break;
                             } else {
-                                fwrite(STDERR, "Invalid choice. Please enter 'yes', 'no', or 'refine'." . PHP_EOL);
+                                fwrite(STDERR, "Invalid choice. Please enter 'yes' or 'no'." . PHP_EOL);
                             }
                         }
                     }
                 }
+                
+                // Always force prompt re-selection after any LLM response to ensure interaction closure
+                fwrite(STDOUT, "\nPlease select a new prompt template for further interaction." . PHP_EOL);
+                $resolvedPrompt = $this->selectPromptTemplate($space, null);
+                $currentPromptKey = $resolvedPrompt['key'];
+                $currentPromptContent = $resolvedPrompt['content'];
+                $currentPromptInstruction = $resolvedPrompt['instruction'];
+                $currentPromptContextFiles = $resolvedPrompt['context_files'];
+                fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
+                fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
+
             }
 
             return 0;
