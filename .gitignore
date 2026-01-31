@@ -27,6 +27,7 @@ build/
 # ======================================
 .env
 config.php
+/config/app.local.php
 
 # ======================================
 # Project-specific generated / local data

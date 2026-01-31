@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'app_name' => 'INTENTIO',
-    'app_version' => '0.2.0',
+    'app_version' => '0.2.1',
 
     // Base paths for cognitive spaces and blueprints (packages)
     'spaces_base_path' => __DIR__ . '/../spaces',
@@ -35,6 +35,6 @@ return [
 
     // Image renderer configuration
     'image_renderer' => [
-        'model_name' => 'x/flux2-klein',
+        'model_name' => 'x/z-image-turbo',
     ],
 ];
