@@ -129,6 +129,12 @@ Discover and activate a package with a single command:
 ```
 This command will deploy the chosen package, setting up its knowledge space, specialized prompts, and generators in your INTENTIO environment.
 
+**Browse Available Packages:**
+Explore the specific README files for each pre-built package to understand its purpose, internal structure, and usage examples:
+
+-   [Hook Analyzer](packages/hook_analyzer/README.md)
+-   [Cartoon Universe](packages/cartoon_universe/README.md)
+
 ---
 
 ### The Cognitive Space Structure
