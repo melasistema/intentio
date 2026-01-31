@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Special thanks to [Luca Visciola](https://github.com/melasistema) for the original work and ongoing vision.
 
+## [0.2.1] - 2026-01-30
+
+### Added
+-   **Image Generation Capability:** Introduced `OllamaImageRenderer.php` to leverage local image generation models, enabling coherent visual rendering.
+-   **Cartoon Universe Blueprint:** Added `@packages/cartoon_universe` as a new blueprint to demonstrate consistent cartoon styling with image generation models.
+
 ## [unreleased]
 
 ## [0.2.0] - 2026-01-28
