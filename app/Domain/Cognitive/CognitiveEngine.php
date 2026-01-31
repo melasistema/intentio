@@ -6,6 +6,7 @@ namespace Intentio\Domain\Cognitive;
 
 use Intentio\Domain\Space\Space;
 use Intentio\Domain\Model\LLMInterface;
+use Intentio\Domain\Model\ImageRendererInterface; // Import the new interface
 
 final readonly class CognitiveEngine
 {
@@ -13,7 +14,8 @@ final readonly class CognitiveEngine
         private LLMInterface         $llmAdapter,
         private IngestionService     $ingestionService,
         private RetrievalService     $retrievalService,
-        private VectorStoreInterface $vectorStore
+        private VectorStoreInterface $vectorStore,
+        private ImageRendererInterface $imageRenderer // Add the new dependency
     )
     {
     }
@@ -73,11 +75,19 @@ final readonly class CognitiveEngine
         return $this->llmAdapter->generate($fullPrompt, '', $options['llm_options'] ?? []);
     }
 
+    public function render(Space $space, string $query, array $options): string // Changed return type to string
+    {
+        // Construct space-specific renderer folder path
+        $spaceRendererFolder = $space->getPath() . '/renderer_images';
+
+        // Now use the dedicated image renderer
+        return $this->imageRenderer->render($query, $spaceRendererFolder, $options);
+    }
+
     public function clear(Space $space): void
     {
         fwrite(STDOUT, "CognitiveEngine: Clearing ingested data for space '" . $space->getName() . "'." . PHP_EOL);
         $this->vectorStore->clear($space);
         fwrite(STDOUT, "CognitiveEngine: Ingested data cleared for space '" . $space->getName() . "'." . PHP_EOL);
     }
-
 }

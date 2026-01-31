@@ -16,3 +16,4 @@ interface LLMInterface
      */
     public function generate(string $prompt, string $context = '', array $options = []): string;
 }
+

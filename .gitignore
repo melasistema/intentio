@@ -27,6 +27,7 @@ build/
 # ======================================
 .env
 config.php
+/config/app.local.php
 
 # ======================================
 # Project-specific generated / local data
@@ -34,7 +35,7 @@ config.php
 references/
 /spaces/
 .intentio_store/
-rendered/
+renderer_images/
 
 # ======================================
 # Documentation / AI artifacts

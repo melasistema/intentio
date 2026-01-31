@@ -8,6 +8,19 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 
 ## [unreleased]
 
+## [0.2.1] - 2026-01-31
+
+### Added
+-   **Image Generation Capability:** Introduced `OllamaImageRenderer.php` to leverage local image generation models, enabling coherent visual rendering.
+-   **Rendering Workflow:** Introduced a streamlined image rendering workflow, allowing manifest generation and subsequent image creation in interactive sessions.
+-   **Cartoon Universe Blueprint:** Introduced the `@packages/cartoon_universe` cognitive environment, a blueprint package demonstrating INTENTIO's ability to deliver coherent and consistent visual rendering in a fun, cartoon style.
+
+### Removed
+-   **"Refine" Interaction:** Eliminated the 'refine' option from interactive manifest processing (including removal from manifest files) to enhance stability and ensure predictable LLM behavior.
+
+### Changed
+-   **Interactive Context Management:** Implemented forced prompt re-selection after *every* LLM response within interactive sessions, ensuring a clean operational context for subsequent queries and preventing unintended LLM state accumulation.
+
 ## [0.2.0] - 2026-01-28
 
 ### Added

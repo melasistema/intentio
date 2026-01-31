@@ -15,13 +15,16 @@ final class OllamaAdapter implements LLMInterface
     private array $defaultOptions;
     private int $timeout;
 
-    public function __construct(array $ollamaConfig, string $llmModel, array $defaultOptions = [])
-    {
+    public function __construct(
+        array $ollamaConfig,
+        string $llmModel,
+        array $defaultOptions
+    ) {
         $this->baseUrl = rtrim($ollamaConfig['base_url'] ?? 'http://127.0.0.1:11434', '/');
         $this->apiPathGenerate = $ollamaConfig['api_path_generate'] ?? '/api/generate';
         $this->llmModel = $llmModel;
         $this->defaultOptions = $defaultOptions;
-        $this->timeout = $ollamaConfig['timeout'] ?? 120; // Default to 120 seconds
+        $this->timeout = $ollamaConfig['timeout'] ?? 120;
     }
 
     public function generate(string $prompt, string $context = '', array $options = []): string

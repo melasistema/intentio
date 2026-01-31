@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Intentio\Application;
 
+use Intentio\Application\Console\Commands\RenderCommand;
 use Intentio\Application\Console\ConsoleApplication;
 use Intentio\Application\Console\Commands\ChatCommand;
 use Intentio\Application\Console\Commands\ClearCommand;
@@ -21,7 +22,9 @@ use Intentio\Infrastructure\Filesystem\LocalSpaceRepository;
 use Intentio\Infrastructure\Filesystem\LocalBlueprintRepository;
 use Intentio\Infrastructure\Filesystem\FileCopier;
 use Intentio\Infrastructure\Storage\SQLiteVectorStore; // New
+use Intentio\Infrastructure\ImageRenderer\OllamaImageRenderer; // New
 use Intentio\Domain\Cognitive\VectorStoreInterface; // New
+use Intentio\Domain\Model\ImageRendererInterface; // New
 
 use Intentio\Domain\Space\SpaceFactory;
 use Intentio\Domain\Cognitive\IngestionService;
@@ -61,6 +64,7 @@ final class Kernel
             $localSpaceRepository = new LocalSpaceRepository($this->config['spaces_base_path'] ?? __DIR__ . '/../../../spaces');
             $localBlueprintRepository = new LocalBlueprintRepository($this->config['blueprints_base_path'] ?? __DIR__ . '/../../../packages');
             $vectorStore = new SQLiteVectorStore(); // New - no constructor args needed anymore
+            $ollamaImageRenderer = new OllamaImageRenderer($this->config['image_renderer']); // Instantiate the new image renderer
 
             // Domain dependencies
             $spaceFactory = new SpaceFactory(); // Needs construction logic
@@ -79,7 +83,8 @@ final class Kernel
                 $ollamaAdapter,
                 $ingestionService,
                 $retrievalService,
-                $vectorStore
+                $vectorStore,
+                $ollamaImageRenderer // Inject the new image renderer
             );
 
             $consoleApplication = new ConsoleApplication($this->config['app_name'] ?? 'INTENTIO', '0.1.0');
@@ -109,6 +114,7 @@ final class Kernel
                 $this->config
             ));
             $consoleApplication->addCommand(new SpacesCommand($localSpaceRepository)); // New command to list spaces
+            $consoleApplication->addCommand(new RenderCommand($cognitiveEngine, $localSpaceRepository, $promptResolver));
 
             return $consoleApplication->run();
         } catch (IntentioException $e) {

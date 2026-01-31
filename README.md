@@ -77,13 +77,11 @@ INTENTIO does not simulate consciousness. It does not improvise identities. It d
 The same engine can become:
 
 -   A research assistant grounded in primary sources
-
 -   A personal archive that remembers carefully
-
 -   A legal or technical analyst that refuses to speculate
-
 -   A creative collaborator for platform-aware content generation, shaped by context, not noise
 -   A marketing strategist for multi-platform hook analysis and comprehensive reports
+-   A **visual art director**, consistently generating images in a defined style, like the `Cartoon Universe` blueprint for animated content.
 
 
 Not because the model changes — but because the **context does**.
@@ -230,6 +228,8 @@ By leveraging configurable prompt templates, you transform INTENTIO into a truly
 
 -   **Storage:** Local SQLite database (vector index)
 
+-   **Image Renderer:** Local Image Generation Models (via Ollama)
+
 
 No cloud calls. No silent training. No external APIs.
 
@@ -254,6 +254,7 @@ INTENTIO uses [Ollama](https://ollama.com) to run local Large Language Models (L
      ```bash
      ollama pull nomic-embed-text
      ollama pull llama3.1
+     ollama pull x/z-image-turbo
      ```
    - Verify installation: `ollama list` should show `nomic-embed-text:latest` and `llama3.1:latest`.
 
@@ -341,7 +342,16 @@ Once Ollama is running and your knowledge environment (either package-initialize
    ```
    *Replace `my_private_notes` with the name of the space you wish to clear.*
 
+**e. Generate an Image:**
+   After generating a manifest (e.g., using a blueprint like `cartoon_universe`) in interactive mode, you can render an image.
 
+   ```bash
+   ./intentio interact
+   # Follow prompts to select a space (e.g., 'cartoon_universe') and a prompt that generates a manifest.
+   # Once a manifest is generated, the system will prompt you to "Render this manifest? (yes/no/refine):"
+   # Type 'yes' to generate the image.
+   ```
+   *The generated image will be saved to the space's output directory.*
 
 **f. Get General Help:**
    ```bash

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'app_name' => 'INTENTIO',
-    'app_version' => '0.2.0',
+    'app_version' => '0.2.1',
 
     // Base paths for cognitive spaces and blueprints (packages)
     'spaces_base_path' => __DIR__ . '/../spaces',
@@ -31,5 +31,10 @@ return [
     // Embedding model configuration
     'embedding' => [
         'model_name' => 'nomic-embed-text', // From original embedding.model_name
+    ],
+
+    // Image renderer configuration
+    'image_renderer' => [
+        'model_name' => 'x/z-image-turbo',
     ],
 ];
