@@ -64,8 +64,9 @@ final class InteractCommand implements CommandInterface
             $currentPromptContent = $resolvedPrompt['content'];
             $currentPromptInstruction = $resolvedPrompt['instruction'];
             $currentPromptContextFiles = $resolvedPrompt['context_files'];
-            $currentInputType = $resolvedPrompt['input_type']; // New
-            $currentImageSourceFolder = $resolvedPrompt['image_source_folder']; // New
+            $currentInputType = $resolvedPrompt['input_type'];
+            $currentImageSourceFolder = $resolvedPrompt['image_source_folder'];
+            $currentVisionPrompt = $resolvedPrompt['vision_prompt'] ?? null; // New
 
             $this->ensureSpaceIngested($space);
 
@@ -111,9 +112,9 @@ final class InteractCommand implements CommandInterface
                     
                     fwrite(STDOUT, "Analyzing image: {$imageFilename}..." . PHP_EOL);
                     
-                    // Provide a concise, direct prompt to the vision model, asking it to respond with a specific error keyword on failure.
-                    $visionModelPrompt = "Interpret this 2D floor plan image, identifying all rooms, doors, windows, and their connections in a detailed list. Describe the layout and dimensions if possible. If the image is unclear, blurry, or not a floor plan, respond with only the word 'ERROR'.";
-                    $visionModelInterpretation = $this->cognitiveEngine->analyzeImage($imagePath, $visionModelPrompt, $options['vision_model_options'] ?? []);
+                    // Use the vision prompt from the front matter, with a fallback to a simple default.
+                    $visionModelPrompt = $currentVisionPrompt ?? 'Describe this image in detail. If the image is unclear or cannot be interpreted, respond with only the word \'ERROR\'.';
+                    $visionModelInterpretation = $this->cognitiveEngine->analyzeImage($imagePath, trim($visionModelPrompt), $options['vision_model_options'] ?? []);
                     
                     // Check for vision model error before proceeding
                     if (trim($visionModelInterpretation) === 'ERROR' || str_contains(strtolower($visionModelInterpretation), 'cannot interpret')) {
@@ -141,6 +142,7 @@ final class InteractCommand implements CommandInterface
                         $currentPromptContextFiles = $resolvedPrompt['context_files'];
                         $currentInputType = $resolvedPrompt['input_type'];
                         $currentImageSourceFolder = $resolvedPrompt['image_source_folder'];
+                        $currentVisionPrompt = $resolvedPrompt['vision_prompt'] ?? null;
                         fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
                         fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
                         continue;
@@ -252,8 +254,9 @@ final class InteractCommand implements CommandInterface
                 $currentPromptContent = $resolvedPrompt['content'];
                 $currentPromptInstruction = $resolvedPrompt['instruction'];
                 $currentPromptContextFiles = $resolvedPrompt['context_files'];
-                $currentInputType = $resolvedPrompt['input_type']; // New
-                $currentImageSourceFolder = $resolvedPrompt['image_source_folder']; // New
+                $currentInputType = $resolvedPrompt['input_type'];
+                $currentImageSourceFolder = $resolvedPrompt['image_source_folder'];
+                $currentVisionPrompt = $resolvedPrompt['vision_prompt'] ?? null;
                 fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
                 fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
 

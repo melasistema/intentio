@@ -62,6 +62,9 @@ final class PromptResolver
             $instruction = $frontMatter['instruction'] ?? '';
             $inputType = $frontMatter['input_type'] ?? 'text';
             $imageSourceFolder = $frontMatter['image_source_folder'] ?? null;
+            $visionPrompt = $frontMatter['vision_prompt'] ?? null; // New
+        } else {
+            $visionPrompt = null; // Ensure default if no front-matter
         }
 
         // Identify referenced .md files within the prompt content for contextual knowledge
@@ -81,6 +84,7 @@ final class PromptResolver
             'context_files' => array_values($contextFiles),
             'input_type' => $inputType,
             'image_source_folder' => $imageSourceFolder,
+            'vision_prompt' => $visionPrompt,
         ];
     }
 
