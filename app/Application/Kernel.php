@@ -25,6 +25,8 @@ use Intentio\Infrastructure\Storage\SQLiteVectorStore; // New
 use Intentio\Infrastructure\ImageRenderer\OllamaImageRenderer; // New
 use Intentio\Domain\Cognitive\VectorStoreInterface; // New
 use Intentio\Domain\Model\ImageRendererInterface; // New
+use Intentio\Domain\Model\VisionModelInterface; // New
+use Intentio\Infrastructure\VisionModel\OllamaVisionModel; // New
 
 use Intentio\Domain\Space\SpaceFactory;
 use Intentio\Domain\Cognitive\IngestionService;
@@ -65,6 +67,10 @@ final class Kernel
             $localBlueprintRepository = new LocalBlueprintRepository($this->config['blueprints_base_path'] ?? __DIR__ . '/../../../packages');
             $vectorStore = new SQLiteVectorStore(); // New - no constructor args needed anymore
             $ollamaImageRenderer = new OllamaImageRenderer($this->config['image_renderer']); // Instantiate the new image renderer
+            $ollamaVisionModel = new OllamaVisionModel(
+                $this->config['vision_model'] ?? [],
+                $ollamaConfig
+            );
 
             // Domain dependencies
             $spaceFactory = new SpaceFactory(); // Needs construction logic
@@ -84,7 +90,8 @@ final class Kernel
                 $ingestionService,
                 $retrievalService,
                 $vectorStore,
-                $ollamaImageRenderer // Inject the new image renderer
+                $ollamaImageRenderer, // Inject the image renderer
+                $ollamaVisionModel // Inject the vision model
             );
 
             $consoleApplication = new ConsoleApplication($this->config['app_name'] ?? 'INTENTIO', '0.1.0');

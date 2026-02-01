@@ -37,4 +37,13 @@ return [
     'image_renderer' => [
         'model_name' => 'x/z-image-turbo',
     ],
+
+    // Vision model configuration
+    'vision_model' => [
+        'model_name' => 'llava:34b',
+        'options' => [
+            'temperature' => 0.4, // A slightly lower temperature for more factual interpretation
+            'num_predict' => 1024, // Example: how many tokens to predict
+        ],
+    ],
 ];

@@ -32,37 +32,39 @@ final class PromptResolver
         }
 
         $fileContent = file_get_contents($promptPath);
-        fwrite(STDOUT, "DEBUG: PromptResolver - fileContent type: " . gettype($fileContent) . ", length: " . (is_string($fileContent) ? strlen($fileContent) : 'N/A') . PHP_EOL); // DEBUG
         if ($fileContent === false) {
             throw new IntentioException("Failed to read prompt file: {$promptPath}");
         }
 
         $instruction = '';
-        $mainContent = $fileContent;
+        $inputType = 'text';
+        $imageSourceFolder = null;
         $contextFiles = [];
+        $mainContent = $fileContent;
+        
+        // More robust front-matter parsing, supporting both \n and \r\n line endings
+        if (preg_match('/^---\s*?\R(.*?)\R---\s*?\R/s', $fileContent, $matches)) {
+            $frontMatterRaw = trim($matches[1]);
+            $mainContent = trim(str_replace($matches[0], '', $fileContent));
 
-        // Parse YAML front-matter
-        if (preg_match('/^---\s*(.*?)\s*---(?s)(.*)$/', $fileContent, $matches)) {
-            fwrite(STDOUT, "DEBUG: PromptResolver - Front-matter matched." . PHP_EOL); // DEBUG
-            $frontMatterRaw = $matches[1];
-            $mainContent = trim($matches[2]);
-            fwrite(STDOUT, "DEBUG: PromptResolver - mainContent after front-matter type: " . gettype($mainContent) . ", length: " . (is_string($mainContent) ? strlen($mainContent) : 'N/A') . PHP_EOL); // DEBUG
-            // Simple YAML-like parser for front-matter (key: value)
             $frontMatter = [];
             foreach (explode("\n", $frontMatterRaw) as $line) {
                 if (str_contains($line, ':')) {
                     list($key, $value) = explode(':', $line, 2);
-                    $frontMatter[trim($key)] = trim($value);
+                    $value = trim($value);
+                    // Strip quotes if they exist
+                    if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
+                        $value = substr($value, 1, -1);
+                    }
+                    $frontMatter[trim($key)] = $value;
                 }
             }
             $instruction = $frontMatter['instruction'] ?? '';
-        } else {
-            fwrite(STDOUT, "DEBUG: PromptResolver - Front-matter NOT matched." . PHP_EOL); // DEBUG
+            $inputType = $frontMatter['input_type'] ?? 'text';
+            $imageSourceFolder = $frontMatter['image_source_folder'] ?? null;
         }
-        fwrite(STDOUT, "DEBUG: PromptResolver - Returning content type: " . gettype($mainContent) . PHP_EOL); // DEBUG
 
         // Identify referenced .md files within the prompt content for contextual knowledge
-        // This regex looks for patterns like `filename.md` or `path/filename.md`
         if (preg_match_all('/`?([a-zA-Z0-9_\-\.\/]+\.md)`?/', $mainContent, $matches)) {
             foreach ($matches[1] as $referencedFile) {
                 // Search for the referenced file within the knowledge path of the space
@@ -76,7 +78,9 @@ final class PromptResolver
         return [
             'content' => $mainContent,
             'instruction' => $instruction,
-            'context_files' => array_values($contextFiles), // Return just the paths
+            'context_files' => array_values($contextFiles),
+            'input_type' => $inputType,
+            'image_source_folder' => $imageSourceFolder,
         ];
     }
 

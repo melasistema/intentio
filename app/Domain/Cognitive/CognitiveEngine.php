@@ -6,7 +6,8 @@ namespace Intentio\Domain\Cognitive;
 
 use Intentio\Domain\Space\Space;
 use Intentio\Domain\Model\LLMInterface;
-use Intentio\Domain\Model\ImageRendererInterface; // Import the new interface
+use Intentio\Domain\Model\ImageRendererInterface;
+use Intentio\Domain\Model\VisionModelInterface; // Import the new interface
 
 final readonly class CognitiveEngine
 {
@@ -15,7 +16,8 @@ final readonly class CognitiveEngine
         private IngestionService     $ingestionService,
         private RetrievalService     $retrievalService,
         private VectorStoreInterface $vectorStore,
-        private ImageRendererInterface $imageRenderer // Add the new dependency
+        private ImageRendererInterface $imageRenderer,
+        private VisionModelInterface $visionModel // Add the new dependency
     )
     {
     }
@@ -82,6 +84,11 @@ final readonly class CognitiveEngine
 
         // Now use the dedicated image renderer
         return $this->imageRenderer->render($query, $spaceRendererFolder, $options);
+    }
+
+    public function analyzeImage(string $imagePath, string $prompt = '', array $options = []): string
+    {
+        return $this->visionModel->analyzeImage($imagePath, $prompt, $options);
     }
 
     public function clear(Space $space): void

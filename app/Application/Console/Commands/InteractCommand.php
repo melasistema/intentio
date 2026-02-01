@@ -64,6 +64,8 @@ final class InteractCommand implements CommandInterface
             $currentPromptContent = $resolvedPrompt['content'];
             $currentPromptInstruction = $resolvedPrompt['instruction'];
             $currentPromptContextFiles = $resolvedPrompt['context_files'];
+            $currentInputType = $resolvedPrompt['input_type']; // New
+            $currentImageSourceFolder = $resolvedPrompt['image_source_folder']; // New
 
             $this->ensureSpaceIngested($space);
 
@@ -74,36 +76,92 @@ final class InteractCommand implements CommandInterface
             fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
 
             while (true) {
-                fwrite(STDOUT, "\n> ");
-                $query = trim(fgets(STDIN));
+                $rawQuery = '';
+                $visionModelInterpretation = ''; // To store vision model's output
+                $queryForLLM = ''; // The actual query string that goes into the LLM
 
-                if (strtolower($query) === 'exit') {
-                    fwrite(STDOUT, "Ending interactive session." . PHP_EOL);
-                    break;
+                if ($currentInputType === 'image') {
+                    if ($currentImageSourceFolder === null) {
+                        fwrite(STDERR, "Error: Prompt requires image input but 'image_source_folder' is not defined in front matter." . PHP_EOL);
+                        // Force prompt re-selection due to misconfiguration
+                        fwrite(STDOUT, "\nPlease select a new prompt template for further interaction." . PHP_EOL);
+                        $resolvedPrompt = $this->selectPromptTemplate($space, null);
+                        $currentPromptKey = $resolvedPrompt['key'];
+                        $currentPromptContent = $resolvedPrompt['content'];
+                        $currentPromptInstruction = $resolvedPrompt['instruction'];
+                        $currentPromptContextFiles = $resolvedPrompt['context_files'];
+                        $currentInputType = $resolvedPrompt['input_type'];
+                        $currentImageSourceFolder = $resolvedPrompt['image_source_folder'];
+                        fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
+                        fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
+                        continue;
+                    }
+                    fwrite(STDOUT, "\nEnter image filename (e.g., myplan.png) from '{$space->getName()}/{$currentImageSourceFolder}/': ");
+                    $imageFilename = trim(fgets(STDIN));
+                    if (empty($imageFilename)) {
+                        fwrite(STDERR, "Error: No image filename provided." . PHP_EOL);
+                        continue;
+                    }
+                    $imagePath = rtrim($space->getPath(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . rtrim($currentImageSourceFolder, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $imageFilename;
+                    
+                    if (!file_exists($imagePath) || !is_readable($imagePath)) {
+                        fwrite(STDERR, "Error: Image file not found or not readable at: {$imagePath}" . PHP_EOL);
+                        continue;
+                    }
+                    
+                    fwrite(STDOUT, "Analyzing image: {$imageFilename}..." . PHP_EOL);
+                    
+                    // Provide a concise, direct prompt to the vision model, asking it to respond with a specific error keyword on failure.
+                    $visionModelPrompt = "Interpret this 2D floor plan image, identifying all rooms, doors, windows, and their connections in a detailed list. Describe the layout and dimensions if possible. If the image is unclear, blurry, or not a floor plan, respond with only the word 'ERROR'.";
+                    $visionModelInterpretation = $this->cognitiveEngine->analyzeImage($imagePath, $visionModelPrompt, $options['vision_model_options'] ?? []);
+                    
+                    // Check for vision model error before proceeding
+                    if (trim($visionModelInterpretation) === 'ERROR' || str_contains(strtolower($visionModelInterpretation), 'cannot interpret')) {
+                        fwrite(STDERR, "\nError: Could not analyze the image '{$imageFilename}'. Please try again with a clearer, higher-quality image of a floor plan." . PHP_EOL);
+                        // We continue the main loop, which will re-prompt the user for input with the same active prompt.
+                        continue; 
+                    }
+                    
+                    fwrite(STDOUT, "Vision model interpreted: " . substr($visionModelInterpretation, 0, 100) . "..." . PHP_EOL); // Log a snippet
+                    $queryForLLM = $visionModelInterpretation; // The query to the LLM becomes the interpretation
+                    $rawQuery = "User provided image: " . $imageFilename; // Keep track of what user "typed" for context saving, etc.
+
+                } else { // Normal text input
+                    fwrite(STDOUT, "\n> ");
+                    $rawQuery = trim(fgets(STDIN));
+                    if (strtolower($rawQuery) === 'exit') {
+                        fwrite(STDOUT, "Ending interactive session." . PHP_EOL);
+                        break;
+                    }
+                    if (strtolower($rawQuery) === 'switch_prompt') {
+                        $resolvedPrompt = $this->selectPromptTemplate($space, null);
+                        $currentPromptKey = $resolvedPrompt['key'];
+                        $currentPromptContent = $resolvedPrompt['content'];
+                        $currentPromptInstruction = $resolvedPrompt['instruction'];
+                        $currentPromptContextFiles = $resolvedPrompt['context_files'];
+                        $currentInputType = $resolvedPrompt['input_type'];
+                        $currentImageSourceFolder = $resolvedPrompt['image_source_folder'];
+                        fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
+                        fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
+                        continue;
+                    }
+                    if (empty($rawQuery)) {
+                        continue;
+                    }
+                    $queryForLLM = $rawQuery; // Normal text query
                 }
 
-                if (strtolower($query) === 'switch_prompt') {
-                    $resolvedPrompt = $this->selectPromptTemplate($space, null);
-                    $currentPromptKey = $resolvedPrompt['key'];
-                    $currentPromptContent = $resolvedPrompt['content'];
-                    $currentPromptInstruction = $resolvedPrompt['instruction'];
-                    $currentPromptContextFiles = $resolvedPrompt['context_files'];
-                    fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
-                    fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
-                    continue;
-                }
-
-                if (empty($query)) {
-                    continue;
-                }
-
+                // If the prompt content has {{QUERY}} placeholder, replace it.
+                // This is important if $queryForLLM is the vision model interpretation
+                $finalPromptContentForLLM = str_replace('{{QUERY}}', $queryForLLM, $currentPromptContent);
+                
                 $chatOptions = $options;
                 $chatOptions['prompt_key'] = $currentPromptKey;
                 $chatOptions['prompt_instruction'] = $currentPromptInstruction;
-                $chatOptions['prompt_content'] = $currentPromptContent;
+                $chatOptions['prompt_content'] = $finalPromptContentForLLM; // Use the modified prompt content
                 $chatOptions['context_files'] = $currentPromptContextFiles;
 
-                $response = $this->cognitiveEngine->chat($space, $query, $chatOptions);
+                $response = $this->cognitiveEngine->chat($space, $queryForLLM, $chatOptions);
 
                 fwrite(STDOUT, "\n--- INTENTIO Response ---" . PHP_EOL);
                 fwrite(STDOUT, $response . PHP_EOL);
@@ -194,6 +252,8 @@ final class InteractCommand implements CommandInterface
                 $currentPromptContent = $resolvedPrompt['content'];
                 $currentPromptInstruction = $resolvedPrompt['instruction'];
                 $currentPromptContextFiles = $resolvedPrompt['context_files'];
+                $currentInputType = $resolvedPrompt['input_type']; // New
+                $currentImageSourceFolder = $resolvedPrompt['image_source_folder']; // New
                 fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
                 fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
 
@@ -238,6 +298,12 @@ final class InteractCommand implements CommandInterface
                     if ($currentActionName && preg_match('/^    (\w+): (.*)$/', $trimmedLine, $matches)) {
                         $key = $matches[1];
                         $value = trim($matches[2]);
+
+                        // Strip comments from the value
+                        if (str_contains($value, '#')) {
+                            $value = trim(substr($value, 0, strpos($value, '#')));
+                        }
+
                         // Strip quotes from string values
                         if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
                             $value = substr($value, 1, -1);
