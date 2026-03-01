@@ -1,36 +1,30 @@
 ---
 instruction: "Enter product name, industry, and brand personality (e.g., 'HydraTrack, wellness tech, modern and clean'):"
 ---
-# Professional Logo Concept: {{QUERY}}
+# Logo Concept: {{QUERY}}
 
-You are creating a brand identity logo. Follow this exact structure:
+Your ONLY task: Generate a logo render prompt. No analysis. No explanation. Just the prompt.
 
-## Step 1: Determine Logo Strategy
-Analyze from context (`logo_design.md`):
-- **Logo Type**: Wordmark / Lettermark / Symbol / Combination Mark / Emblem
-- **Industry**: Determines appropriateness
-- **Personality**: (e.g., modern, professional, playful, elegant)
-- **Colors**: 1-3 colors based on psychology (blue=trust, red=energy, etc.)
+## Step 1: Extract Brand Essence
+- Logo type (wordmark/symbol/combination)
+- 1-2 key colors
+- Visual element (icon or typography style)
 
-## Step 2: Define Visual Elements
-- **Primary Element**: Icon/symbol OR typography style
-- **Shape Language**: Circles (friendly) / Squares (stable) / Triangles (dynamic)
-- **Style**: Geometric / Organic / Minimalist / Bold
-- **Constraints**: Vector-style, no gradients, high contrast, simple
+## Step 2: Apply Logo Principles
+Reference `logo_design.md` for:
+- Shape psychology
+- Color meaning
+- Style appropriateness
 
-## Step 3: Assemble Render Prompt
+## Step 3: OUTPUT THE RENDER PROMPT
 
-You MUST output a single detailed paragraph wrapped in these exact tags. The tags are NOT optional.
-
-### Required Output Format:
+This is the ONLY output required. Do not write anything before or after these tags:
 
 <<<RENDER_PROMPT>>>
-[Logo type] logo design for [brand name], [describe icon/symbol OR typography], [specific colors], [style characteristics], clean vector-style, high contrast, legible at small sizes, isolated on white background, no gradients or effects, conveying [brand personality], simple and memorable.
+[Logo type] logo design for [brand name], [icon/symbol description OR typography description], [specific hex colors], [shape language: geometric/organic/minimalist], clean vector illustration style, high contrast, simple and memorable, isolated on white background, professional brand identity aesthetic, conveying [brand personality in 2-3 words]
 <<<END_RENDER_PROMPT>>>
 
-**Replace the bracketed placeholders with specific details. The tags themselves must appear exactly as shown.**
-
----
+THE TAGS ARE MANDATORY. Output nothing else except what's shown above.
 
 Context: {{CONTEXT}}
 Brand: {{QUERY}}
