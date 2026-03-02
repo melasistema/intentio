@@ -28,12 +28,14 @@ Synthesize your analysis into a clear visual concept:
 
 ## Phase 3: Assemble the Final Render Prompt
 
-Create a single cohesive description that integrates all elements: logo type, brand name, detailed visual element description (icon/symbol OR typography), specific colors with their meaning, style characteristics, and brand personality conveyed.
+Create a single cohesive description that integrates all elements: logo type, brand name IN QUOTES, detailed visual element description, specific colors, style characteristics, and brand personality.
+
+**CRITICAL**: The brand name text must be enclosed in quotes (e.g., text "PULSE" or reading "Ember") for the diffusion model to render it correctly.
 
 The prompt must be wrapped within the tags shown below:
 
 <<<RENDER_PROMPT>>>
-[{Logo type} logo design for {brand name}, {detailed description of icon/symbol OR typography style}, {specific colors}, {style: geometric/organic/minimalist/bold}, clean vector illustration, high contrast, simple and memorable, professional brand identity, isolated on white background, conveying {brand personality}]
+[{Logo type} logo design with text "{BRAND NAME IN CAPS}", {detailed description of icon/symbol OR typography style}, {specific colors}, {style: geometric/organic/minimalist/bold}, clean vector illustration, high contrast, simple and memorable, professional brand identity, isolated on white background, conveying {brand personality}]
 <<<END_RENDER_PROMPT>>>
 
 ---

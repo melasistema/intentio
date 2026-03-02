@@ -30,6 +30,8 @@ Apply professional photography principles:
 
 Synthesize your analysis into a single cohesive prompt that integrates all elements: product description with specific materials, key features emphasized, viewing angle, lighting approach, background, material qualities, and aesthetic direction.
 
+**IMPORTANT**: If the product has visible text, labels, or branding, enclose that text in quotes (e.g., display reading "24°C" or label text "ON/OFF") for the diffusion model to render it correctly.
+
 The prompt must be wrapped within the tags shown below:
 
 <<<RENDER_PROMPT>>>
