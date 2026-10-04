@@ -14,11 +14,3 @@ enforce_line_art_rules: strict
 enforce_color_palette: "universe_default"
 enforce_shading_model: "cel_shaded"
 forbid_realism_traits: true
-
-actions:
-  render:
-    description: "Generate an image in the cartoon universe style from the current manifest."
-    template: "render_cartoon_manifest"
-    handler: "image_renderer"
-    context_required: "lastGeneratedManifest"
-    updates_context: null

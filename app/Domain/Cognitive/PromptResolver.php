@@ -12,11 +12,11 @@ use RecursiveIteratorIterator;
 final class PromptResolver
 {
     /**
-     * Resolves a prompt for a given cognitive space, extracting its content, instruction, and referenced knowledge files.
+     * Resolves a prompt for a given cognitive space, extracting its content, its front matter, and referenced knowledge files.
      *
      * @param Space $space The cognitive space.
      * @param string $promptKey The key of the prompt to resolve (e.g., 'default', 'analyze_hook').
-     * @return array An associative array with 'content', 'instruction', and 'context_files'.
+     * @return array An associative array with 'content', 'instruction', 'render' (whether its answers describe an image to render), and 'context_files'.
      * @throws IntentioException If the prompt cannot be resolved.
      */
     public function resolve(Space $space, string $promptKey = 'default'): array
@@ -33,6 +33,7 @@ final class PromptResolver
         }
 
         $instruction = '';
+        $render = false;
         $mainContent = $fileContent;
         $contextFiles = [];
 
@@ -49,6 +50,7 @@ final class PromptResolver
                 }
             }
             $instruction = $frontMatter['instruction'] ?? '';
+            $render = ($frontMatter['render'] ?? '') === 'true';
         }
 
         // Identify referenced .md files within the prompt content for contextual knowledge
@@ -66,6 +68,7 @@ final class PromptResolver
         return [
             'content' => $mainContent,
             'instruction' => $instruction,
+            'render' => $render,
             'context_files' => array_values($contextFiles), // Return just the paths
         ];
     }

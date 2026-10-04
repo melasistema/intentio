@@ -1,5 +1,6 @@
 ---
 instruction: "Describe your product simply (e.g., 'a smart water bottle' or 'urban backpack with tech features'):"
+render: true
 ---
 # Product Visualization: {{QUERY}}
 

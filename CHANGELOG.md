@@ -15,6 +15,9 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 -   **Context Window Warning:** The context window is set explicitly (`llm.options.num_ctx`, 8192 by default), and a warning is printed when a prompt is estimated to be larger than it.
 
 ### Changed
+-   **Rendering Declared by the Prompt (package format change):** A prompt template whose answers are rendered now says `render: true` in its front matter. The `actions` block of `manifest.md` is no longer read, and `default_prompt` is the only manifest line the engine uses. Spaces created earlier need `render: true` added to their rendering prompts. The answer is no longer saved to `lastGeneratedManifest.md`; the image prompt is taken from the answer itself.
+-   **Active Prompt Template:** In `interact`, the selected prompt template stays active until `switch_prompt` is used, and is shown in front of each query. Previously a template had to be selected again after every answer.
+-   **Errors During a Session:** In `interact`, a failed answer or render is reported and the session continues. A session whose input ends closes without an error.
 -   **Minimum Similarity:** A passage is retrieved only if its similarity to the query reaches `retrieval.min_score` (0.5 by default). Previously the five nearest passages were always sent, however distant.
 -   **Pinned Files:** Passages of a file that the prompt template already loads in full are no longer retrieved a second time.
 -   **Quiet Output:** Removed debug lines and the engine's internal progress messages from `interact`, `chat`, `ingest`, `clear` and `render`.

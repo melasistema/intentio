@@ -210,7 +210,7 @@ Prompts are not merely instructions; they are fundamental tools for **agent desi
 ### How it Works:
 
 1.  **Template Files**: Prompt templates are simple Markdown (`.md`) files located within the `prompts/` directory of your **specific knowledge package** (e.g., `packages/hook_analyzer/prompts/`). Each file defines a distinct "stance" or "command" for the AI.
-2.  **Self-Describing Commands**: Each prompt template can include YAML front matter at the top to provide a user-facing `instruction` (e.g., `--- instruction: "Enter the hook you want to analyze:" ---`). This instruction is automatically displayed in interactive mode to guide your input. It is shown to you only and is never sent to the model.
+2.  **Self-Describing Commands**: Each prompt template can include YAML front matter at the top to provide a user-facing `instruction` (e.g., `--- instruction: "Enter the hook you want to analyze:" ---`). This instruction is automatically displayed in interactive mode to guide your input. It is shown to you only and is never sent to the model. A template whose answers describe an image adds `render: true` to its front matter: after such a template answers, interactive mode offers to render the text the model wrote between `<<<RENDER_PROMPT>>>` and `<<<END_RENDER_PROMPT>>>`.
 3.  **Flexible Design**: These templates allow you to:
     *   Guide the LLM to adopt specific personas (e.g., `analytical`, `creative`, `skeptical`).
     *   Provide task-specific instructions (e.g., summarize, extract facts, generate narratives).
@@ -220,7 +220,7 @@ Prompts are not merely instructions; they are fundamental tools for **agent desi
     *   **Default Prompt:** You can define a global default prompt template name in your `config/app.php` file.
     *   **Package Default:** A `default_prompt` can be specified in a space's `manifest.md` to override the global default for that specific space.
     *   **Command Line:** Use the `--prompt-key=<name>` option with the `chat` command for a one-off prompt selection, or with `interact` to choose the starting template. Without it, `chat` sends your query with the retrieved knowledge and no template.
-    *   **Interactive Mode:** Within the `./intentio interact` session, you will be prompted to select an initial prompt template, and you can dynamically switch between templates using the `switch_prompt` command. The `instruction` from the template's front-matter will guide your input.
+    *   **Interactive Mode:** Within the `./intentio interact` session, you will be prompted to select an initial prompt template, and it stays active for every query until you change it with the `switch_prompt` command. The active template is shown in front of each query (e.g., `[analyze_hook] >`). The `instruction` from the template's front-matter will guide your input.
 
 By leveraging configurable prompt templates, you transform INTENTIO into a truly adaptable cognitive instrument, capable of adopting diverse "cognitive stances" to match your specific needs and intentions.
 
@@ -361,15 +361,15 @@ Once Ollama is running and your knowledge environment (either package-initialize
    *Replace `my_private_notes` with the name of the space you wish to clear.*
 
 **e. Generate an Image:**
-   After generating a manifest (e.g., using a blueprint like `cartoon_universe`) in interactive mode, you can render an image.
+   In interactive mode, a prompt template marked `render: true` writes an image prompt, and you are asked whether to render it.
 
    ```bash
    ./intentio interact
-   # Follow prompts to select a space (e.g., 'cartoon_universe') and a prompt that generates a manifest.
-   # Once a manifest is generated, the system will prompt you to "Render this manifest? (yes/no/refine):"
+   # Select a space (e.g., 'cartoon_universe') and describe what you want to see.
+   # After the answer, the system asks: "Render this image? (yes/no):"
    # Type 'yes' to generate the image.
    ```
-   *The generated image will be saved to the space's output directory.*
+   *The generated image is saved to the `renderer_images/` folder of the space.*
 
 **f. Get General Help:**
    ```bash

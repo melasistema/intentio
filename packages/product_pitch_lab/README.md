@@ -70,16 +70,18 @@ After each answer you choose the command for your next step, so a session natura
 (Active Prompt Template: validate_idea)
 Instruction: "Describe your product idea in 2-3 sentences (what it is, who it is for, what problem it solves):"
 
-> A smart water bottle that tracks hydration and reminds busy professionals to drink water throughout the day.
+[validate_idea] > A smart water bottle that tracks hydration and reminds busy professionals to drink water throughout the day.
 ```
 
 The system answers with a structured critique. It names the red flags that apply and ends with a verdict: **Promising**, **Needs rework**, or **Fatal flaw**.
 
 ### Phase 2: Refinement
 
-After the answer, INTENTIO lists the commands and asks for the next one. Choose `craft_pitch`, `competitor_analysis`, or `business_model`:
+A command stays active until you change it. Type `switch_prompt` and choose `craft_pitch`, `competitor_analysis`, or `business_model`:
 
 ```
+[validate_idea] > switch_prompt
+
 Available Prompt Templates for 'product_pitch_lab':
   1. business_model
   2. competitor_analysis
@@ -90,21 +92,21 @@ Available Prompt Templates for 'product_pitch_lab':
   7. visualize_product
 Enter the number of the prompt template to use: 3
 
-> HydraTrack - a smart water bottle for busy professionals that tracks how much they drink and sends gentle reminders through a mobile app.
+[craft_pitch] > HydraTrack - a smart water bottle for busy professionals that tracks how much they drink and sends gentle reminders through a mobile app.
 ```
 
 ### Phase 3: Visualization
 
-Choose `visualize_product` or `logo_concept` and describe what you want to see:
+Type `switch_prompt`, choose `visualize_product` or `logo_concept`, and describe what you want to see:
 
 ```
-> A sleek, modern water bottle with an LED ring at the base showing hydration progress in blue. Minimalist design, brushed steel finish.
+[visualize_product] > A sleek, modern water bottle with an LED ring at the base showing hydration progress in blue. Minimalist design, brushed steel finish.
 ```
 
 The system will:
 1. Interpret your description using the design principles in the knowledge base
 2. Write an image prompt wrapped in `<<<RENDER_PROMPT>>>` tags
-3. Ask: `Render this manifest? (yes/no):`
+3. Ask: `Render this image? (yes/no):`
 4. On `yes`, generate the image with the local image model
 5. Save it to `spaces/<your_space>/renderer_images/`
 

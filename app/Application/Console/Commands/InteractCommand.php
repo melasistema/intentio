@@ -49,151 +49,55 @@ final class InteractCommand implements CommandInterface
             $spaceName = $options['space'] ?? null;
             $space = $this->selectOrCreateSpace($spaceName);
 
-            $manifestPath = $space->getPath() . '/manifest.md';
-            $manifestConfig = [];
-            if (file_exists($manifestPath)) {
-                $manifestConfig = $this->parseManifest(file_get_contents($manifestPath));
-            }
-
             $selectedPromptKey = $options['prompt-key']
-                                ?? $manifestConfig['default_prompt']
+                                ?? $this->readDefaultPrompt($space)
                                 ?? $this->config['llm']['default_prompt_template_name']
                                 ?? 'default';
 
-            $resolvedPrompt = $this->selectPromptTemplate($space, $selectedPromptKey);
-            $currentPromptKey = $resolvedPrompt['key'];
-            $currentPromptContent = $resolvedPrompt['content'];
-            $currentPromptInstruction = $resolvedPrompt['instruction'];
-            $currentPromptContextFiles = $resolvedPrompt['context_files'];
+            $prompt = $this->selectPromptTemplate($space, $selectedPromptKey);
 
             $this->ensureSpaceIngested($space);
 
             fwrite(STDOUT, "\n--- Interactive Session with '{$space->getName()}' ---" . PHP_EOL);
             fwrite(STDOUT, "Type your query and press Enter. Type 'exit' to end the session." . PHP_EOL);
             fwrite(STDOUT, "Use 'switch_prompt' to change the active prompt template." . PHP_EOL);
-            fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
-            fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
+            $this->showActivePrompt($prompt);
 
             while (true) {
-                fwrite(STDOUT, "\n> ");
-                $query = trim(fgets(STDIN));
+                // The active prompt template stays in view, and stays active until it is switched
+                fwrite(STDOUT, "\n[{$prompt['key']}] > ");
+                $query = $this->readLine();
 
-                if (strtolower($query) === 'exit') {
+                if ($query === null || strtolower($query) === 'exit') {
                     fwrite(STDOUT, "Ending interactive session." . PHP_EOL);
                     break;
                 }
 
                 if (strtolower($query) === 'switch_prompt') {
-                    $resolvedPrompt = $this->selectPromptTemplate($space, null);
-                    $currentPromptKey = $resolvedPrompt['key'];
-                    $currentPromptContent = $resolvedPrompt['content'];
-                    $currentPromptInstruction = $resolvedPrompt['instruction'];
-                    $currentPromptContextFiles = $resolvedPrompt['context_files'];
-                    fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
-                    fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
+                    $prompt = $this->selectPromptTemplate($space, null);
+                    $this->showActivePrompt($prompt);
                     continue;
                 }
 
-                if (empty($query)) {
+                if ($query === '') {
                     continue;
                 }
 
-                $result = $this->cognitiveEngine->chat($space, $query, $currentPromptContent, $currentPromptContextFiles);
-                $response = $result['answer'];
+                try {
+                    $result = $this->cognitiveEngine->chat($space, $query, $prompt['content'], $prompt['context_files']);
 
-                fwrite(STDOUT, "\n--- INTENTIO Response ---" . PHP_EOL);
-                fwrite(STDOUT, $response . PHP_EOL);
-                fwrite(STDOUT, "-------------------------" . PHP_EOL);
-                SourceList::write($result);
-                fwrite(STDOUT, PHP_EOL);
+                    fwrite(STDOUT, "\n--- INTENTIO Response ---" . PHP_EOL);
+                    fwrite(STDOUT, $result['answer'] . PHP_EOL);
+                    fwrite(STDOUT, "-------------------------" . PHP_EOL);
+                    SourceList::write($result);
 
-                $actions = $manifestConfig['actions'] ?? [];
-                $actionConfig = null;
-                // Find which action corresponds to the prompt key we just used
-                foreach ($actions as $action) {
-                    if (isset($action['template']) && $action['template'] === $currentPromptKey) {
-                        $actionConfig = $action;
-                        break;
+                    if ($prompt['render']) {
+                        $this->offerRender($space, $result['answer']);
                     }
+                } catch (IntentioException $e) {
+                    // A failed answer or image does not end the session
+                    fwrite(STDERR, "Error: " . $e->getMessage() . PHP_EOL);
                 }
-
-                // As a fallback for design_intent, which isn't a formal action, we create a pseudo-action
-                if ($actionConfig === null
-                    && $currentPromptKey === ($manifestConfig['default_prompt'] ?? null)
-                    && ($manifestConfig['default_prompt'] ?? null) !== null
-                ) {
-                    $actionConfig = ['updates_context' => 'lastGeneratedManifest'];
-                }
-
-                $contextVar = $actionConfig['updates_context'] ?? null;
-                if ($contextVar) {
-                    $contextFilePath = $space->getPath() . '/' . $contextVar . '.md';
-                    file_put_contents($contextFilePath, $response);
-                    fwrite(STDOUT, "(✓ Context '{$contextVar}' saved.)" . PHP_EOL);
-
-                    $renderAction = null;
-                    foreach ($actions as $action) {
-                        if (isset($action['handler']) && $action['handler'] === 'image_renderer') {
-                            $renderAction = $action;
-                            break;
-                        }
-                    }
-
-                    if ($renderAction) {
-                        while (true) {
-                            fwrite(STDOUT, "\nRender this manifest? (yes/no): ");
-                            $choice = trim(fgets(STDIN));
-
-                            if (in_array(strtolower($choice), ['yes', 'y'])) {
-                                $requiredContext = $renderAction['context_required'] ?? null;
-                                if (!$requiredContext) {
-                                     fwrite(STDERR, "Error: The render action in the manifest does not specify a 'context_required'." . PHP_EOL);
-                                     break;
-                                }
-                                $requiredContextPath = $space->getPath() . '/' . $requiredContext . '.md';
-                                if (!file_exists($requiredContextPath)) {
-                                    fwrite(STDERR, "Error: Required context file '{$requiredContext}.md' not found." . PHP_EOL);
-                                    break;
-                                }
-
-                                $manifestToRender = file_get_contents($requiredContextPath);
-
-                                // Extract master prompt using regex from the manifest content
-                                if (preg_match('/<<<RENDER_PROMPT>>>(.*?)<<<END_RENDER_PROMPT>>>/s', $manifestToRender, $matches)) {
-                                    $masterPrompt = trim($matches[1]);
-                                } else {
-                                    $masterPrompt = '';
-                                }
-
-                                if (empty($masterPrompt)) {
-                                    fwrite(STDERR, "Error: Could not extract master render prompt from the manifest using the expected tags." . PHP_EOL);
-                                    break;
-                                }
-
-                                $this->cognitiveEngine->render($space, $masterPrompt, []);
-                                fwrite(STDOUT, "Image rendering complete." . PHP_EOL);
-                                break;
-
-                            } elseif (in_array(strtolower($choice), ['no', 'n'])) {
-                                fwrite(STDOUT, "Rendering skipped." . PHP_EOL);
-                                break;
-                            } else {
-                                fwrite(STDERR, "Invalid choice. Please enter 'yes' or 'no'." . PHP_EOL);
-                            }
-                        }
-                    }
-                }
-                
-                // Always force prompt re-selection after any LLM response to ensure interaction closure
-                fwrite(STDOUT, "\nPlease select a new prompt template for further interaction." . PHP_EOL);
-                $resolvedPrompt = $this->selectPromptTemplate($space, null);
-                $currentPromptKey = $resolvedPrompt['key'];
-                $currentPromptContent = $resolvedPrompt['content'];
-                $currentPromptInstruction = $resolvedPrompt['instruction'];
-                $currentPromptContextFiles = $resolvedPrompt['context_files'];
-                fwrite(STDOUT, "(Active Prompt Template: {$currentPromptKey})" . PHP_EOL);
-                fwrite(STDOUT, "Instruction: {$currentPromptInstruction}" . PHP_EOL);
-
             }
 
             return 0;
@@ -206,62 +110,82 @@ final class InteractCommand implements CommandInterface
         }
     }
 
-    private function parseManifest(string $content): array
+    /**
+     * Reads one line the user typed, without the line ending.
+     *
+     * @return string|null The line, or null when the input has ended.
+     */
+    private function readLine(): ?string
     {
-        $config = [];
-        $lines = explode("\n", $content);
-        $inActionsBlock = false;
-        $currentActionName = null;
+        $line = fgets(STDIN);
 
-        foreach ($lines as $line) {
-            $trimmedLine = rtrim($line);
+        return $line === false ? null : trim($line);
+    }
 
-            if (rtrim($trimmedLine) === 'actions:') {
-                $inActionsBlock = true;
-                $config['actions'] = [];
-                continue;
-            }
-
-            if ($inActionsBlock) {
-                if (strlen($trimmedLine) > 0 && !str_starts_with($trimmedLine, ' ')) {
-                    $inActionsBlock = false;
-                    $currentActionName = null;
-                } else {
-                    if (preg_match('/^  (\w+):$/', $trimmedLine, $matches)) {
-                        $currentActionName = $matches[1];
-                        $config['actions'][$currentActionName] = [];
-                        continue;
-                    }
-                    if ($currentActionName && preg_match('/^    (\w+): (.*)$/', $trimmedLine, $matches)) {
-                        $key = $matches[1];
-                        $value = trim($matches[2]);
-                        // Strip quotes from string values
-                        if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
-                            $value = substr($value, 1, -1);
-                        }
-                        // Basic type conversion
-                        if ($value === 'null') $value = null;
-                        elseif ($value === 'true') $value = true;
-                        elseif ($value === 'false') $value = false;
-                        $config['actions'][$currentActionName][$key] = $value;
-                    }
-                    continue;
-                }
-            }
-
-            if (str_contains($trimmedLine, ':')) {
-                list($key, $value) = explode(':', $trimmedLine, 2);
-                if (trim($key) !== 'actions') {
-                    $value = trim($value);
-                    // Strip quotes from string values
-                    if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
-                        $value = substr($value, 1, -1);
-                    }
-                    $config[trim($key)] = $value;
-                }
-            }
+    /**
+     * Reads an answer the session cannot continue without.
+     */
+    private function readChoice(): string
+    {
+        $line = $this->readLine();
+        if ($line === null) {
+            throw new IntentioException("The input ended before a choice was made.");
         }
-        return $config;
+
+        return $line;
+    }
+
+    private function showActivePrompt(array $prompt): void
+    {
+        fwrite(STDOUT, "(Active Prompt Template: {$prompt['key']})" . PHP_EOL);
+        fwrite(STDOUT, "Instruction: {$prompt['instruction']}" . PHP_EOL);
+    }
+
+    /**
+     * Reads the prompt template a space starts with from its manifest.
+     */
+    private function readDefaultPrompt(Space $space): ?string
+    {
+        $manifestPath = $space->getPath() . '/manifest.md';
+        if (!file_exists($manifestPath)) {
+            return null;
+        }
+
+        if (preg_match('/^default_prompt:\s*(\S+)\s*$/mu', file_get_contents($manifestPath), $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * After an answer from a prompt template marked 'render: true': offers to turn the answer into an image.
+     * The image prompt is the text the model wrote between the render tags.
+     */
+    private function offerRender(Space $space, string $answer): void
+    {
+        if (!preg_match('/<<<RENDER_PROMPT>>>(.*?)<<<END_RENDER_PROMPT>>>/su', $answer, $matches) || trim($matches[1]) === '') {
+            fwrite(STDERR, "Nothing to render: the answer has no text between <<<RENDER_PROMPT>>> and <<<END_RENDER_PROMPT>>>." . PHP_EOL);
+            return;
+        }
+
+        while (true) {
+            fwrite(STDOUT, "\nRender this image? (yes/no): ");
+            $choice = strtolower($this->readChoice());
+
+            if (in_array($choice, ['yes', 'y'])) {
+                $this->cognitiveEngine->render($space, trim($matches[1]), []);
+                fwrite(STDOUT, "Image rendering complete." . PHP_EOL);
+                return;
+            }
+
+            if (in_array($choice, ['no', 'n'])) {
+                fwrite(STDOUT, "Rendering skipped." . PHP_EOL);
+                return;
+            }
+
+            fwrite(STDERR, "Invalid choice. Please enter 'yes' or 'no'." . PHP_EOL);
+        }
     }
 
     private function selectOrCreateSpace(?string $spaceName): Space
@@ -270,7 +194,7 @@ final class InteractCommand implements CommandInterface
             $space = $this->spaceRepository->findByName($spaceName);
             if ($space === null) {
                 fwrite(STDOUT, "Cognitive space '{$spaceName}' not found. Would you like to create it? (yes/no): ");
-                $confirm = trim(fgets(STDIN));
+                $confirm = $this->readChoice();
                 if (strtolower($confirm) === 'yes') {
                     return $this->createSpaceInteractive($spaceName);
                 } else {
@@ -292,7 +216,7 @@ final class InteractCommand implements CommandInterface
 
         while (true) {
             fwrite(STDOUT, "Enter the number of the space to interact with, or 'new' to create one: ");
-            $choice = trim(fgets(STDIN));
+            $choice = $this->readChoice();
 
             if (strtolower($choice) === 'new') {
                 return $this->createSpaceInteractive(null);
@@ -327,7 +251,7 @@ final class InteractCommand implements CommandInterface
         $chosenBlueprint = null;
         while (true) {
             fwrite(STDOUT, "Enter the number of the blueprint to use: ");
-            $choice = trim(fgets(STDIN));
+            $choice = $this->readChoice();
             if (!ctype_digit($choice) || (int)$choice < 1 || (int)$choice > count($blueprints)) {
                 fwrite(STDERR, "Invalid choice." . PHP_EOL);
                 continue;
@@ -340,7 +264,7 @@ final class InteractCommand implements CommandInterface
         if ($spaceName === null) {
             while (true) {
                 fwrite(STDOUT, "Enter a name for your new space (e.g., 'my_{$chosenBlueprint->getName()}_space'): ");
-                $inputName = trim(fgets(STDIN));
+                $inputName = $this->readChoice();
                 if (empty($inputName) || !preg_match('/^[a-zA-Z0-9_\-]+$/', $inputName)) {
                     fwrite(STDERR, "Invalid space name. Use alphanumeric, hyphens, and underscores." . PHP_EOL);
                     continue;
@@ -389,7 +313,7 @@ final class InteractCommand implements CommandInterface
 
         while (true) {
             fwrite(STDOUT, "Enter the number of the prompt template to use: ");
-            $choice = trim(fgets(STDIN));
+            $choice = $this->readChoice();
 
             if (!ctype_digit($choice)) {
                 fwrite(STDERR, "Invalid choice. Please enter a number." . PHP_EOL);
@@ -427,7 +351,7 @@ final class InteractCommand implements CommandInterface
                 count($pending['removed'])
             ));
             fwrite(STDOUT, "Update the index now? (yes/no): ");
-            if (!in_array(strtolower(trim((string) fgets(STDIN))), ['yes', 'y'])) {
+            if (!in_array(strtolower($this->readChoice()), ['yes', 'y'])) {
                 fwrite(STDOUT, "Index left as it is." . PHP_EOL);
                 return;
             }

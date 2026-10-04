@@ -1,5 +1,6 @@
 ---
 instruction: "Describe the character, object, or scene to be rendered in the consistent 'Cartoon Universe' style. This will be translated into a latent-aware prompt for the image generation model."
+render: true
 ---
 # 🎨 Latent-Aware Cartoon Render Brief: {{QUERY}}
 

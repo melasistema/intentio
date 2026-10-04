@@ -7,21 +7,3 @@ default_prompt: validate_idea
 
 description:
 A cognitive instrument for entrepreneurs and product managers to validate, refine, and visualize product ideas. Combines business framework analysis with product visualization capabilities, helping users move from concept to pitch-ready presentation.
-
-actions:
-  validate_idea:
-    description: "Evaluate a product idea. Text only, nothing to render."
-    template: "validate_idea"
-    updates_context: null
-  visualize_product:
-    description: "Generate a product mockup from the description."
-    template: "visualize_product"
-    handler: "image_renderer"
-    context_required: "lastGeneratedManifest"
-    updates_context: "lastGeneratedManifest"
-  logo_concept:
-    description: "Generate a logo concept from the brand description."
-    template: "logo_concept"
-    handler: "image_renderer"
-    context_required: "lastGeneratedManifest"
-    updates_context: "lastGeneratedManifest"
