@@ -8,6 +8,8 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 
 ## [unreleased]
 
+### Added
+-   **Product Pitch Lab Blueprint:** Introduced the `@packages/product_pitch_lab` cognitive environment (`version: 0.1.0`), which validates product ideas against business frameworks, drafts elevator pitches, competitive analyses and Lean Canvases, and renders product mockups and logo concepts.
 ## [0.2.1] - 2026-01-31
 
 ### Added

@@ -82,6 +82,7 @@ The same engine can become:
 -   A creative collaborator for platform-aware content generation, shaped by context, not noise
 -   A marketing strategist for multi-platform hook analysis and comprehensive reports
 -   A **visual art director**, consistently generating images in a defined style, like the `Cartoon Universe` blueprint for animated content.
+-   A **product validation lab** that stress-tests an idea, drafts its pitch and sketches its mockup, like the `Product Pitch Lab` blueprint.
 
 
 Not because the model changes — but because the **context does**.
@@ -134,6 +135,7 @@ Explore the specific README files for each pre-built package to understand its p
 
 -   [Hook Analyzer](packages/hook_analyzer/README.md)
 -   [Cartoon Universe](packages/cartoon_universe/README.md)
+-   [Product Pitch Lab](packages/product_pitch_lab/README.md)
 
 ---
 

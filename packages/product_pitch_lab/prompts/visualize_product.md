@@ -40,5 +40,4 @@ The prompt must be wrapped within the tags shown below:
 
 ---
 
-Context: {{CONTEXT}}
 User Input: {{QUERY}}

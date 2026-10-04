@@ -1,111 +1,134 @@
 # Product Pitch Lab Package
 
-A cognitive instrument for validating, refining, and visualizing product ideas using established business frameworks and visual mockup generation.
+A cognitive instrument for validating, refining, and visualizing product ideas, grounded in a small knowledge base of business frameworks and visual design principles.
 
-This package operates as a suite of analytical and creative "commands" designed for entrepreneurs, product managers, and innovators who want to stress-test their ideas before investing significant resources.
+This package operates as a suite of "commands" that you run from the INTENTIO interactive mode. Five of them reason in text; two of them write a prompt for the local image model and render it. It is designed for founders, product managers, and students who want to stress-test an idea before investing in it.
+
+## Quick Start
+
+```bash
+./intentio init product_pitch_lab --space=product_pitch_lab
+./intentio interact
+```
+
+Select the `product_pitch_lab` space. The first time you enter it, INTENTIO ingests the knowledge base, then starts you on `validate_idea`.
 
 ## How It Works
 
-When you select a prompt template (a "command") in interactive mode, you'll receive specific guidance on what information to provide. The system analyzes your input using curated business knowledge—lean startup principles, market analysis frameworks, positioning strategies, and visual design theory.
+Every command is a prompt template. When you select one, you are given a specific instruction for what to enter. The system then builds its answer from two sources of context:
+
+*   **Pinned knowledge**: each analysis command names the knowledge files it depends on, and INTENTIO loads those files in full.
+*   **Retrieved knowledge**: the passages of the knowledge base most similar to your input.
+
+After each answer you choose the command for your next step, so a session naturally moves from validation to refinement to visualization.
 
 ## Available Commands (Prompts)
 
-### Analysis Commands (Text-Based)
+### Analysis Commands (Text)
 
 *   **`validate_idea`** (Default)
-    *   Critically evaluates your product concept for problem-solution fit, target audience clarity, and viability.
-    *   *Instruction: Describe your product idea in 2-3 sentences:*
+    *   Critically evaluates a product idea: problem clarity, target customer, solution viability, the red flags that apply, the riskiest assumptions, and a verdict.
+    *   Grounded in `problem_solution_fit.md` and `red_flags.md`.
+    *   *Instruction: Describe your product idea in 2-3 sentences (what it is, who it is for, what problem it solves):*
 
 *   **`craft_pitch`**
-    *   Generates a structured 30-second elevator pitch with hook, problem, solution, and value proposition.
-    *   *Instruction: Enter your product name and what it does:*
+    *   Writes a 30-45 second elevator pitch in five parts: hook, problem, solution, unique value, call to action.
+    *   Grounded in `elevator_pitch.md`.
+    *   *Instruction: Enter your product name, what it does, and who it is for:*
 
 *   **`competitor_analysis`**
-    *   Performs SWOT-based competitive analysis and identifies differentiation opportunities.
-    *   *Instruction: Describe your product and 2-3 competitors:*
+    *   Maps the alternatives you describe, compares them with SWOT and a Jobs-to-be-Done table, and recommends a differentiation strategy.
+    *   Grounded in `competitive_analysis.md`.
+    *   *Instruction: Describe your product and 2-3 competitors or alternatives, with what you know about each:*
 
 *   **`business_model`**
-    *   Creates a Lean Canvas breakdown covering problem, solution, customers, channels, revenue, and costs.
-    *   *Instruction: Provide product concept and target market:*
+    *   Drafts a nine-block Lean Canvas, marks every entry as stated or assumed, and names the riskiest assumptions to test.
+    *   Grounded in `lean_canvas.md` and `value_proposition.md`.
+    *   *Instruction: Describe your product concept and its target market:*
 
 *   **`default`**
-    *   Allows open-ended questions about business frameworks and concepts in the knowledge base.
+    *   Answers open questions about the frameworks in the knowledge base (e.g., "What is the difference between a vitamin and a painkiller?").
     *   *Instruction: Ask a question about product strategy or business frameworks:*
 
 ### Visualization Commands (Image Generation)
 
 *   **`visualize_product`**
-    *   Generates a professional product mockup concept based on your description.
-    *   *Instruction: Describe the product you want to visualize:*
+    *   Turns a plain description into a professional product photography prompt, then offers to render it.
+    *   Grounded in `product_mockup.md`.
+    *   *Instruction: Describe your product simply (e.g., 'a smart water bottle' or 'urban backpack with tech features'):*
 
 *   **`logo_concept`**
-    *   Creates a brand identity visual concept aligned with your product's personality.
-    *   *Instruction: Product name, industry, and brand personality (modern/classic/playful):*
+    *   Turns a brand brief into a logo prompt (type, colors, shape, typography), then offers to render it.
+    *   Grounded in `logo_design.md`.
+    *   *Instruction: Describe your brand briefly (e.g., 'Vortex, urban backpacks, bold and modern'):*
 
 ## Example Usage
 
 ### Phase 1: Validation
-1.  Start interactive mode: `./intentio interact`
-2.  Select the `product_pitch_lab` space
-3.  Select the `validate_idea` template (or it will be selected by default)
-4.  Describe your product idea
 
 ```
-INTENTIO > A smart water bottle that tracks hydration and reminds busy professionals to drink water throughout the day.
+(Active Prompt Template: validate_idea)
+Instruction: "Describe your product idea in 2-3 sentences (what it is, who it is for, what problem it solves):"
+
+> A smart water bottle that tracks hydration and reminds busy professionals to drink water throughout the day.
 ```
 
-The system will provide critical analysis on problem clarity, target audience, competitive landscape, and potential concerns.
+The system answers with a structured critique. It names the red flags that apply and ends with a verdict: **Promising**, **Needs rework**, or **Fatal flaw**.
 
 ### Phase 2: Refinement
-Based on validation feedback, refine your concept and craft your pitch:
+
+After the answer, INTENTIO lists the commands and asks for the next one. Choose `craft_pitch`, `competitor_analysis`, or `business_model`:
 
 ```
-# Switch to craft_pitch
-INTENTIO > switch_prompt
+Available Prompt Templates for 'product_pitch_lab':
+  1. business_model
+  2. competitor_analysis
+  3. craft_pitch
+  4. default
+  5. logo_concept
+  6. validate_idea
+  7. visualize_product
+Enter the number of the prompt template to use: 3
 
-# Select craft_pitch, then:
-INTENTIO > HydraTrack - A smart water bottle for busy professionals that tracks hydration levels and sends gentle reminders via a mobile app.
+> HydraTrack - a smart water bottle for busy professionals that tracks how much they drink and sends gentle reminders through a mobile app.
 ```
 
 ### Phase 3: Visualization
-Once your concept is refined, generate visual assets:
+
+Choose `visualize_product` or `logo_concept` and describe what you want to see:
 
 ```
-# Switch to visualize_product
-INTENTIO > switch_prompt
-
-# Select visualize_product, then:
-INTENTIO > A sleek, modern water bottle with an LED display ring at the base showing hydration progress in blue. Minimalist design, brushed steel finish, touchscreen interface.
+> A sleek, modern water bottle with an LED ring at the base showing hydration progress in blue. Minimalist design, brushed steel finish.
 ```
 
 The system will:
-1. Analyze your description using design principles
-2. Generate an optimized image prompt
-3. Display the manifest with `<<<RENDER_PROMPT>>>` tags
-4. Ask: "Render this manifest? (yes/no/refine):"
-5. If `yes` → Generate image via Ollama's diffusion model
-6. Save to `renderer_images/` directory in the space
+1. Interpret your description using the design principles in the knowledge base
+2. Write an image prompt wrapped in `<<<RENDER_PROMPT>>>` tags
+3. Ask: `Render this manifest? (yes/no):`
+4. On `yes`, generate the image with the local image model
+5. Save it to `spaces/<your_space>/renderer_images/`
 
-**Note**: Images are saved to `spaces/product_pitch_lab/renderer_images/` (not the package directory). The space must have this directory for rendering to work.
+Not happy with the result? Answer `no`, choose the same command again, and describe the product differently.
 
-You can type `refine` to iterate on the prompt before rendering.
+## Notes
+
+*   **The session has no memory between commands.** Each command sees only what you type into it, so repeat the product description when you move from one phase to the next.
+*   **Images are saved in the space, not in this package.** The `renderer_images/` folder is created on the first render.
+*   **Changing the knowledge.** A space is a copy of this package. To change what the space knows, edit the files under `spaces/<your_space>/knowledge/`, then run `./intentio clear --space=<your_space>` and `./intentio ingest --space=<your_space>`.
+*   **Context window.** `validate_idea` and `business_model` each load two knowledge files in full. If answers seem to ignore the frameworks, your model is probably truncating its input: raise `num_ctx` under `llm.options` in `config/app.local.php` (8192 is enough).
 
 ## What This Package Is
 
-✅ A validation tool for stress-testing business ideas  
-✅ A structured framework for building pitches  
-✅ A concept visualization generator for early-stage mockups  
-✅ An educational resource on business frameworks  
+✅ A validation tool for stress-testing product ideas  
+✅ A structured way to draft a pitch, a competitive analysis, and a Lean Canvas  
+✅ A concept visualizer for early mockups and logo directions  
+✅ A compact reference on business frameworks  
 
 ## What This Package Is Not
 
 ❌ A substitute for market research or customer interviews  
+❌ A source of market data (it has none, and is told not to invent any)  
 ❌ A production-ready design tool  
-❌ A comprehensive business consultant  
 ❌ A guarantee of product success  
 
-The mockups are concept sketches, not final designs. The analysis is grounded in established frameworks but not a replacement for domain expertise or real-world validation.
-
-## Tutorial
-
-For a complete guide on how this package was designed and how to create your own cognitive spaces, see the tutorial: [`references/products-pitch-lab.md`](../../references/products-pitch-lab.md)
+The mockups are concept sketches, not final designs. The analysis applies established frameworks to what you tell it; it knows nothing about your market that you have not written down.

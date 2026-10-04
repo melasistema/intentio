@@ -1,89 +1,49 @@
-# Value Proposition Framework
+# Value Proposition
+A value proposition states the unique benefit a product gives its customers. It answers one question: why should someone choose this product over the alternatives, including doing nothing?
 
-A value proposition defines the unique benefit your product provides to customers. It answers the fundamental question: "Why should someone choose your product over alternatives (including doing nothing)?"
+## Jobs-to-be-Done
+Customers "hire" a product to get a job done. Describing the job, rather than the product, leads to stronger value propositions.
+- Formula: "When [situation], I want to [motivation], so I can [expected outcome]"
+- Example: "When I finish a client project, I want to send the invoice in one step, so I can get paid without chasing paperwork"
 
-## Jobs-to-be-Done (JTBD) Model
+## The three types of customer jobs
+- Functional job: the practical task to complete ("I need to send an accurate invoice")
+- Emotional job: how the customer wants to feel ("I want to feel on top of my finances")
+- Social job: how the customer wants to be seen ("I want to look professional to my clients")
+A proposition that serves only the functional job is easy to copy.
 
-### Core Concept
-Customers "hire" products to get a job done. Understanding the job helps craft better value propositions.
+## The Value Proposition Canvas
+The canvas matches a customer profile to a value map.
+- Customer profile: the jobs they are trying to do, the pains that frustrate or block them, the gains that would make them successful or relieved
+- Value map: the products and services offered, the pain relievers that reduce specific pains, the gain creators that produce specific gains
+Fit exists when each pain reliever and gain creator answers a pain or gain the customer actually has.
 
-**Formula**: When [situation], I want to [motivation], so I can [expected outcome].
+## The value proposition statement template
+- For [target customer]
+- who [statement of need or opportunity],
+- [product name] is a [product category]
+- that [key benefit, the compelling reason to buy].
+- Unlike [primary alternative],
+- our product [primary differentiation].
+Example: "For freelance designers who lose hours every month to billing, Tally is an invoicing tool that turns a finished project into a sent invoice in one step. Unlike spreadsheet templates, it tracks who has paid and reminds the ones who have not."
 
-**Example**: When I'm working remotely, I want to stay hydrated without interrupting focus, so I can maintain energy and productivity.
+## Four tests for a value proposition
+- The "so what?" test: state it, then ask "so what?". If the answer is not a clear customer benefit, refine it.
+- The clarity test: can a stranger understand it in five seconds?
+- The relevance test: does it address a problem customers say they care about?
+- The differentiation test: is it clearly different from the alternatives?
 
-### Three Types of Jobs
+## Common value proposition mistakes
+- Feature-focused ("has automatic tax fields") instead of benefit-focused ("never redo an invoice because of a tax error")
+- Too broad ("for everyone who sends invoices") instead of specific ("for freelancers with more than five clients")
+- Vague claims ("the best invoicing tool ever") instead of concrete ones ("sends a payment reminder on the day an invoice is due")
+- Inside-out thinking ("we built a powerful rules engine") instead of outside-in ("you stop thinking about billing")
 
-1. **Functional Jobs**: The practical task the customer wants to complete
-   - "I need to track my daily water intake"
-   
-2. **Emotional Jobs**: How the customer wants to feel
-   - "I want to feel healthier and more in control"
-   
-3. **Social Jobs**: How the customer wants to be perceived
-   - "I want to be seen as someone who prioritizes wellness"
-
-## Crafting a Strong Value Proposition
-
-### The Value Proposition Canvas
-
-**Customer Profile:**
-- **Pains**: What frustrates, annoys, or blocks your customer?
-- **Gains**: What makes them happy, successful, or relieved?
-- **Jobs**: What are they trying to accomplish?
-
-**Value Map:**
-- **Pain Relievers**: How your product reduces specific pains
-- **Gain Creators**: How your product creates specific gains
-- **Products & Services**: What you offer
-
-### The Value Proposition Statement Template
-
-**For** [target customer]  
-**Who** [statement of need or opportunity]  
-**Our** [product name] is a [product category]  
-**That** [key benefit/compelling reason to buy]  
-**Unlike** [primary competitive alternative]  
-**Our product** [statement of primary differentiation]
-
-**Example:**  
-For busy professionals who struggle to maintain healthy hydration habits, HydraTrack is a smart water bottle that proactively reminds you to drink throughout the day. Unlike generic reminder apps, our product integrates seamlessly into your existing routine with ambient LED indicators and personalized hydration goals.
-
-## Testing Your Value Proposition
-
-### The "So What?" Test
-State your value proposition. Then ask "So what?" If you can't answer with a clear customer benefit, refine it.
-
-### The Clarity Test
-Can a stranger understand it in 5 seconds? If not, simplify.
-
-### The Relevance Test
-Does it address a problem customers actually care about? Validate through interviews.
-
-### The Differentiation Test
-Is it clearly different from alternatives? Highlight unique aspects.
-
-## Common Value Proposition Mistakes
-
-❌ **Feature-focused**: "Our bottle has a touchscreen display"  
-✅ **Benefit-focused**: "Never forget to hydrate with subtle reminders that fit your workflow"
-
-❌ **Too broad**: "For everyone who drinks water"  
-✅ **Specific**: "For remote workers who lose track of time during deep work"
-
-❌ **Vague claims**: "The best water bottle ever"  
-✅ **Concrete claims**: "Tracks hydration patterns and adapts reminders to your schedule"
-
-❌ **Inside-out thinking**: "We built cutting-edge IoT sensor tech"  
-✅ **Outside-in thinking**: "You stay healthier without thinking about it"
-
-## Hierarchy of Value
-
-From weakest to strongest differentiation:
-
-1. **Price**: Cheapest option (easily copied)
-2. **Features**: More/better functionality (eventually commoditized)
-3. **Experience**: Better usability and delight (harder to copy)
-4. **Platform**: Ecosystem lock-in (strong moat)
-5. **Mission**: Shared identity and values (deepest connection)
-
-Strong value propositions often combine multiple levels.
+## The hierarchy of value
+Sources of differentiation, from weakest to strongest:
+1. Price: being cheapest is easily copied
+2. Features: more functionality is eventually commoditized
+3. Experience: better usability and delight are harder to copy
+4. Platform: an ecosystem creates switching costs
+5. Mission: shared identity and values create the deepest connection
+Strong value propositions usually combine more than one level.
