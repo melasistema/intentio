@@ -30,6 +30,16 @@
             "Intentio\\Infrastructure\\": "app/Infrastructure/",
             "Intentio\\Shared\\": "app/Shared/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Intentio\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
     }
 }
-

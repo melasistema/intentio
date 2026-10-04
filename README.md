@@ -393,6 +393,15 @@ Once oMLX is running and your knowledge environment (either package-initialized 
    ./intentio help
    ```
 
+### 5. Run the Tests
+
+The tests cover the parts of INTENTIO that need no model: how a knowledge file is split, how a prompt template is read, how the prompt for the model is assembled, and how the closest passages are found. They run in a temporary folder and never touch your spaces or the oMLX server.
+
+```bash
+composer install
+composer test
+```
+
 ----------
 
 ## How It Works (Conceptually)

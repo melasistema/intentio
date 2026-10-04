@@ -16,6 +16,7 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 -   **Context Window Warning:** A warning is printed when a prompt is estimated to be larger than the model's context window (`llm.context_window`, 32768 by default).
 -   **Batch Embedding:** The sections of a knowledge file are embedded in one request.
 -   **Streamed Answers:** `chat` and `interact` show an answer while the model writes it, instead of after its last word. `omlx.timeout` is now the longest silence accepted from the server, not the time allowed for a whole answer.
+-   **Tests:** `composer test` runs PHPUnit tests of the chunker, the prompt front matter, the prompt assembly and the similarity search. They need no model and no server. PHPUnit is a development dependency only.
 -   **`status` Command:** Lists the models on the oMLX server and reports a configured model that is missing.
 
 ### Changed
