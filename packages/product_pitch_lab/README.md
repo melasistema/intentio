@@ -2,7 +2,7 @@
 
 A cognitive instrument for validating, refining, and visualizing product ideas, grounded in a small knowledge base of business frameworks and visual design principles.
 
-This package operates as a suite of "commands" that you run from the INTENTIO interactive mode. Five of them reason in text; two of them write a prompt for the local image model and render it. It is designed for founders, product managers, and students who want to stress-test an idea before investing in it.
+This package operates as a suite of "commands" that you run from the INTENTIO interactive mode. Five of them reason in text; three of them write a prompt for the local image model and render it. It is designed for founders, product managers, and students who want to stress-test an idea before investing in it.
 
 ## Quick Start
 
@@ -62,6 +62,11 @@ After each answer you choose the command for your next step, so a session natura
     *   Grounded in `logo_design.md`.
     *   *Instruction: Describe your brand briefly (e.g., 'Vortex, urban backpacks, bold and modern'):*
 
+*   **`landing_page`**
+    *   Designs the first screen of a landing page (the name, a headline of at most five words, one button, the product photograph), then offers to render it.
+    *   Grounded in `landing_page.md`.
+    *   *Instruction: Enter your product name, what it does for its user, and how it looks (e.g., 'Lumo, a reading lamp that clips to a book so you can read in bed without waking anyone. A slim white aluminium arm with a warm light.'):*
+
 ## Example Usage
 
 ### Phase 1: Validation
@@ -87,9 +92,10 @@ Available Prompt Templates for 'product_pitch_lab':
   2. competitor_analysis
   3. craft_pitch
   4. default
-  5. logo_concept
-  6. validate_idea
-  7. visualize_product
+  5. landing_page
+  6. logo_concept
+  7. validate_idea
+  8. visualize_product
 Enter the number of the prompt template to use: 3
 
 [craft_pitch] > HydraTrack - a smart water bottle for busy professionals that tracks how much they drink and sends gentle reminders through a mobile app.
@@ -97,7 +103,7 @@ Enter the number of the prompt template to use: 3
 
 ### Phase 3: Visualization
 
-Type `switch_prompt`, choose `visualize_product` or `logo_concept`, and describe what you want to see:
+Type `switch_prompt`, choose `visualize_product`, `logo_concept` or `landing_page`, and describe what you want to see:
 
 ```
 [visualize_product] > A sleek, modern water bottle with an LED ring at the base showing hydration progress in blue. Minimalist design, brushed steel finish.
@@ -112,6 +118,8 @@ The system will:
 
 Not happy with the result? Answer `no`, choose the same command again, and describe the product differently.
 
+Lettering is where a small image model fails most often. Render a logo or a landing page more than once and check the spelling.
+
 ## Notes
 
 *   **The session has no memory between commands.** Each command sees only what you type into it, so repeat the product description when you move from one phase to the next.
@@ -123,7 +131,7 @@ Not happy with the result? Answer `no`, choose the same command again, and descr
 
 ✅ A validation tool for stress-testing product ideas  
 ✅ A structured way to draft a pitch, a competitive analysis, and a Lean Canvas  
-✅ A concept visualizer for early mockups and logo directions  
+✅ A concept visualizer for early mockups, logo directions and landing pages  
 ✅ A compact reference on business frameworks  
 
 ## What This Package Is Not
