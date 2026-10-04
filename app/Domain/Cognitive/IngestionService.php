@@ -20,8 +20,6 @@ final class IngestionService
 
     public function ingestSpace(Space $space): void
     {
-        fwrite(STDOUT, "IngestionService: Initiating ingestion for space: '{$space->getName()}'." . PHP_EOL);
-
         // Scan the knowledge space for files within the knowledge and prompts directories
         $knowledgeFiles = $this->fileProcessor->scanDirectory($space->getKnowledgePath());
         $promptFiles = $this->fileProcessor->scanDirectory($space->getPromptsPath());
@@ -66,7 +64,6 @@ final class IngestionService
                     if ($relativePath !== null) {
                         $chunk['metadata']['relative_path'] = $relativePath;
                     }
-                    fwrite(STDOUT, sprintf("    - Embedding chunk (length: %d)..." . PHP_EOL, $chunk['metadata']['chunk_length']));
                     $embedding = $this->embeddingAdapter->embed($chunk['content']);
                     $this->vectorStore->add($space, $chunk, $embedding); // Pass Space object
                 }
@@ -75,6 +72,5 @@ final class IngestionService
                 // Continue to next file
             }
         }
-        fwrite(STDOUT, "IngestionService: Ingestion complete for space: '{$space->getName()}'." . PHP_EOL);
     }
 }

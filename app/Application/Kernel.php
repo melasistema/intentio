@@ -10,21 +10,20 @@ use Intentio\Application\Console\Commands\ChatCommand;
 use Intentio\Application\Console\Commands\ClearCommand;
 use Intentio\Application\Console\Commands\IngestCommand;
 use Intentio\Application\Console\Commands\InitCommand;
-use Intentio\Application\Console\Commands\InteractCommand; // Uncommented
-use Intentio\Application\Console\Commands\StatusCommand;   // Uncommented
+use Intentio\Application\Console\Commands\InteractCommand;
+use Intentio\Application\Console\Commands\StatusCommand;
 use Intentio\Application\Console\Commands\SpacesCommand;
 
-// Placeholder for Infrastructure dependencies that will be injected
 use Intentio\Infrastructure\Filesystem\FileProcessor;
 use Intentio\Infrastructure\LLM\OllamaAdapter;
 use Intentio\Infrastructure\Embeddings\LocalEmbeddingAdapter;
 use Intentio\Infrastructure\Filesystem\LocalSpaceRepository;
 use Intentio\Infrastructure\Filesystem\LocalBlueprintRepository;
 use Intentio\Infrastructure\Filesystem\FileCopier;
-use Intentio\Infrastructure\Storage\SQLiteVectorStore; // New
-use Intentio\Infrastructure\ImageRenderer\OllamaImageRenderer; // New
-use Intentio\Domain\Cognitive\VectorStoreInterface; // New
-use Intentio\Domain\Model\ImageRendererInterface; // New
+use Intentio\Infrastructure\Storage\SQLiteVectorStore;
+use Intentio\Infrastructure\ImageRenderer\OllamaImageRenderer;
+use Intentio\Domain\Cognitive\VectorStoreInterface;
+use Intentio\Domain\Model\ImageRendererInterface;
 
 use Intentio\Domain\Space\SpaceFactory;
 use Intentio\Domain\Cognitive\IngestionService;
@@ -56,18 +55,18 @@ final class Kernel
                 $llmOptions
             );
             $embeddingAdapter = new LocalEmbeddingAdapter(
-                $ollamaConfig, // Pass ollamaConfig here
+                $ollamaConfig,
                 $this->config['embedding']['model_name'] ?? 'nomic-embed-text'
             );
-            $fileCopier = new FileCopier(); // Needs proper construction/config
-            $fileProcessor = new FileProcessor(); // New
+            $fileCopier = new FileCopier();
+            $fileProcessor = new FileProcessor();
             $localSpaceRepository = new LocalSpaceRepository($this->config['spaces_base_path'] ?? __DIR__ . '/../../../spaces');
             $localBlueprintRepository = new LocalBlueprintRepository($this->config['blueprints_base_path'] ?? __DIR__ . '/../../../packages');
-            $vectorStore = new SQLiteVectorStore(); // New - no constructor args needed anymore
-            $ollamaImageRenderer = new OllamaImageRenderer($this->config['image_renderer']); // Instantiate the new image renderer
+            $vectorStore = new SQLiteVectorStore();
+            $ollamaImageRenderer = new OllamaImageRenderer($this->config['image_renderer']);
 
             // Domain dependencies
-            $spaceFactory = new SpaceFactory(); // Needs construction logic
+            $spaceFactory = new SpaceFactory();
             $ingestionService = new IngestionService(
                 $fileProcessor,
                 $embeddingAdapter,
@@ -77,17 +76,17 @@ final class Kernel
                 $embeddingAdapter,
                 $vectorStore
             );
-            $promptResolver = new PromptResolver(); // Needs construction logic
+            $promptResolver = new PromptResolver();
 
             $cognitiveEngine = new CognitiveEngine(
                 $ollamaAdapter,
                 $ingestionService,
                 $retrievalService,
                 $vectorStore,
-                $ollamaImageRenderer // Inject the new image renderer
+                $ollamaImageRenderer
             );
 
-            $consoleApplication = new ConsoleApplication($this->config['app_name'] ?? 'INTENTIO', '0.1.0');
+            $consoleApplication = new ConsoleApplication($this->config['app_name'] ?? 'INTENTIO', $this->config['app_version'] ?? 'unknown');
 
             // Register Commands
             $consoleApplication->addCommand(new InitCommand(
@@ -98,7 +97,7 @@ final class Kernel
                 $this->config // Pass config for paths etc.
             ));
             $consoleApplication->addCommand(new IngestCommand($cognitiveEngine, $localSpaceRepository));
-            $consoleApplication->addCommand(new ChatCommand($cognitiveEngine, $localSpaceRepository));
+            $consoleApplication->addCommand(new ChatCommand($cognitiveEngine, $localSpaceRepository, $promptResolver));
             $consoleApplication->addCommand(new ClearCommand($cognitiveEngine, $localSpaceRepository));
             $consoleApplication->addCommand(new InteractCommand(
                 $cognitiveEngine,
@@ -107,14 +106,14 @@ final class Kernel
                 $localBlueprintRepository,
                 $fileCopier,
                 $this->config,
-                $promptResolver // Added promptResolver
+                $promptResolver
             ));
-            $consoleApplication->addCommand(new StatusCommand( // Uncommented and instantiated
+            $consoleApplication->addCommand(new StatusCommand(
                 $localSpaceRepository,
                 $this->config
             ));
-            $consoleApplication->addCommand(new SpacesCommand($localSpaceRepository)); // New command to list spaces
-            $consoleApplication->addCommand(new RenderCommand($cognitiveEngine, $localSpaceRepository, $promptResolver));
+            $consoleApplication->addCommand(new SpacesCommand($localSpaceRepository));
+            $consoleApplication->addCommand(new RenderCommand($cognitiveEngine, $localSpaceRepository));
 
             return $consoleApplication->run();
         } catch (IntentioException $e) {

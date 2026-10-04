@@ -54,7 +54,7 @@ final class InteractCommand implements CommandInterface
                 $manifestConfig = $this->parseManifest(file_get_contents($manifestPath));
             }
 
-            $selectedPromptKey = $options['prompt_key']
+            $selectedPromptKey = $options['prompt-key']
                                 ?? $manifestConfig['default_prompt']
                                 ?? $this->config['llm']['default_prompt_template_name']
                                 ?? 'default';
@@ -97,13 +97,7 @@ final class InteractCommand implements CommandInterface
                     continue;
                 }
 
-                $chatOptions = $options;
-                $chatOptions['prompt_key'] = $currentPromptKey;
-                $chatOptions['prompt_instruction'] = $currentPromptInstruction;
-                $chatOptions['prompt_content'] = $currentPromptContent;
-                $chatOptions['context_files'] = $currentPromptContextFiles;
-
-                $response = $this->cognitiveEngine->chat($space, $query, $chatOptions);
+                $response = $this->cognitiveEngine->chat($space, $query, $currentPromptContent, $currentPromptContextFiles);
 
                 fwrite(STDOUT, "\n--- INTENTIO Response ---" . PHP_EOL);
                 fwrite(STDOUT, $response . PHP_EOL);
@@ -172,7 +166,6 @@ final class InteractCommand implements CommandInterface
                                     break;
                                 }
 
-                                fwrite(STDOUT, "DEBUG: Extracted master prompt: '" . $masterPrompt . "'" . PHP_EOL);
                                 $this->cognitiveEngine->render($space, $masterPrompt, []);
                                 fwrite(STDOUT, "Image rendering complete." . PHP_EOL);
                                 break;

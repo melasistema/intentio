@@ -6,7 +6,7 @@ namespace Intentio\Domain\Cognitive;
 
 use Intentio\Domain\Space\Space;
 use Intentio\Domain\Model\LLMInterface;
-use Intentio\Domain\Model\ImageRendererInterface; // Import the new interface
+use Intentio\Domain\Model\ImageRendererInterface;
 
 final readonly class CognitiveEngine
 {
@@ -15,7 +15,7 @@ final readonly class CognitiveEngine
         private IngestionService     $ingestionService,
         private RetrievalService     $retrievalService,
         private VectorStoreInterface $vectorStore,
-        private ImageRendererInterface $imageRenderer // Add the new dependency
+        private ImageRendererInterface $imageRenderer
     )
     {
     }
@@ -25,57 +25,67 @@ final readonly class CognitiveEngine
         $this->ingestionService->ingestSpace($space);
     }
 
-    public function chat(Space $space, string $message, array $options = []): string
+    /**
+     * Answers a query inside a space.
+     *
+     * @param string $promptTemplate The prompt template to use. Without one, the query itself is the prompt.
+     * @param string[] $pinnedFiles Paths of knowledge files the template names, loaded in full.
+     */
+    public function chat(Space $space, string $message, string $promptTemplate = '{{QUERY}}', array $pinnedFiles = []): string
     {
-        // Extract prompt details from options, provided by InteractCommand
-        $promptContent = $options['prompt_content'] ?? '';
-        $promptInstruction = $options['prompt_instruction'] ?? '';
-        $promptContextFiles = $options['context_files'] ?? [];
+        $retrievedChunks = $this->retrievalService->retrieve($space, $message);
+        $context = $this->formatContext($pinnedFiles, $retrievedChunks);
 
-        // 1. Retrieve relevant context from the space (from vector store)
-        $retrievedContext = $this->retrievalService->retrieve($space, $message, $options['retrieval_limit'] ?? 5);
-
-        // 2. Load additional context from referenced files
-        $additionalContext = [];
-        foreach ($promptContextFiles as $filePath) {
-            if (file_exists($filePath) && is_readable($filePath)) {
-                $additionalContext[] = "--- Content from " . basename($filePath) . " ---\n" . file_get_contents($filePath);
-            }
-        }
-        $fullContextContent = implode("\n\n", $additionalContext);
-
-        // Format retrieved context for the LLM
-        $retrievedContextString = implode("\n\n", array_map(function ($item) {
-            return "Source: {" . $item['source'] . "}\nContent: {" . $item['content'] . "}";
-        }, $retrievedContext));
-
-        // Combine all context: additional files + retrieved chunks
-        $finalContext = [];
-        if (!empty($fullContextContent)) {
-            $finalContext[] = "### Knowledge Base\n" . $fullContextContent;
-        }
-        if (!empty($retrievedContextString)) {
-            $finalContext[] = "### Retrieved Information\n" . $retrievedContextString;
-        }
-        $finalContextString = implode("\n\n", $finalContext);
-
-
-        // 3. Construct the full prompt for the LLM
-        $fullPrompt = sprintf(
-            "%s\n%s\n\n%s", // Instruction, Context, Main Prompt (content with QUERY placeholder)
-            empty($promptInstruction) ? '' : "Instruction: " . $promptInstruction, // Add instruction if present
-            empty($finalContextString) ? '' : "Context:\n" . $finalContextString,
-            str_replace('{{QUERY}}', $message, $promptContent) // Replace {{QUERY}} placeholder
-        );
-        // Clean up empty lines that might result from missing instruction or context
-        $fullPrompt = preg_replace("/\n{2,}/", "\n\n", $fullPrompt);
-
-
-        // 4. Get response from LLM
-        return $this->llmAdapter->generate($fullPrompt, '', $options['llm_options'] ?? []);
+        return $this->llmAdapter->generate($this->assemblePrompt($promptTemplate, $message, $context));
     }
 
-    public function render(Space $space, string $query, array $options): string // Changed return type to string
+    /**
+     * Builds the one text the model receives: the knowledge in scope and the prompt template with the query.
+     * A template places the knowledge itself with {{CONTEXT}}; without that placeholder, the knowledge comes first.
+     */
+    private function assemblePrompt(string $template, string $query, string $context): string
+    {
+        if (!str_contains($template, '{{QUERY}}')) {
+            $template .= "\n\n{{QUERY}}";
+        }
+
+        if (!str_contains($template, '{{CONTEXT}}') && $context !== '') {
+            $template = "Context:\n{{CONTEXT}}\n\n" . $template;
+        }
+
+        // strtr replaces both placeholders in one pass, so a placeholder written inside the knowledge or the query is left as it is
+        return strtr($template, ['{{CONTEXT}}' => $context, '{{QUERY}}' => $query]);
+    }
+
+    /**
+     * Formats the knowledge in scope: the pinned files in full, then the retrieved passages with their source.
+     */
+    private function formatContext(array $pinnedFiles, array $retrievedChunks): string
+    {
+        $sections = [];
+
+        $pinned = [];
+        foreach ($pinnedFiles as $filePath) {
+            if (file_exists($filePath) && is_readable($filePath)) {
+                $pinned[] = "--- Content from " . basename($filePath) . " ---\n" . trim(file_get_contents($filePath));
+            }
+        }
+        if (!empty($pinned)) {
+            $sections[] = "### Knowledge Base\n" . implode("\n\n", $pinned);
+        }
+
+        $retrieved = [];
+        foreach ($retrievedChunks as $chunk) {
+            $retrieved[] = "Source: " . $chunk['source'] . "\nContent: " . $chunk['content'];
+        }
+        if (!empty($retrieved)) {
+            $sections[] = "### Retrieved Information\n" . implode("\n\n", $retrieved);
+        }
+
+        return implode("\n\n", $sections);
+    }
+
+    public function render(Space $space, string $query, array $options): string
     {
         // Construct space-specific renderer folder path
         $spaceRendererFolder = $space->getPath() . '/renderer_images';
@@ -86,8 +96,6 @@ final readonly class CognitiveEngine
 
     public function clear(Space $space): void
     {
-        fwrite(STDOUT, "CognitiveEngine: Clearing ingested data for space '" . $space->getName() . "'." . PHP_EOL);
         $this->vectorStore->clear($space);
-        fwrite(STDOUT, "CognitiveEngine: Ingested data cleared for space '" . $space->getName() . "'." . PHP_EOL);
     }
 }

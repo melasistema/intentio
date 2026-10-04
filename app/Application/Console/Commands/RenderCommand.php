@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Intentio\Application\Console\Commands;
 
 use Intentio\Domain\Cognitive\CognitiveEngine;
-use Intentio\Domain\Cognitive\PromptResolver;
 use Intentio\Domain\Space\SpaceRepository;
 use Intentio\Shared\Exceptions\IntentioException;
 
@@ -16,8 +15,7 @@ class RenderCommand implements CommandInterface
 
     public function __construct(
         private readonly CognitiveEngine $cognitiveEngine,
-        private readonly SpaceRepository $spaceRepository,
-        private readonly PromptResolver $promptResolver
+        private readonly SpaceRepository $spaceRepository
     ) {
     }
 
@@ -34,7 +32,6 @@ class RenderCommand implements CommandInterface
     public function execute(array $arguments, array $options): int
     {
         $spaceName = $options['space'] ?? null;
-        $promptKey = $options['prompt-key'] ?? 'render_manifest';
         $query = $arguments[0] ?? null;
 
         if ($spaceName === null) {
@@ -53,26 +50,6 @@ class RenderCommand implements CommandInterface
             if ($space === null) {
                 throw new IntentioException("Cognitive space '{$spaceName}' not found.");
             }
-
-            // Resolve the prompt using the PromptResolver
-            $resolvedPrompt = $this->promptResolver->resolve($space, $promptKey);
-            $promptContent = $resolvedPrompt['content'];
-
-            // Handle special context for visual_intent_designer
-            if (str_contains($promptContent, '{{lastGeneratedManifest}}')) {
-                $manifestPath = $space->getPath() . '/lastGeneratedManifest.md';
-                if (file_exists($manifestPath)) {
-                    $manifestContent = file_get_contents($manifestPath);
-                    $promptContent = str_replace('{{lastGeneratedManifest}}', $manifestContent, $promptContent);
-                } else {
-                    $promptContent = str_replace('{{lastGeneratedManifest}}', '[No lastGeneratedManifest found]', $promptContent);
-                }
-            }
-
-            $options['prompt_content'] = $promptContent;
-            $options['prompt_instruction'] = $resolvedPrompt['instruction'];
-            $options['context_files'] = $resolvedPrompt['context_files'];
-
 
             fwrite(STDOUT, "Initiating render with space: {$space->getName()}" . PHP_EOL);
 

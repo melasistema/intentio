@@ -55,7 +55,8 @@ final class InitCommand implements CommandInterface
                 return 1;
             }
 
-            $this->initializeSpace($blueprint->getName(), $spaceName);
+            // Prompt for space name if not provided via --space
+            $this->initializeSpace($blueprint->getName(), $spaceName ?? $this->askForSpaceName($blueprint->getName()));
             return 0;
         } catch (IntentioException $e) {
             fwrite(STDERR, "Error: " . $e->getMessage() . PHP_EOL);

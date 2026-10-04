@@ -210,16 +210,16 @@ Prompts are not merely instructions; they are fundamental tools for **agent desi
 ### How it Works:
 
 1.  **Template Files**: Prompt templates are simple Markdown (`.md`) files located within the `prompts/` directory of your **specific knowledge package** (e.g., `packages/hook_analyzer/prompts/`). Each file defines a distinct "stance" or "command" for the AI.
-2.  **Self-Describing Commands**: Each prompt template can include YAML front matter at the top to provide a user-facing `instruction` (e.g., `--- instruction: "Enter the hook you want to analyze:" ---`). This instruction is automatically displayed in interactive mode to guide your input.
+2.  **Self-Describing Commands**: Each prompt template can include YAML front matter at the top to provide a user-facing `instruction` (e.g., `--- instruction: "Enter the hook you want to analyze:" ---`). This instruction is automatically displayed in interactive mode to guide your input. It is shown to you only and is never sent to the model.
 3.  **Flexible Design**: These templates allow you to:
     *   Guide the LLM to adopt specific personas (e.g., `analytical`, `creative`, `skeptical`).
     *   Provide task-specific instructions (e.g., summarize, extract facts, generate narratives).
     *   Enforce strict grounding rules, ensuring responses adhere solely to the provided context.
-4.  **Placeholders**: Each template uses `{{CONTEXT}}` to inject retrieved knowledge and `{{QUERY}}` for the user's question, allowing you to craft precise instructions around this core information.
+4.  **Placeholders**: `{{QUERY}}` is replaced with the user's input. `{{CONTEXT}}` is optional and marks where the knowledge in scope (pinned files and retrieved passages) is placed; a template without it receives that knowledge ahead of its own text.
 5.  **Usage**:
     *   **Default Prompt:** You can define a global default prompt template name in your `config/app.php` file.
     *   **Package Default:** A `default_prompt` can be specified in a space's `manifest.md` to override the global default for that specific space.
-    *   **Command Line:** Use the `--prompt-key=<name>` option with the `chat` command for a one-off prompt selection.
+    *   **Command Line:** Use the `--prompt-key=<name>` option with the `chat` command for a one-off prompt selection, or with `interact` to choose the starting template. Without it, `chat` sends your query with the retrieved knowledge and no template.
     *   **Interactive Mode:** Within the `./intentio interact` session, you will be prompted to select an initial prompt template, and you can dynamically switch between templates using the `switch_prompt` command. The `instruction` from the template's front-matter will guide your input.
 
 By leveraging configurable prompt templates, you transform INTENTIO into a truly adaptable cognitive instrument, capable of adopting diverse "cognitive stances" to match your specific needs and intentions.
