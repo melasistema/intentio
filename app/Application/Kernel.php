@@ -48,6 +48,8 @@ final class Kernel
             $ollamaConfig = $this->config['ollama'] ?? [];
             $llmModel = $this->config['llm']['model_name'] ?? 'llama2';
             $llmOptions = $this->config['llm']['options'] ?? [];
+            // The context window is always sent to Ollama, so the size INTENTIO checks prompts against is the size in use
+            $llmOptions += ['num_ctx' => 8192];
 
             $ollamaAdapter = new OllamaAdapter(
                 $ollamaConfig,
@@ -76,7 +78,9 @@ final class Kernel
             );
             $retrievalService = new RetrievalService(
                 $embeddingAdapter,
-                $vectorStore
+                $vectorStore,
+                $this->config['retrieval']['limit'] ?? 5,
+                $this->config['retrieval']['min_score'] ?? 0.5
             );
             $promptResolver = new PromptResolver();
 
@@ -85,7 +89,8 @@ final class Kernel
                 $ingestionService,
                 $retrievalService,
                 $vectorStore,
-                $ollamaImageRenderer
+                $ollamaImageRenderer,
+                $llmOptions['num_ctx']
             );
 
             $consoleApplication = new ConsoleApplication($this->config['app_name'] ?? 'INTENTIO', $this->config['app_version'] ?? 'unknown');

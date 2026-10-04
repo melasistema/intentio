@@ -24,6 +24,7 @@ return [
         'options' => [
             'temperature' => 0.5, // From original interpreter.options
             'keep_alive' => '15m', // From original interpreter.options
+            'num_ctx' => 8192, // The context window, in tokens. A prompt longer than this is cut by Ollama without notice.
         ],
         'default_prompt_template_name' => 'default', // From original interpreter.default_prompt_template_name
     ],
@@ -31,6 +32,14 @@ return [
     // Embedding model configuration
     'embedding' => [
         'model_name' => 'nomic-embed-text', // From original embedding.model_name
+    ],
+
+    // Retrieval configuration
+    'retrieval' => [
+        'limit' => 5, // The most passages a query may bring into the prompt
+        // The lowest similarity (0 to 1) a passage needs to be used. It depends on the embedding model:
+        // with nomic-embed-text, passages on the topic mostly score above 0.55 and unrelated ones mostly below 0.5.
+        'min_score' => 0.5,
     ],
 
     // Image renderer configuration

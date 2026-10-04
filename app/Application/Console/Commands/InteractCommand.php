@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Intentio\Application\Console\Commands;
 
+use Intentio\Application\Console\SourceList;
 use Intentio\Domain\Cognitive\CognitiveEngine;
 use Intentio\Domain\Cognitive\PromptResolver;
 use Intentio\Domain\Space\Space;
@@ -97,11 +98,14 @@ final class InteractCommand implements CommandInterface
                     continue;
                 }
 
-                $response = $this->cognitiveEngine->chat($space, $query, $currentPromptContent, $currentPromptContextFiles);
+                $result = $this->cognitiveEngine->chat($space, $query, $currentPromptContent, $currentPromptContextFiles);
+                $response = $result['answer'];
 
                 fwrite(STDOUT, "\n--- INTENTIO Response ---" . PHP_EOL);
                 fwrite(STDOUT, $response . PHP_EOL);
-                fwrite(STDOUT, "-------------------------\n" . PHP_EOL);
+                fwrite(STDOUT, "-------------------------" . PHP_EOL);
+                SourceList::write($result);
+                fwrite(STDOUT, PHP_EOL);
 
                 $actions = $manifestConfig['actions'] ?? [];
                 $actionConfig = null;

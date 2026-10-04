@@ -334,6 +334,16 @@ Once Ollama is running and your knowledge environment (either package-initialize
    ```
    *Replace `hook_analyzer` with the name of your cognitive space, and `analyze_hook` with the name of a prompt template available in that space.*
 
+   Every answer, in `chat` and in `interact`, is followed by its sources: the files the template pinned in full, and the passages that were retrieved, each with its similarity to your query (0 to 1).
+
+   ```
+   Sources:
+     pinned  platform_specs.md
+     0.76    hook_models.md > Hook Models > The PAS Model
+   ```
+
+   Passages below `retrieval.min_score` (0.5 by default, in `config/app.php`) are not used, and passages of a pinned file are not retrieved a second time. When nothing is close enough, the list says `Sources: none`, and the answer does not come from the space. INTENTIO also warns when a prompt is estimated to be larger than the model's context window (`llm.options.num_ctx`, 8192 by default).
+
 **c. Interactive Mode (Recommended for exploration and guided experience):**
    Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates (commands), and chat. A space that was never ingested is ingested on entry; if its knowledge has changed since, you are asked whether to update the index.
 

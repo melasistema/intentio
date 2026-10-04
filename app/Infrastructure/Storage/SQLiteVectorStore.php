@@ -119,7 +119,7 @@ final class SQLiteVectorStore implements VectorStoreInterface
         }
     }
 
-    public function findSimilar(Space $space, array $queryEmbedding, int $limit = 5): array
+    public function findSimilar(Space $space, array $queryEmbedding, int $limit, float $minScore, array $excludedPaths = []): array
     {
         if (!file_exists($this->getDbPathForSpace($space))) {
             return [];
@@ -129,10 +129,14 @@ final class SQLiteVectorStore implements VectorStoreInterface
         $dimensions = count($queryVector);
 
         $db = $this->connect($space);
-        $results = $db->query('SELECT content, metadata, embedding FROM chunks');
+        $results = $db->query('SELECT path, content, metadata, embedding FROM chunks');
 
         $scoredResults = [];
         while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
+            if (in_array($row['path'], $excludedPaths, true)) {
+                continue;
+            }
+
             $chunkVector = array_values(unpack('g*', $row['embedding']));
             if (count($chunkVector) !== $dimensions) {
                 // Embedded with a different model than the query: not comparable
@@ -145,8 +149,8 @@ final class SQLiteVectorStore implements VectorStoreInterface
                 $score += $queryVector[$i] * $chunkVector[$i];
             }
 
-            // Only include results with a score greater than 0 (i.e., not perfectly orthogonal)
-            if ($score > 0) {
+            // A chunk below the minimum is not close enough to the query to be worth the model's attention
+            if ($score >= $minScore) {
                 $scoredResults[] = [
                     'content' => $row['content'],
                     'metadata' => json_decode($row['metadata'], true),

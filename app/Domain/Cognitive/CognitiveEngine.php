@@ -15,7 +15,8 @@ final readonly class CognitiveEngine
         private IngestionService     $ingestionService,
         private RetrievalService     $retrievalService,
         private VectorStoreInterface $vectorStore,
-        private ImageRendererInterface $imageRenderer
+        private ImageRendererInterface $imageRenderer,
+        private int $contextWindow
     )
     {
     }
@@ -45,13 +46,48 @@ final readonly class CognitiveEngine
      *
      * @param string $promptTemplate The prompt template to use. Without one, the query itself is the prompt.
      * @param string[] $pinnedFiles Paths of knowledge files the template names, loaded in full.
+     * @return array The 'answer' and what it was built from: 'pinned' (files given in full, as paths relative
+     *               to the knowledge folder), 'retrieved' (passages, each with 'source' and 'score'),
+     *               and 'warning' (null, or why the model may not have seen all of it).
      */
-    public function chat(Space $space, string $message, string $promptTemplate = '{{QUERY}}', array $pinnedFiles = []): string
+    public function chat(Space $space, string $message, string $promptTemplate = '{{QUERY}}', array $pinnedFiles = []): array
     {
-        $retrievedChunks = $this->retrievalService->retrieve($space, $message);
-        $context = $this->formatContext($pinnedFiles, $retrievedChunks);
+        $pinnedPaths = [];
+        foreach ($pinnedFiles as $filePath) {
+            $pinnedPaths[] = substr($filePath, strlen($space->getKnowledgePath()) + 1);
+        }
 
-        return $this->llmAdapter->generate($this->assemblePrompt($promptTemplate, $message, $context));
+        // A pinned file is already given in full, so its passages are not retrieved a second time
+        $retrievedChunks = $this->retrievalService->retrieve($space, $message, $pinnedPaths);
+        $prompt = $this->assemblePrompt($promptTemplate, $message, $this->formatContext($pinnedFiles, $retrievedChunks));
+
+        $retrieved = [];
+        foreach ($retrievedChunks as $chunk) {
+            $retrieved[] = ['source' => $chunk['source'], 'score' => $chunk['score']];
+        }
+
+        return [
+            'answer' => $this->llmAdapter->generate($prompt),
+            'pinned' => $pinnedPaths,
+            'retrieved' => $retrieved,
+            'warning' => $this->contextWindowWarning($prompt),
+        ];
+    }
+
+    /**
+     * Compares the size of a prompt with the model's context window.
+     * The size is an estimate: about four characters make a token.
+     */
+    private function contextWindowWarning(string $prompt): ?string
+    {
+        $estimatedTokens = (int) ceil(strlen($prompt) / 4);
+
+        if ($estimatedTokens <= $this->contextWindow) {
+            return null;
+        }
+
+        return "the prompt is about {$estimatedTokens} tokens and the context window is {$this->contextWindow}, "
+            . "so the model did not see all of it. Pin fewer files, or raise llm.options.num_ctx in the configuration.";
     }
 
     /**

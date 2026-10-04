@@ -10,8 +10,13 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 
 ### Added
 -   **Product Pitch Lab Blueprint:** Introduced the `@packages/product_pitch_lab` cognitive environment (`version: 0.1.0`), which validates product ideas against business frameworks, drafts elevator pitches, competitive analyses and Lean Canvases, and renders product mockups and logo concepts.
+-   **Sources Under Each Answer:** `chat` and `interact` list what an answer was built from: the knowledge files pinned by the prompt template and the retrieved passages, each with its similarity score. When nothing was used, the list says so.
+-   **Retrieval Settings:** `retrieval.limit` and `retrieval.min_score` in `config/app.php`.
+-   **Context Window Warning:** The context window is set explicitly (`llm.options.num_ctx`, 8192 by default), and a warning is printed when a prompt is estimated to be larger than it.
 
 ### Changed
+-   **Minimum Similarity:** A passage is retrieved only if its similarity to the query reaches `retrieval.min_score` (0.5 by default). Previously the five nearest passages were always sent, however distant.
+-   **Pinned Files:** Passages of a file that the prompt template already loads in full are no longer retrieved a second time.
 -   **Quiet Output:** Removed debug lines and the engine's internal progress messages from `interact`, `chat`, `ingest`, `clear` and `render`.
 -   **`init` Without `--space`:** `./intentio init <blueprint>` now asks for the space name instead of failing.
 -   **Missing Prompts:** A prompt template that does not exist is reported as an error instead of silently falling back to `default`.

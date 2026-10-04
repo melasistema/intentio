@@ -6,31 +6,33 @@ namespace Intentio\Domain\Cognitive;
 
 use Intentio\Domain\Space\Space;
 use Intentio\Domain\Model\EmbeddingInterface;
-use Intentio\Shared\Exceptions\IntentioException;
 
 final class RetrievalService
 {
     public function __construct(
         private readonly EmbeddingInterface $embeddingAdapter,
-        private readonly VectorStoreInterface $vectorStore
+        private readonly VectorStoreInterface $vectorStore,
+        private readonly int $limit,
+        private readonly float $minScore
     ) {
     }
 
     /**
-     * Retrieves relevant information for a query from the given cognitive space.
+     * Retrieves the passages of a cognitive space that are close enough to a query.
+     * It may return nothing: a passage that is not about the query is not offered to the model.
      *
      * @param Space $space The cognitive space to retrieve from.
      * @param string $query The user's query.
-     * @param int $limit The maximum number of results to retrieve.
-     * @return array An array of retrieved relevant context/documents.
+     * @param string[] $excludedPaths Files to leave out, as paths relative to the knowledge folder.
+     * @return array The passages, best first, each with 'content', 'source' and 'score'.
      */
-    public function retrieve(Space $space, string $query, int $limit = 5): array
+    public function retrieve(Space $space, string $query, array $excludedPaths = []): array
     {
         // Embed the query
         $queryEmbedding = $this->embeddingAdapter->embed($query);
 
         // Retrieve from vector store
-        $retrievedChunks = $this->vectorStore->findSimilar($space, $queryEmbedding, $limit);
+        $retrievedChunks = $this->vectorStore->findSimilar($space, $queryEmbedding, $this->limit, $this->minScore, $excludedPaths);
 
         $results = [];
         foreach ($retrievedChunks as $chunk) {

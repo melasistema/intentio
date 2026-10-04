@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Intentio\Application\Console\Commands;
 
+use Intentio\Application\Console\SourceList;
 use Intentio\Domain\Cognitive\CognitiveEngine;
 use Intentio\Domain\Cognitive\PromptResolver;
 use Intentio\Infrastructure\Filesystem\LocalSpaceRepository;
@@ -66,16 +67,18 @@ final class ChatCommand implements CommandInterface
             fwrite(STDOUT, "Your query: \"{$query}\"" . PHP_EOL);
 
             if ($promptKey === null) {
-                $response = $this->cognitiveEngine->chat($space, $query);
+                $result = $this->cognitiveEngine->chat($space, $query);
             } else {
                 $resolvedPrompt = $this->promptResolver->resolve($space, $promptKey);
                 fwrite(STDOUT, "Prompt template: {$promptKey}" . PHP_EOL);
-                $response = $this->cognitiveEngine->chat($space, $query, $resolvedPrompt['content'], $resolvedPrompt['context_files']);
+                $result = $this->cognitiveEngine->chat($space, $query, $resolvedPrompt['content'], $resolvedPrompt['context_files']);
             }
 
             fwrite(STDOUT, "\n--- Interpreter Response ---" . PHP_EOL);
-            fwrite(STDOUT, $response . PHP_EOL);
-            fwrite(STDOUT, "----------------------------\n" . PHP_EOL);
+            fwrite(STDOUT, $result['answer'] . PHP_EOL);
+            fwrite(STDOUT, "----------------------------" . PHP_EOL);
+            SourceList::write($result);
+            fwrite(STDOUT, PHP_EOL);
 
             return 0;
         } catch (IntentioException $e) {

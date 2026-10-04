@@ -42,9 +42,11 @@ interface VectorStoreInterface
      * @param Space $space The cognitive space.
      * @param array $queryEmbedding The embedding of the query.
      * @param int $limit The maximum number of similar chunks to return.
-     * @return array An array of associative arrays, each containing 'content', 'metadata', and 'score'.
+     * @param float $minScore The lowest similarity a chunk needs to be returned.
+     * @param string[] $excludedPaths Files to leave out, as paths relative to the knowledge folder.
+     * @return array An array of associative arrays, each containing 'content', 'metadata', and 'score', best first.
      */
-    public function findSimilar(Space $space, array $queryEmbedding, int $limit = 5): array;
+    public function findSimilar(Space $space, array $queryEmbedding, int $limit, float $minScore, array $excludedPaths = []): array;
 
     /**
      * Clears all data from the vector store for a given space.
