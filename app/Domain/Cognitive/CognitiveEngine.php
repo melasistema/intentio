@@ -76,11 +76,11 @@ final readonly class CognitiveEngine
 
     /**
      * Compares the size of a prompt with the model's context window.
-     * The size is an estimate: about four characters make a token.
+     * The size is an estimate: a token is between three and four bytes of English text, and 3.5 is used.
      */
     private function contextWindowWarning(string $prompt): ?string
     {
-        $estimatedTokens = (int) ceil(strlen($prompt) / 4);
+        $estimatedTokens = (int) ceil(strlen($prompt) / 3.5);
 
         if ($estimatedTokens <= $this->contextWindow) {
             return null;

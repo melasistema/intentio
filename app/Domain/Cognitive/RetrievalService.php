@@ -13,7 +13,8 @@ final class RetrievalService
         private readonly EmbeddingInterface $embeddingAdapter,
         private readonly VectorStoreInterface $vectorStore,
         private readonly int $limit,
-        private readonly float $minScore
+        private readonly float $minScore,
+        private readonly string $queryPrefix
     ) {
     }
 
@@ -29,7 +30,7 @@ final class RetrievalService
     public function retrieve(Space $space, string $query, array $excludedPaths = []): array
     {
         // Embed the query
-        $queryEmbedding = $this->embeddingAdapter->embed($query);
+        $queryEmbedding = $this->embeddingAdapter->embed($this->queryPrefix . $query);
 
         // Retrieve from vector store
         $retrievedChunks = $this->vectorStore->findSimilar($space, $queryEmbedding, $this->limit, $this->minScore, $excludedPaths);

@@ -17,7 +17,8 @@ final class IngestionService
         private readonly FileProcessor $fileProcessor,
         private readonly EmbeddingInterface $embeddingAdapter,
         private readonly VectorStoreInterface $vectorStore,
-        private readonly string $embeddingModel
+        private readonly string $embeddingModel,
+        private readonly string $documentPrefix
     ) {
     }
 
@@ -36,8 +37,8 @@ final class IngestionService
         $unchanged = 0;
         foreach ($this->fileProcessor->scanDirectory($knowledgePath) as $filePath) {
             $relativePath = substr($filePath, strlen($knowledgePath) + 1);
-            // The embedding model is part of the fingerprint: vectors from another model cannot be compared
-            $fingerprint = hash('sha256', self::INDEX_FORMAT . "\n" . $this->embeddingModel . "\n" . file_get_contents($filePath));
+            // The embedding model and its prefix are part of the fingerprint: vectors made another way cannot be compared
+            $fingerprint = hash('sha256', self::INDEX_FORMAT . "\n" . $this->embeddingModel . "\n" . $this->documentPrefix . "\n" . file_get_contents($filePath));
 
             if (($indexed[$relativePath] ?? null) === $fingerprint) {
                 $unchanged++;
@@ -81,7 +82,7 @@ final class IngestionService
                     // A section is embedded together with the headings above it, so that
                     // "Examples" under "Unfair Advantage" is found by a question about unfair advantage
                     $parentHeadings = array_slice($chunk['metadata']['headings'], 0, -1);
-                    $texts[] = implode("\n", [...$parentHeadings, $chunk['content']]);
+                    $texts[] = $this->documentPrefix . implode("\n", [...$parentHeadings, $chunk['content']]);
                 }
                 // The sections of a file are embedded in one request
                 $embeddings = $this->embeddingAdapter->embedAll($texts);

@@ -32,14 +32,18 @@ return [
     // Embedding model configuration
     'embedding' => [
         'model_name' => 'nomicai-modernbert-embed-base-bf16', // The model's name as oMLX lists it
+        // Some embedding models expect a word in front of each text that says what it is. Nomic's models do:
+        // without these, unrelated passages score almost as high as related ones. Leave both empty for a model that has none.
+        'document_prefix' => 'search_document: ',
+        'query_prefix' => 'search_query: ',
     ],
 
     // Retrieval configuration
     'retrieval' => [
         'limit' => 5, // The most passages a query may bring into the prompt
-        // The lowest similarity (0 to 1) a passage needs to be used. It depends on the embedding model:
-        // the default was measured with nomic-embed-text and has to be checked again for another model.
-        'min_score' => 0.5,
+        // The lowest similarity (0 to 1) a passage needs to be used. It depends on the embedding model.
+        // With the default model, unrelated questions scored up to 0.29 and related ones from 0.35.
+        'min_score' => 0.32,
     ],
 
     // Image renderer configuration

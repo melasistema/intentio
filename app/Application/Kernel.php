@@ -68,13 +68,15 @@ final class Kernel
                 $fileProcessor,
                 $embeddingAdapter,
                 $vectorStore,
-                $embeddingModel
+                $embeddingModel,
+                $this->config['embedding']['document_prefix'] ?? ''
             );
             $retrievalService = new RetrievalService(
                 $embeddingAdapter,
                 $vectorStore,
                 $this->config['retrieval']['limit'] ?? 5,
-                $this->config['retrieval']['min_score'] ?? 0.5
+                $this->config['retrieval']['min_score'] ?? 0.5,
+                $this->config['embedding']['query_prefix'] ?? ''
             );
             $promptResolver = new PromptResolver();
 

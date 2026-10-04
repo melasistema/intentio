@@ -355,7 +355,7 @@ Once oMLX is running and your knowledge environment (either package-initialized 
      0.76    hook_models.md > Hook Models > The PAS Model
    ```
 
-   Passages below `retrieval.min_score` (0.5 by default, in `config/app.php`) are not used, and passages of a pinned file are not retrieved a second time. When nothing is close enough, the list says `Sources: none`, and the answer does not come from the space. INTENTIO also warns when a prompt is estimated to be larger than the model's context window (`llm.context_window`, 32768 by default).
+   Passages below `retrieval.min_score` (0.32 by default, in `config/app.php`) are not used. The value belongs to the embedding model: measure it again if you change the model. Passages of a pinned file are not retrieved a second time. When nothing is close enough, the list says `Sources: none`, and the answer does not come from the space. INTENTIO also warns when a prompt is estimated to be larger than the model's context window (`llm.context_window`, 32768 by default).
 
 **c. Interactive Mode (Recommended for exploration and guided experience):**
    Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates (commands), and chat. A space that was never ingested is ingested on entry; if its knowledge has changed since, you are asked whether to update the index.

@@ -12,6 +12,7 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 -   **Product Pitch Lab Blueprint:** Introduced the `@packages/product_pitch_lab` cognitive environment (`version: 0.1.0`), which validates product ideas against business frameworks, drafts elevator pitches, competitive analyses and Lean Canvases, and renders product mockups and logo concepts.
 -   **Sources Under Each Answer:** `chat` and `interact` list what an answer was built from: the knowledge files pinned by the prompt template and the retrieved passages, each with its similarity score. When nothing was used, the list says so.
 -   **Retrieval Settings:** `retrieval.limit` and `retrieval.min_score` in `config/app.php`.
+-   **Embedding Prefixes:** `embedding.document_prefix` and `embedding.query_prefix` put the words an embedding model expects in front of knowledge sections and queries (`search_document: ` and `search_query: ` for the default model).
 -   **Context Window Warning:** A warning is printed when a prompt is estimated to be larger than the model's context window (`llm.context_window`, 32768 by default).
 -   **Batch Embedding:** The sections of a knowledge file are embedded in one request.
 -   **`status` Command:** Lists the models on the oMLX server and reports a configured model that is missing.
@@ -21,7 +22,7 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 -   **Rendering Declared by the Prompt (package format change):** A prompt template whose answers are rendered now says `render: true` in its front matter. The `actions` block of `manifest.md` is no longer read, and `default_prompt` is the only manifest line the engine uses. Spaces created earlier need `render: true` added to their rendering prompts. The answer is no longer saved to `lastGeneratedManifest.md`; the image prompt is taken from the answer itself.
 -   **Active Prompt Template:** In `interact`, the selected prompt template stays active until `switch_prompt` is used, and is shown in front of each query. Previously a template had to be selected again after every answer.
 -   **Errors During a Session:** In `interact`, a failed answer or render is reported and the session continues. A session whose input ends closes without an error.
--   **Minimum Similarity:** A passage is retrieved only if its similarity to the query reaches `retrieval.min_score` (0.5 by default). Previously the five nearest passages were always sent, however distant.
+-   **Minimum Similarity:** A passage is retrieved only if its similarity to the query reaches `retrieval.min_score` (0.32 by default, measured with the default embedding model). Previously the five nearest passages were always sent, however distant.
 -   **Pinned Files:** Passages of a file that the prompt template already loads in full are no longer retrieved a second time.
 -   **Quiet Output:** Removed debug lines and the engine's internal progress messages from `interact`, `chat`, `ingest`, `clear` and `render`.
 -   **`init` Without `--space`:** `./intentio init <blueprint>` now asks for the space name instead of failing.
