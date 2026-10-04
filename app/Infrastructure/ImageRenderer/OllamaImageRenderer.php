@@ -18,14 +18,10 @@ final class OllamaImageRenderer implements ImageRendererInterface
 
     public function render(string $prompt, string $rendererFolder, array $options = []): string
     {
-        fwrite(STDOUT, "DEBUG: OllamaImageRenderer->render received prompt: '" . $prompt . "'" . PHP_EOL);
-
         $promptArg = escapeshellarg($prompt);
         $modelArg = escapeshellarg($this->imageRendererModel);
 
         $command = "ollama run {$modelArg} {$promptArg} 2>&1";
-
-        fwrite(STDOUT, "Executing image generation command: {$command}" . PHP_EOL);
 
         $output = shell_exec($command);
 

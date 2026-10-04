@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Intentio\Application\Console\Commands;
 
 use Intentio\Domain\Cognitive\CognitiveEngine;
+use Intentio\Domain\Cognitive\PromptResolver;
 use Intentio\Infrastructure\Filesystem\LocalSpaceRepository;
 use Intentio\Shared\Exceptions\IntentioException;
 
@@ -15,7 +16,8 @@ final class ChatCommand implements CommandInterface
 
     public function __construct(
         private readonly CognitiveEngine $cognitiveEngine,
-        private readonly LocalSpaceRepository $spaceRepository
+        private readonly LocalSpaceRepository $spaceRepository,
+        private readonly PromptResolver $promptResolver
     ) {
     }
 
@@ -33,6 +35,7 @@ final class ChatCommand implements CommandInterface
     {
         $spaceName = $options['space'] ?? null;
         $query = $arguments[0] ?? null;
+        $promptKey = $options['prompt-key'] ?? null;
 
         if ($spaceName === null) {
             fwrite(STDERR, "Error: The 'chat' command requires a '--space' option (e.g., --space=my_agent).\n");
@@ -54,7 +57,13 @@ final class ChatCommand implements CommandInterface
             fwrite(STDOUT, "Initiating chat with space: {$space->getName()}" . PHP_EOL);
             fwrite(STDOUT, "Your query: \"{$query}\"" . PHP_EOL);
 
-            $response = $this->cognitiveEngine->chat($space, $query, $options);
+            if ($promptKey === null) {
+                $response = $this->cognitiveEngine->chat($space, $query);
+            } else {
+                $resolvedPrompt = $this->promptResolver->resolve($space, $promptKey);
+                fwrite(STDOUT, "Prompt template: {$promptKey}" . PHP_EOL);
+                $response = $this->cognitiveEngine->chat($space, $query, $resolvedPrompt['content'], $resolvedPrompt['context_files']);
+            }
 
             fwrite(STDOUT, "\n--- Interpreter Response ---" . PHP_EOL);
             fwrite(STDOUT, $response . PHP_EOL);

@@ -8,6 +8,26 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 
 ## [unreleased]
 
+### Added
+-   **Product Pitch Lab Blueprint:** Introduced the `@packages/product_pitch_lab` cognitive environment (`version: 0.1.0`), which validates product ideas against business frameworks, drafts elevator pitches, competitive analyses and Lean Canvases, and renders product mockups and logo concepts.
+
+### Changed
+-   **Quiet Output:** Removed debug lines and the engine's internal progress messages from `interact`, `chat`, `ingest`, `clear` and `render`.
+-   **`init` Without `--space`:** `./intentio init <blueprint>` now asks for the space name instead of failing.
+-   **Missing Prompts:** A prompt template that does not exist is reported as an error instead of silently falling back to `default`.
+-   **`render` Command:** Removed the unused prompt resolution; the command renders the given query directly.
+-   **Prompt Assembly:** The prompt sent to the model is now built in one place: the knowledge in scope, then the template with the query. The `instruction` in a template's front matter is shown on screen only and is no longer sent to the model.
+-   **`--prompt-key` Option:** `interact` now reads `--prompt-key` (previously `--prompt_key`), matching `chat`.
+
+### Fixed
+-   **`chat` Command:** The query is now sent to the model. Previously only the retrieved context was sent.
+-   **`{{CONTEXT}}` Placeholder:** A template can now place the knowledge in scope with `{{CONTEXT}}`, as documented. Previously the placeholder was left in the prompt as literal text.
+-   **`chat --prompt-key`:** The `chat` command now applies the named prompt template, as documented.
+-   **Prompt Front Matter:** Front matter with more than one key is now parsed, instead of being sent to the model as part of the prompt.
+-   **Ollama Errors:** Error responses from Ollama (e.g., a model that is not pulled) are reported with Ollama's own message, and an empty model response is reported as an error.
+-   **Space Names:** Space names given through `--space` are validated, so a space can no longer point outside the spaces directory.
+-   **Version:** `./intentio help` now shows the configured application version.
+
 ## [0.2.1] - 2026-01-31
 
 ### Added

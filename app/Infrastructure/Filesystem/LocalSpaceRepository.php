@@ -23,6 +23,7 @@ final class LocalSpaceRepository implements SpaceRepository
 
     public function findByName(string $name): ?Space
     {
+        $this->assertValidName($name);
         $spacePath = $this->spacesBasePath . '/' . $name;
         if (is_dir($spacePath)) {
             // A space is considered valid if its directory exists.
@@ -44,6 +45,7 @@ final class LocalSpaceRepository implements SpaceRepository
 
     public function exists(string $name): bool
     {
+        $this->assertValidName($name);
         return is_dir($this->spacesBasePath . '/' . $name);
     }
 
@@ -71,6 +73,7 @@ final class LocalSpaceRepository implements SpaceRepository
 
     public function delete(string $name): void
     {
+        $this->assertValidName($name);
         $spacePath = $this->spacesBasePath . '/' . $name;
         if (!is_dir($spacePath)) {
             throw new IntentioException("Space '{$name}' does not exist and cannot be deleted.");
@@ -78,6 +81,16 @@ final class LocalSpaceRepository implements SpaceRepository
 
         // Recursively delete the directory
         $this->rmdirRecursive($spacePath);
+    }
+
+    /**
+     * A space name is a single folder name, so it can never point outside the spaces directory.
+     */
+    private function assertValidName(string $name): void
+    {
+        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $name)) {
+            throw new IntentioException("Invalid space name '{$name}'. Use alphanumeric, hyphens, and underscores.");
+        }
     }
 
     private function rmdirRecursive(string $dir): void

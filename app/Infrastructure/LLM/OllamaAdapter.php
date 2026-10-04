@@ -52,6 +52,7 @@ final class OllamaAdapter implements LLMInterface
                 'method'  => 'POST',
                 'content' => json_encode($data),
                 'timeout' => $this->timeout,
+                'ignore_errors' => true, // Read the body of error responses, so Ollama's own message can be reported
             ],
         ];
         $context  = stream_context_create($requestOptions);
@@ -73,8 +74,16 @@ final class OllamaAdapter implements LLMInterface
             throw new IntentioException("Failed to decode Ollama API response: " . json_last_error_msg());
         }
 
+        if (isset($response['error'])) {
+            throw new IntentioException("Ollama returned an error for model '{$this->llmModel}': " . $response['error']);
+        }
+
         if (!isset($response['response'])) {
             throw new IntentioException("Ollama API response missing 'response' field.");
+        }
+
+        if (trim($response['response']) === '') {
+            throw new IntentioException("Model '{$this->llmModel}' returned an empty response.");
         }
 
         return $response['response'];

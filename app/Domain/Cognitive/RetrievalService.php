@@ -26,15 +26,11 @@ final class RetrievalService
      */
     public function retrieve(Space $space, string $query, int $limit = 5): array
     {
-        fwrite(STDOUT, "RetrievalService: Retrieving for query '{$query}' in space '{$space->getName()}'." . PHP_EOL);
-
         // Ensure the vector store is initialized for this space
         $this->vectorStore->initialize($space);
 
         // Embed the query
         $queryEmbedding = $this->embeddingAdapter->embed($query);
-
-        fwrite(STDOUT, "RetrievalService: Generated query embedding (length: " . count($queryEmbedding) . ")." . PHP_EOL);
 
         // Retrieve from vector store
         $retrievedChunks = $this->vectorStore->findSimilar($space, $queryEmbedding, $limit); // Pass Space object
@@ -43,7 +39,7 @@ final class RetrievalService
         foreach ($retrievedChunks as $chunk) {
             $results[] = [
                 'content' => $chunk['content'],
-                'source' => $chunk['metadata']['filepath'] ?? 'unknown',
+                'source' => $chunk['metadata']['relative_path'] ?? $chunk['metadata']['filename'] ?? 'unknown',
                 'score' => $chunk['score'] ?? 0.0,
             ];
         }

@@ -37,6 +37,7 @@ final class LocalEmbeddingAdapter implements EmbeddingInterface
                 'method'  => 'POST',
                 'content' => json_encode($data),
                 'timeout' => $this->timeout,
+                'ignore_errors' => true, // Read the body of error responses, so Ollama's own message can be reported
             ],
         ];
         $context  = stream_context_create($options);
@@ -57,6 +58,10 @@ final class LocalEmbeddingAdapter implements EmbeddingInterface
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new IntentioException("Failed to decode Ollama API response: " . json_last_error_msg());
+        }
+
+        if (isset($response['error'])) {
+            throw new IntentioException("Ollama returned an error for model '{$this->embeddingModel}': " . $response['error']);
         }
 
         if (!isset($response['embedding']) || !is_array($response['embedding'])) {

@@ -24,10 +24,6 @@ final class PromptResolver
         $promptPath = $space->getPromptsPath() . DIRECTORY_SEPARATOR . $promptKey . '.md';
 
         if (!file_exists($promptPath) || !is_readable($promptPath)) {
-            // Fallback to a generic default prompt if a specific one isn't found
-            if ($promptKey !== 'default') {
-                return $this->resolve($space, 'default');
-            }
             throw new IntentioException("Prompt '{$promptKey}' not found or not readable in space '{$space->getName()}'.");
         }
 
@@ -37,37 +33,26 @@ final class PromptResolver
         }
 
         $instruction = '';
-        $inputType = 'text';
-        $imageSourceFolder = null;
-        $contextFiles = [];
         $mainContent = $fileContent;
-        
-        // More robust front-matter parsing, supporting both \n and \r\n line endings
-        if (preg_match('/^---\s*?\R(.*?)\R---\s*?\R/s', $fileContent, $matches)) {
-            $frontMatterRaw = trim($matches[1]);
-            $mainContent = trim(str_replace($matches[0], '', $fileContent));
+        $contextFiles = [];
 
+        // Parse YAML front-matter: everything between the opening '---' line and the next '---' line
+        if (preg_match('/^---\R(.*?)\R---\R(.*)$/s', $fileContent, $matches)) {
+            $frontMatterRaw = $matches[1];
+            $mainContent = trim($matches[2]);
+            // Simple YAML-like parser for front-matter (key: value)
             $frontMatter = [];
             foreach (explode("\n", $frontMatterRaw) as $line) {
                 if (str_contains($line, ':')) {
                     list($key, $value) = explode(':', $line, 2);
-                    $value = trim($value);
-                    // Strip quotes if they exist
-                    if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
-                        $value = substr($value, 1, -1);
-                    }
-                    $frontMatter[trim($key)] = $value;
+                    $frontMatter[trim($key)] = trim($value);
                 }
             }
             $instruction = $frontMatter['instruction'] ?? '';
-            $inputType = $frontMatter['input_type'] ?? 'text';
-            $imageSourceFolder = $frontMatter['image_source_folder'] ?? null;
-            $visionPrompt = $frontMatter['vision_prompt'] ?? null; // New
-        } else {
-            $visionPrompt = null; // Ensure default if no front-matter
         }
 
         // Identify referenced .md files within the prompt content for contextual knowledge
+        // This regex looks for patterns like `filename.md` or `path/filename.md`
         if (preg_match_all('/`?([a-zA-Z0-9_\-\.\/]+\.md)`?/', $mainContent, $matches)) {
             foreach ($matches[1] as $referencedFile) {
                 // Search for the referenced file within the knowledge path of the space
@@ -81,10 +66,7 @@ final class PromptResolver
         return [
             'content' => $mainContent,
             'instruction' => $instruction,
-            'context_files' => array_values($contextFiles),
-            'input_type' => $inputType,
-            'image_source_folder' => $imageSourceFolder,
-            'vision_prompt' => $visionPrompt,
+            'context_files' => array_values($contextFiles), // Return just the paths
         ];
     }
 
