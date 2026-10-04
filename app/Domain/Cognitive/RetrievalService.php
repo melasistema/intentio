@@ -34,9 +34,15 @@ final class RetrievalService
 
         $results = [];
         foreach ($retrievedChunks as $chunk) {
+            // The source names the file and the headings that lead to the passage
+            $source = $chunk['metadata']['relative_path'] ?? $chunk['metadata']['filename'] ?? 'unknown';
+            foreach ($chunk['metadata']['headings'] ?? [] as $heading) {
+                $source .= ' > ' . $heading;
+            }
+
             $results[] = [
                 'content' => $chunk['content'],
-                'source' => $chunk['metadata']['relative_path'] ?? $chunk['metadata']['filename'] ?? 'unknown',
+                'source' => $source,
                 'score' => $chunk['score'] ?? 0.0,
             ];
         }

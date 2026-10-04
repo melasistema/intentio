@@ -10,6 +10,9 @@ use Intentio\Infrastructure\Filesystem\FileProcessor;
 
 final class IngestionService
 {
+    // Raised whenever files are chunked or embedded differently, so that existing indexes are rebuilt
+    private const INDEX_FORMAT = '2';
+
     public function __construct(
         private readonly FileProcessor $fileProcessor,
         private readonly EmbeddingInterface $embeddingAdapter,
@@ -34,7 +37,7 @@ final class IngestionService
         foreach ($this->fileProcessor->scanDirectory($knowledgePath) as $filePath) {
             $relativePath = substr($filePath, strlen($knowledgePath) + 1);
             // The embedding model is part of the fingerprint: vectors from another model cannot be compared
-            $fingerprint = hash('sha256', $this->embeddingModel . "\n" . file_get_contents($filePath));
+            $fingerprint = hash('sha256', self::INDEX_FORMAT . "\n" . $this->embeddingModel . "\n" . file_get_contents($filePath));
 
             if (($indexed[$relativePath] ?? null) === $fingerprint) {
                 $unchanged++;
@@ -75,7 +78,10 @@ final class IngestionService
                 $embeddings = [];
                 foreach ($chunks as $index => $chunk) {
                     $chunks[$index]['metadata']['relative_path'] = $relativePath;
-                    $embeddings[] = $this->embeddingAdapter->embed($chunk['content']);
+                    // A section is embedded together with the headings above it, so that
+                    // "Examples" under "Unfair Advantage" is found by a question about unfair advantage
+                    $parentHeadings = array_slice($chunk['metadata']['headings'], 0, -1);
+                    $embeddings[] = $this->embeddingAdapter->embed(implode("\n", [...$parentHeadings, $chunk['content']]));
                 }
 
                 $this->vectorStore->replaceFile($space, $relativePath, $fingerprint, $chunks, $embeddings);

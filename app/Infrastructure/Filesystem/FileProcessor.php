@@ -55,29 +55,73 @@ final class FileProcessor
             throw new IntentioException("Failed to read file content: {$filePath}");
         }
 
-        // Basic chunking: split by double newline, then trim and filter empty chunks.
-        // A more advanced chunking strategy could involve sentence splitting,
-        // fixed-size chunks with overlap, or semantic chunking.
-        $rawChunks = preg_split('/(\R){2,}/', $content, -1, PREG_SPLIT_NO_EMPTY);
-
         $chunks = [];
-        foreach ($rawChunks as $index => $rawChunk) {
-            $cleanedChunk = trim($rawChunk);
-            if (empty($cleanedChunk)) {
-                continue;
-            }
-
+        foreach ($this->splitIntoSections($content) as $index => $section) {
             $chunks[] = [
-                'content' => $cleanedChunk,
+                'content' => $section['text'],
                 'metadata' => [
                     'filename' => basename($filePath),
                     'category' => $category,
+                    'headings' => $section['headings'],
                     'chunk_index' => $index,
-                    'chunk_length' => strlen($cleanedChunk),
+                    'chunk_length' => strlen($section['text']),
                 ],
             ];
         }
 
         return $chunks;
+    }
+
+    /**
+     * Splits a text at its Markdown headings. A section is a heading with the text under it,
+     * and it remembers the headings above it, so a subsection still knows what it belongs to.
+     * A text without headings is split into paragraphs instead.
+     *
+     * @return array An array of sections, each with 'text' and 'headings' (from the top-level heading down to its own).
+     */
+    private function splitIntoSections(string $content): array
+    {
+        $sections = [];
+        $headings = []; // heading level => title, for the section being read
+        $lines = [];
+        $inCodeBlock = false;
+
+        foreach (preg_split('/\R/', $content) as $line) {
+            if (preg_match('/^\s{0,3}(```|~~~)/', $line)) {
+                $inCodeBlock = !$inCodeBlock;
+            }
+
+            if (!$inCodeBlock && preg_match('/^(#{1,6})\s+(.+?)[\s#]*$/', $line, $matches)) {
+                $sections[] = ['text' => trim(implode("\n", $lines)), 'headings' => array_values($headings)];
+
+                // A new heading closes every heading of the same or a deeper level
+                $level = strlen($matches[1]);
+                $headings = array_filter($headings, fn (int $openLevel) => $openLevel < $level, ARRAY_FILTER_USE_KEY);
+                $headings[$level] = $matches[2];
+                $lines = [];
+            }
+
+            $lines[] = $line;
+        }
+        $sections[] = ['text' => trim(implode("\n", $lines)), 'headings' => array_values($headings)];
+
+        if (count($sections) === 1) {
+            // No headings: the paragraph is the unit of meaning
+            $paragraphs = preg_split('/(\R){2,}/', $sections[0]['text'], -1, PREG_SPLIT_NO_EMPTY);
+            return array_map(fn (string $paragraph) => ['text' => trim($paragraph), 'headings' => []], $paragraphs);
+        }
+
+        $sectionsWithContent = [];
+        foreach ($sections as $index => $section) {
+            // The first section is the text before the first heading; every other one starts with its heading line
+            $isOnlyAHeading = $index > 0 && !str_contains($section['text'], "\n");
+
+            // A heading with nothing under it is not kept on its own: its title lives on in the sections below it
+            if ($section['text'] !== '' && !$isOnlyAHeading) {
+                $sectionsWithContent[] = $section;
+            }
+        }
+
+        return $sectionsWithContent;
     }
 }
