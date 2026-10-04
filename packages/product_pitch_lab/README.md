@@ -114,7 +114,7 @@ Not happy with the result? Answer `no`, choose the same command again, and descr
 
 *   **The session has no memory between commands.** Each command sees only what you type into it, so repeat the product description when you move from one phase to the next.
 *   **Images are saved in the space, not in this package.** The `renderer_images/` folder is created on the first render.
-*   **Changing the knowledge.** A space is a copy of this package. To change what the space knows, edit the files under `spaces/<your_space>/knowledge/`, then run `./intentio clear --space=<your_space>` and `./intentio ingest --space=<your_space>`.
+*   **Changing the knowledge.** A space is a copy of this package. To change what the space knows, edit the files under `spaces/<your_space>/knowledge/`, then run `./intentio ingest --space=<your_space>`. Only the files you changed are re-indexed.
 *   **Context window.** `validate_idea` and `business_model` each load two knowledge files in full. If answers seem to ignore the frameworks, your model is probably truncating its input: raise `num_ctx` under `llm.options` in `config/app.local.php` (8192 is enough).
 
 ## What This Package Is

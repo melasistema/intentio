@@ -16,10 +16,15 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 -   **`init` Without `--space`:** `./intentio init <blueprint>` now asks for the space name instead of failing.
 -   **Missing Prompts:** A prompt template that does not exist is reported as an error instead of silently falling back to `default`.
 -   **`render` Command:** Removed the unused prompt resolution; the command renders the given query directly.
+-   **Repeatable Ingestion:** `ingest` now compares each knowledge file with the index and embeds only new and modified files; deleted files are removed. Running it twice no longer duplicates chunks, and `clear` is no longer needed after editing knowledge. Changing the embedding model marks every file as modified.
+-   **Knowledge Only:** Prompt templates are no longer indexed, so they can no longer be retrieved as context.
+-   **Index Storage:** The index is stored at `.intentio_store/index.sqlite` inside the space, with relative paths and compact vectors. Existing spaces are re-ingested on their next use; `clear` removes the index file left by earlier versions.
+-   **Outdated Spaces:** `interact` asks whether to update the index when the knowledge has changed, and `chat` reports a space that was never ingested instead of answering without context.
 -   **Prompt Assembly:** The prompt sent to the model is now built in one place: the knowledge in scope, then the template with the query. The `instruction` in a template's front matter is shown on screen only and is no longer sent to the model.
 -   **`--prompt-key` Option:** `interact` now reads `--prompt-key` (previously `--prompt_key`), matching `chat`.
 
 ### Fixed
+-   **Incomplete Index:** A file whose embedding fails is left out of the index as a whole and reported, and `ingest` exits with an error; previously a partial index was treated as complete.
 -   **`chat` Command:** The query is now sent to the model. Previously only the retrieved context was sent.
 -   **`{{CONTEXT}}` Placeholder:** A template can now place the knowledge in scope with `{{CONTEXT}}`, as documented. Previously the placeholder was left in the prompt as literal text.
 -   **`chat --prompt-key`:** The `chat` command now applies the named prompt template, as documented.

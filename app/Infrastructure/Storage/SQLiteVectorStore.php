@@ -7,28 +7,23 @@ namespace Intentio\Infrastructure\Storage;
 use Intentio\Domain\Cognitive\VectorStoreInterface;
 use Intentio\Domain\Space\Space;
 use Intentio\Shared\Exceptions\IntentioException;
-use SQLite3; // Assuming SQLite3 extension is available
+use SQLite3;
 
 final class SQLiteVectorStore implements VectorStoreInterface
 {
-    public function __construct()
+    private function getDbDirectoryForSpace(Space $space): string
     {
-        // No specific state needed for the SQLiteVectorStore instance itself
-        // if it manages connections per operation.
+        return $space->getPath() . '/.intentio_store';
     }
 
     private function getDbPathForSpace(Space $space): string
     {
-        $dbDirectory = $space->getPath() . '/.intentio_store';
-        // Use a hash of the space's path for the DB file name to ensure uniqueness and stability
-        $dbFileName = md5($space->getPath()) . '.sqlite';
-        return $dbDirectory . '/' . $dbFileName;
+        return $this->getDbDirectoryForSpace($space) . '/index.sqlite';
     }
 
     private function connect(Space $space): SQLite3
     {
-        $dbPath = $this->getDbPathForSpace($space);
-        $dbDirectory = dirname($dbPath);
+        $dbDirectory = $this->getDbDirectoryForSpace($space);
 
         if (!is_dir($dbDirectory)) {
             if (!mkdir($dbDirectory, 0777, true)) {
@@ -36,79 +31,133 @@ final class SQLiteVectorStore implements VectorStoreInterface
             }
         }
         try {
-            $db = new SQLite3($dbPath);
-            $db->enableExceptions(true); // Enable exceptions for better error handling
+            $db = new SQLite3($this->getDbPathForSpace($space));
+            $db->enableExceptions(true);
+            $db->exec('CREATE TABLE IF NOT EXISTS files (
+                path TEXT PRIMARY KEY,
+                fingerprint TEXT NOT NULL
+            )');
+            $db->exec('CREATE TABLE IF NOT EXISTS chunks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                path TEXT NOT NULL,
+                content TEXT NOT NULL,
+                metadata TEXT NOT NULL,
+                embedding BLOB NOT NULL
+            )');
             return $db;
         } catch (\Exception $e) {
-            throw new IntentioException("Failed to connect to SQLite database for space '{$space->getName()}': " . $e->getMessage());
+            throw new IntentioException("Failed to open the index of space '{$space->getName()}': " . $e->getMessage());
         }
     }
 
-    public function initialize(Space $space): void
+    public function indexedFiles(Space $space): array
+    {
+        // A space that was never ingested has no index, and reading it must not create one
+        if (!file_exists($this->getDbPathForSpace($space))) {
+            return [];
+        }
+
+        $db = $this->connect($space);
+        $results = $db->query('SELECT path, fingerprint FROM files');
+
+        $files = [];
+        while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
+            $files[$row['path']] = $row['fingerprint'];
+        }
+        $db->close();
+
+        return $files;
+    }
+
+    public function replaceFile(Space $space, string $path, string $fingerprint, array $chunks, array $embeddings): void
     {
         $db = $this->connect($space);
-        $db->exec('CREATE TABLE IF NOT EXISTS embeddings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            content TEXT NOT NULL,
-            metadata TEXT NOT NULL,
-            embedding BLOB NOT NULL
-        )');
+        $db->exec('BEGIN');
+
+        try {
+            $this->deleteFile($db, $path);
+
+            $stmt = $db->prepare('INSERT INTO files (path, fingerprint) VALUES (:path, :fingerprint)');
+            $stmt->bindValue(':path', $path, SQLITE3_TEXT);
+            $stmt->bindValue(':fingerprint', $fingerprint, SQLITE3_TEXT);
+            $stmt->execute();
+
+            $stmt = $db->prepare('INSERT INTO chunks (path, content, metadata, embedding) VALUES (:path, :content, :metadata, :embedding)');
+            foreach ($chunks as $index => $chunk) {
+                $stmt->bindValue(':path', $path, SQLITE3_TEXT);
+                $stmt->bindValue(':content', $chunk['content'], SQLITE3_TEXT);
+                $stmt->bindValue(':metadata', json_encode($chunk['metadata']), SQLITE3_TEXT);
+                // Vectors are stored with length 1, as packed 32-bit floats
+                $stmt->bindValue(':embedding', pack('g*', ...$this->normalize($embeddings[$index])), SQLITE3_BLOB);
+                $stmt->execute();
+            }
+
+            $db->exec('COMMIT');
+        } catch (\Throwable $e) {
+            $db->exec('ROLLBACK');
+            $db->close();
+            throw new IntentioException("Failed to index '{$path}' in space '{$space->getName()}': " . $e->getMessage());
+        }
         $db->close();
     }
 
-    public function add(Space $space, array $chunkData, array $embedding): void
+    public function removeFile(Space $space, string $path): void
     {
         $db = $this->connect($space);
-        $stmt = $db->prepare('INSERT INTO embeddings (content, metadata, embedding) VALUES (:content, :metadata, :embedding)');
-        
-        $stmt->bindValue(':content', $chunkData['content'], SQLITE3_TEXT);
-        $stmt->bindValue(':metadata', json_encode($chunkData['metadata']), SQLITE3_TEXT);
-        $stmt->bindValue(':embedding', json_encode($embedding), SQLITE3_BLOB); // Store embedding as JSON string for simplicity
-        
-        $result = $stmt->execute();
-        if ($result === false) {
-            throw new IntentioException("Failed to add embedding to database for space '{$space->getName()}': " . $db->lastErrorMsg());
-        }
+        $db->exec('BEGIN');
+        $this->deleteFile($db, $path);
+        $db->exec('COMMIT');
         $db->close();
+    }
+
+    private function deleteFile(SQLite3 $db, string $path): void
+    {
+        foreach (['DELETE FROM chunks WHERE path = :path', 'DELETE FROM files WHERE path = :path'] as $sql) {
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':path', $path, SQLITE3_TEXT);
+            $stmt->execute();
+        }
     }
 
     public function findSimilar(Space $space, array $queryEmbedding, int $limit = 5): array
     {
-        $db = $this->connect($space);
-        
-        $results = $db->query('SELECT id, content, metadata, embedding FROM embeddings');
-        
-        if ($results === false) {
-            throw new IntentioException("Failed to query embeddings for space '{$space->getName()}': " . $db->lastErrorMsg());
+        if (!file_exists($this->getDbPathForSpace($space))) {
+            return [];
         }
 
-        $allEmbeddings = [];
+        $queryVector = $this->normalize($queryEmbedding);
+        $dimensions = count($queryVector);
+
+        $db = $this->connect($space);
+        $results = $db->query('SELECT content, metadata, embedding FROM chunks');
+
+        $scoredResults = [];
         while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
-            $rowEmbedding = json_decode($row['embedding'], true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                // Log or handle malformed embedding data
+            $chunkVector = array_values(unpack('g*', $row['embedding']));
+            if (count($chunkVector) !== $dimensions) {
+                // Embedded with a different model than the query: not comparable
                 continue;
             }
-            $allEmbeddings[] = [
-                'id' => $row['id'],
-                'content' => $row['content'],
-                'metadata' => json_decode($row['metadata'], true),
-                'embedding' => $rowEmbedding,
-            ];
+
+            // Both vectors have length 1, so their dot product is their cosine similarity
+            $score = 0.0;
+            for ($i = 0; $i < $dimensions; $i++) {
+                $score += $queryVector[$i] * $chunkVector[$i];
+            }
+
+            // Only include results with a score greater than 0 (i.e., not perfectly orthogonal)
+            if ($score > 0) {
+                $scoredResults[] = [
+                    'content' => $row['content'],
+                    'metadata' => json_decode($row['metadata'], true),
+                    'score' => $score,
+                ];
+            }
         }
         $db->close();
 
-        $scoredResults = [];
-        foreach ($allEmbeddings as $data) {
-            $score = $this->cosineSimilarity($queryEmbedding, $data['embedding']);
-            // Only include results with a score greater than 0 (i.e., not perfectly orthogonal)
-            if ($score > 0) {
-                 $scoredResults[] = array_merge($data, ['score' => $score]);
-            }
-        }
-
         // Sort by score in descending order
-        usort($scoredResults, function($a, $b) {
+        usort($scoredResults, function ($a, $b) {
             return $b['score'] <=> $a['score'];
         });
 
@@ -117,44 +166,43 @@ final class SQLiteVectorStore implements VectorStoreInterface
 
     public function clear(Space $space): void
     {
-        $dbPath = $this->getDbPathForSpace($space);
-        
-        if (file_exists($dbPath)) {
-            if (unlink($dbPath)) {
-                // Also remove the containing directory if it's empty
-                $dbDirectory = dirname($dbPath);
-                if (is_dir($dbDirectory) && count(glob($dbDirectory . '/*')) === 0) {
-                    rmdir($dbDirectory);
-                }
-            } else {
+        $dbDirectory = $this->getDbDirectoryForSpace($space);
+        if (!is_dir($dbDirectory)) {
+            return;
+        }
+
+        // Every index file is removed, including those written by earlier versions under another name
+        foreach (glob($dbDirectory . '/*.sqlite') as $dbPath) {
+            if (!unlink($dbPath)) {
                 throw new IntentioException("Failed to delete vector store database file for space '{$space->getName()}': {$dbPath}");
             }
         }
+
+        // Also remove the containing directory if it's empty
+        if (count(glob($dbDirectory . '/*')) === 0) {
+            rmdir($dbDirectory);
+        }
     }
 
-    private function cosineSimilarity(array $vecA, array $vecB): float
+    /**
+     * Scales a vector to length 1. A zero vector is returned as it is.
+     */
+    private function normalize(array $vector): array
     {
-        if (empty($vecA) || empty($vecB) || count($vecA) !== count($vecB)) {
-            return 0.0; // Invalid input
+        $magnitude = 0.0;
+        foreach ($vector as $value) {
+            $magnitude += $value * $value;
+        }
+        $magnitude = sqrt($magnitude);
+
+        if ($magnitude == 0.0) {
+            return $vector;
         }
 
-        $dotProduct = 0.0;
-        $magnitudeA = 0.0;
-        $magnitudeB = 0.0;
-
-        for ($i = 0; $i < count($vecA); $i++) {
-            $dotProduct += $vecA[$i] * $vecB[$i];
-            $magnitudeA += $vecA[$i] * $vecA[$i];
-            $magnitudeB += $vecB[$i] * $vecB[$i];
+        $normalized = [];
+        foreach ($vector as $value) {
+            $normalized[] = $value / $magnitude;
         }
-
-        $magnitudeA = sqrt($magnitudeA);
-        $magnitudeB = sqrt($magnitudeB);
-
-        if ($magnitudeA == 0.0 || $magnitudeB == 0.0) {
-            return 0.0; // Avoid division by zero
-        }
-
-        return $dotProduct / ($magnitudeA * $magnitudeB);
+        return $normalized;
     }
 }

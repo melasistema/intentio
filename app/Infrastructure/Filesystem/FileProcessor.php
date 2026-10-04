@@ -71,7 +71,6 @@ final class FileProcessor
                 'content' => $cleanedChunk,
                 'metadata' => [
                     'filename' => basename($filePath),
-                    'filepath' => $filePath,
                     'category' => $category,
                     'chunk_index' => $index,
                     'chunk_length' => strlen($cleanedChunk),

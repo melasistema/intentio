@@ -406,14 +406,33 @@ final class InteractCommand implements CommandInterface
 
     private function ensureSpaceIngested(Space $space): void
     {
-        $vectorStoreDbPath = $space->getPath() . '/.intentio_store/' . md5($space->getPath()) . '.sqlite';
-        
-        if (!file_exists($vectorStoreDbPath)) {
-            fwrite(STDOUT, "Ingested data not found for space '{$space->getName()}'. Initiating ingestion..." . PHP_EOL);
-            $this->cognitiveEngine->ingest($space);
-            fwrite(STDOUT, "Ingestion complete." . PHP_EOL);
-        } else {
-            fwrite(STDOUT, "Ingested data found for space '{$space->getName()}'." . PHP_EOL);
+        $pending = $this->cognitiveEngine->pendingChanges($space);
+
+        if (empty($pending['changed']) && empty($pending['removed'])) {
+            fwrite(STDOUT, "The index of space '{$space->getName()}' is up to date." . PHP_EOL);
+            return;
         }
+
+        if ($pending['unchanged'] === 0 && empty($pending['removed'])) {
+            fwrite(STDOUT, "Ingested data not found for space '{$space->getName()}'. Initiating ingestion..." . PHP_EOL);
+        } else {
+            fwrite(STDOUT, sprintf(
+                "The knowledge of space '%s' has changed since it was ingested (%d new or modified, %d removed)." . PHP_EOL,
+                $space->getName(),
+                count($pending['changed']),
+                count($pending['removed'])
+            ));
+            fwrite(STDOUT, "Update the index now? (yes/no): ");
+            if (!in_array(strtolower(trim((string) fgets(STDIN))), ['yes', 'y'])) {
+                fwrite(STDOUT, "Index left as it is." . PHP_EOL);
+                return;
+            }
+        }
+
+        $summary = $this->cognitiveEngine->ingest($space);
+        if ($summary['failed'] > 0) {
+            throw new IntentioException("{$summary['failed']} file(s) could not be indexed in space '{$space->getName()}'.");
+        }
+        fwrite(STDOUT, "Ingestion complete." . PHP_EOL);
     }
 }

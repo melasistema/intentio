@@ -54,9 +54,10 @@ final class Kernel
                 $llmModel,
                 $llmOptions
             );
+            $embeddingModel = $this->config['embedding']['model_name'] ?? 'nomic-embed-text';
             $embeddingAdapter = new LocalEmbeddingAdapter(
                 $ollamaConfig,
-                $this->config['embedding']['model_name'] ?? 'nomic-embed-text'
+                $embeddingModel
             );
             $fileCopier = new FileCopier();
             $fileProcessor = new FileProcessor();
@@ -70,7 +71,8 @@ final class Kernel
             $ingestionService = new IngestionService(
                 $fileProcessor,
                 $embeddingAdapter,
-                $vectorStore
+                $vectorStore,
+                $embeddingModel
             );
             $retrievalService = new RetrievalService(
                 $embeddingAdapter,

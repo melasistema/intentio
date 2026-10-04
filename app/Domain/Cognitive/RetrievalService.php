@@ -26,14 +26,11 @@ final class RetrievalService
      */
     public function retrieve(Space $space, string $query, int $limit = 5): array
     {
-        // Ensure the vector store is initialized for this space
-        $this->vectorStore->initialize($space);
-
         // Embed the query
         $queryEmbedding = $this->embeddingAdapter->embed($query);
 
         // Retrieve from vector store
-        $retrievedChunks = $this->vectorStore->findSimilar($space, $queryEmbedding, $limit); // Pass Space object
+        $retrievedChunks = $this->vectorStore->findSimilar($space, $queryEmbedding, $limit);
 
         $results = [];
         foreach ($retrievedChunks as $chunk) {

@@ -20,9 +20,24 @@ final readonly class CognitiveEngine
     {
     }
 
-    public function ingest(Space $space): void
+    /**
+     * Brings the index of a space up to date with its knowledge folder.
+     *
+     * @return array The number of files 'indexed', 'removed', 'unchanged' and 'failed'.
+     */
+    public function ingest(Space $space): array
     {
-        $this->ingestionService->ingestSpace($space);
+        return $this->ingestionService->ingestSpace($space);
+    }
+
+    /**
+     * Reports how the knowledge folder of a space differs from its index.
+     *
+     * @return array 'changed' (path => fingerprint), 'removed' (paths) and 'unchanged' (a count).
+     */
+    public function pendingChanges(Space $space): array
+    {
+        return $this->ingestionService->pendingChanges($space);
     }
 
     /**

@@ -9,21 +9,32 @@ use Intentio\Domain\Space\Space;
 interface VectorStoreInterface
 {
     /**
-     * Initializes the vector store for a specific space.
-     * This might involve creating a database file or tables.
-     *
-     * @param Space $space The cognitive space to initialize.
-     */
-    public function initialize(Space $space): void;
-
-    /**
-     * Adds a chunk of content with its metadata and embedding to the vector store for a specific space.
+     * Lists the files currently in the index of a space.
      *
      * @param Space $space The cognitive space.
-     * @param array $chunkData Associative array containing 'content' and 'metadata'.
-     * @param array $embedding The vector representation of the content.
+     * @return array<string, string> The fingerprint each file had when it was indexed, keyed by its path relative to the knowledge folder.
      */
-    public function add(Space $space, array $chunkData, array $embedding): void;
+    public function indexedFiles(Space $space): array;
+
+    /**
+     * Replaces everything the index holds for one file, as a single operation:
+     * the file is either indexed completely or left as it was.
+     *
+     * @param Space $space The cognitive space.
+     * @param string $path The file's path relative to the knowledge folder.
+     * @param string $fingerprint The fingerprint of the file's current content.
+     * @param array $chunks The file's chunks, each an associative array containing 'content' and 'metadata'.
+     * @param array $embeddings The vector representation of each chunk, in the same order.
+     */
+    public function replaceFile(Space $space, string $path, string $fingerprint, array $chunks, array $embeddings): void;
+
+    /**
+     * Removes one file and its chunks from the index.
+     *
+     * @param Space $space The cognitive space.
+     * @param string $path The file's path relative to the knowledge folder.
+     */
+    public function removeFile(Space $space, string $path): void;
 
     /**
      * Finds similar content based on a query embedding within a specific space.

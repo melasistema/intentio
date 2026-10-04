@@ -317,7 +317,7 @@ INTENTIO treats your filesystem structure as a cognitive space.
 Once Ollama is running and your knowledge environment (either package-initialized or custom) is ready, you can use INTENTIO's commands:
 
 **a. Ingest Your Knowledge (for Custom Spaces or after package updates):**
-   Process your cognitive space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use. **All supported files (`.md`, `.txt`) within the `knowledge/` and `prompts/` subdirectories of your space will be ingested.**
+   Process your cognitive space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use. **All supported files (`.md`, `.txt`) within the `knowledge/` subdirectory of your space will be ingested.** Prompt templates are not indexed. Ingestion is repeatable: only new and modified files are embedded, and files you deleted are removed from the index.
 
    ```bash
    ./intentio ingest --space=my_private_notes
@@ -335,7 +335,7 @@ Once Ollama is running and your knowledge environment (either package-initialize
    *Replace `hook_analyzer` with the name of your cognitive space, and `analyze_hook` with the name of a prompt template available in that space.*
 
 **c. Interactive Mode (Recommended for exploration and guided experience):**
-   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates (commands), and chat. The system will intelligently detect uningested or outdated spaces and offer to ingest/re-ingest them.
+   Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates (commands), and chat. A space that was never ingested is ingested on entry; if its knowledge has changed since, you are asked whether to update the index.
 
    ```bash
    ./intentio interact
@@ -343,7 +343,7 @@ Once Ollama is running and your knowledge environment (either package-initialize
    *Follow the on-screen prompts to select a space and initial prompt template. Once in the session, type `switch_prompt` to change the active prompt template.*
 
 **d. Clear a Cognitive Space's Data:**
-   Remove the SQLite vector store for a specified cognitive space. This is useful for starting fresh or if you've significantly restructured your source files and want a full re-ingestion.
+   Remove the SQLite vector store for a specified cognitive space. This is useful for starting fresh. It is not needed after editing knowledge: running `ingest` again updates the index.
 
    ```bash
    ./intentio clear --space=my_private_notes

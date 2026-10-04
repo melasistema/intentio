@@ -54,6 +54,14 @@ final class ChatCommand implements CommandInterface
                 throw new IntentioException("Cognitive space '{$spaceName}' not found.");
             }
 
+            $pending = $this->cognitiveEngine->pendingChanges($space);
+            if ($pending['unchanged'] === 0 && !empty($pending['changed'])) {
+                throw new IntentioException("Space '{$spaceName}' has not been ingested. Run: ./intentio ingest --space={$spaceName}");
+            }
+            if (!empty($pending['changed']) || !empty($pending['removed'])) {
+                fwrite(STDERR, "Note: the knowledge of this space has changed since it was ingested. Run: ./intentio ingest --space={$spaceName}" . PHP_EOL);
+            }
+
             fwrite(STDOUT, "Initiating chat with space: {$space->getName()}" . PHP_EOL);
             fwrite(STDOUT, "Your query: \"{$query}\"" . PHP_EOL);
 

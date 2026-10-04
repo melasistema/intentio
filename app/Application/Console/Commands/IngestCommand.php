@@ -47,9 +47,20 @@ final class IngestCommand implements CommandInterface
 
             fwrite(STDOUT, "Initiating ingestion for space: {$space->getName()}" . PHP_EOL);
 
-            $this->cognitiveEngine->ingest($space);
+            $summary = $this->cognitiveEngine->ingest($space);
 
-            fwrite(STDOUT, "Ingestion complete for space: {$space->getName()}." . PHP_EOL);
+            fwrite(STDOUT, sprintf(
+                "Ingestion complete for space: %s. %d indexed, %d removed, %d unchanged." . PHP_EOL,
+                $space->getName(),
+                $summary['indexed'],
+                $summary['removed'],
+                $summary['unchanged']
+            ));
+
+            if ($summary['failed'] > 0) {
+                fwrite(STDERR, "Error: {$summary['failed']} file(s) could not be indexed. Run the command again once the cause is fixed." . PHP_EOL);
+                return 1;
+            }
 
             return 0;
         } catch (IntentioException $e) {
