@@ -33,7 +33,7 @@ final class MfluxImageRenderer implements ImageRendererInterface
             throw new IntentioException("Failed to create renderer folder: '{$rendererFolder}'.");
         }
 
-        $targetPath = rtrim($rendererFolder, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'render_' . date('Ymd-His') . '.png';
+        $targetPath = rtrim($rendererFolder, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'render_' . $this->localTime()->format('Ymd-His') . '.png';
 
         $command = escapeshellarg($this->command)
             . ' --model ' . escapeshellarg($this->model)
@@ -59,5 +59,25 @@ final class MfluxImageRenderer implements ImageRendererInterface
         fwrite(STDOUT, "Image rendered and saved to: {$targetPath}" . PHP_EOL);
 
         return $targetPath;
+    }
+
+    /**
+     * The current time on this machine's clock. PHP keeps its own timezone setting, which is often UTC,
+     * so the system's timezone is read from where macOS and Linux keep it.
+     */
+    private function localTime(): \DateTimeImmutable
+    {
+        $zoneFile = @readlink('/etc/localtime');
+        if ($zoneFile === false || !str_contains($zoneFile, '/zoneinfo/')) {
+            return new \DateTimeImmutable();
+        }
+
+        // The link ends in the timezone's name, e.g. /var/db/timezone/zoneinfo/Europe/Rome
+        $zoneName = substr($zoneFile, strpos($zoneFile, '/zoneinfo/') + strlen('/zoneinfo/'));
+        if (!in_array($zoneName, timezone_identifiers_list(), true)) {
+            return new \DateTimeImmutable();
+        }
+
+        return new \DateTimeImmutable('now', new \DateTimeZone($zoneName));
     }
 }
