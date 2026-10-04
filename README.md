@@ -249,9 +249,21 @@ Your data stays where it belongs.
 
 ## Getting Started
 
-To fully utilize INTENTIO, you need to set up a local model server and prepare your cognitive environment.
+To fully utilize INTENTIO, you need to install it, set up a local model server and prepare your cognitive environment.
 
-### 1. Prerequisites: Install oMLX, Download Models, Install mflux
+### 1. Install INTENTIO
+
+INTENTIO needs PHP 8.2 or later with the `sqlite3` extension, and [Composer](https://getcomposer.org).
+
+```bash
+git clone https://github.com/melasistema/intentio.git
+cd intentio
+composer install --no-dev
+```
+
+`composer install` creates the `vendor/` folder with the class loader `./intentio` starts from; without it, no command runs. With `--no-dev` nothing else is downloaded: INTENTIO itself depends on no other package. Leave the option out if you also want to run the tests.
+
+### 2. Prerequisites: Install oMLX, Download Models, Install mflux
 
 INTENTIO uses [oMLX](https://github.com/jundot/omlx) to run the language model and the embedding model on your own machine. oMLX runs on Macs with Apple Silicon.
 
@@ -270,7 +282,7 @@ INTENTIO uses [oMLX](https://github.com/jundot/omlx) to run the language model a
    - The default model is `mflux-community/flux2-klein-4b-mflux-q4`. mflux downloads it on the first render (about 4.5 GB), so that render takes much longer than the following ones. If you already have the model on disk, set `model_name` to the path of its folder and nothing is downloaded.
    - The command, the model and its options (steps, width, height) are set under `image_renderer` in `config/app.php`. Each model family has its own mflux command, e.g. `mflux-generate-z-image-turbo` for Z-Image Turbo.
 
-### 2. Configure INTENTIO
+### 3. Configure INTENTIO
 
 INTENTIO uses a configuration file located at `config/app.php` for its core settings.
 
@@ -288,7 +300,7 @@ INTENTIO uses a configuration file located at `config/app.php` for its core sett
     ```
 -   Run `./intentio status` to check the setup: it lists the models on the server and says when a configured model is missing.
 
-### 3. Initialize a Knowledge Package (Recommended First Step)
+### 4. Initialize a Knowledge Package (Recommended First Step)
 
 Start with a pre-configured cognitive environment. This is the quickest way to experience INTENTIO's capabilities.
 
@@ -299,7 +311,7 @@ Start with a pre-configured cognitive environment. This is the quickest way to e
 ```
 This command will deploy the `hook_analyzer` package, setting up its knowledge space, specialized prompts (like `analyze_hook`), and generators in your INTENTIO environment. The package you initialize will become your `active_package`.
 
-### 3. Organize Your Custom Cognitive Space (Optional, for Advanced Users)
+### 5. Organize Your Custom Cognitive Space (Optional, for Advanced Users)
 
 While packages provide ready-made structures, you can still create and manage your own custom cognitive spaces from scratch.
 
@@ -327,7 +339,7 @@ INTENTIO treats your filesystem structure as a cognitive space.
             └── summarize_doc.md
     ```
 
-### 4. Basic Usage
+### 6. Basic Usage
 
 Once oMLX is running and your knowledge environment (either package-initialized or custom) is ready, you can use INTENTIO's commands:
 
@@ -393,12 +405,12 @@ Once oMLX is running and your knowledge environment (either package-initialized 
    ./intentio help
    ```
 
-### 5. Run the Tests
+### 7. Run the Tests
 
 The tests cover the parts of INTENTIO that need no model: how a knowledge file is split, how a prompt template is read, how the prompt for the model is assembled, and how the closest passages are found. They run in a temporary folder and never touch your spaces or the oMLX server.
 
 ```bash
-composer install
+composer install   # without --no-dev, so that PHPUnit is installed
 composer test
 ```
 
