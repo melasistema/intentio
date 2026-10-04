@@ -41,4 +41,6 @@ renderer_images/
 # Documentation / AI artifacts
 # ======================================
 GEMINI.md
+CLAUDE.md
+AGENTS.md
 TODO.md
