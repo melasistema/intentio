@@ -53,9 +53,9 @@ After each answer you choose the command for your next step, so a session natura
 ### Visualization Commands (Image Generation)
 
 *   **`visualize_product`**
-    *   Turns a plain description into a professional product photography prompt, then offers to render it.
+    *   Designs the object from a plain description (size, shape, materials, one key feature), writes a product photography prompt for it, then offers to render it.
     *   Grounded in `product_mockup.md`.
-    *   *Instruction: Describe your product simply (e.g., 'a smart water bottle' or 'urban backpack with tech features'):*
+    *   *Instruction: Describe your product and what it does (e.g., 'a lunch box that heats a meal' or 'a pen for architects with a scale ruler in the barrel'):*
 
 *   **`logo_concept`**
     *   Turns a brand brief into a logo prompt (type, colors, shape, typography), then offers to render it.
@@ -104,7 +104,7 @@ Type `switch_prompt`, choose `visualize_product` or `logo_concept`, and describe
 ```
 
 The system will:
-1. Interpret your description using the design principles in the knowledge base
+1. Work out the product's size and shape from what it does, using the design principles in the knowledge base
 2. Write an image prompt wrapped in `<<<RENDER_PROMPT>>>` tags
 3. Ask: `Render this image? (yes/no):`
 4. On `yes`, generate the image with the local image model
