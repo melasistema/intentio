@@ -349,6 +349,8 @@ Once oMLX is running and your knowledge environment (either package-initialized 
    ```
    *Replace `hook_analyzer` with the name of your cognitive space, and `analyze_hook` with the name of a prompt template available in that space.*
 
+   An answer is shown while the model writes it, so you read it from its first words instead of waiting for the last.
+
    Every answer, in `chat` and in `interact`, is followed by its sources: the files the template pinned in full, and the passages that were retrieved, each with its similarity to your query (0 to 1).
 
    ```

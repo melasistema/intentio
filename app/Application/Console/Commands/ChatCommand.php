@@ -66,17 +66,22 @@ final class ChatCommand implements CommandInterface
             fwrite(STDOUT, "Initiating chat with space: {$space->getName()}" . PHP_EOL);
             fwrite(STDOUT, "Your query: \"{$query}\"" . PHP_EOL);
 
-            if ($promptKey === null) {
-                $result = $this->cognitiveEngine->chat($space, $query);
-            } else {
+            // Without a prompt template, the query itself is the prompt
+            $template = '{{QUERY}}';
+            $pinnedFiles = [];
+            if ($promptKey !== null) {
                 $resolvedPrompt = $this->promptResolver->resolve($space, $promptKey);
                 fwrite(STDOUT, "Prompt template: {$promptKey}" . PHP_EOL);
-                $result = $this->cognitiveEngine->chat($space, $query, $resolvedPrompt['content'], $resolvedPrompt['context_files']);
+                $template = $resolvedPrompt['content'];
+                $pinnedFiles = $resolvedPrompt['context_files'];
             }
 
+            // The answer is shown while the model writes it
             fwrite(STDOUT, "\n--- Interpreter Response ---" . PHP_EOL);
-            fwrite(STDOUT, $result['answer'] . PHP_EOL);
-            fwrite(STDOUT, "----------------------------" . PHP_EOL);
+            $result = $this->cognitiveEngine->chat($space, $query, $template, $pinnedFiles, function (string $text): void {
+                fwrite(STDOUT, $text);
+            });
+            fwrite(STDOUT, PHP_EOL . "----------------------------" . PHP_EOL);
             SourceList::write($result);
             fwrite(STDOUT, PHP_EOL);
 

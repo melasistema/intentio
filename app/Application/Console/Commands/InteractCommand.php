@@ -84,11 +84,10 @@ final class InteractCommand implements CommandInterface
                 }
 
                 try {
-                    $result = $this->cognitiveEngine->chat($space, $query, $prompt['content'], $prompt['context_files']);
-
+                    // The answer is shown while the model writes it
                     fwrite(STDOUT, "\n--- INTENTIO Response ---" . PHP_EOL);
-                    fwrite(STDOUT, $result['answer'] . PHP_EOL);
-                    fwrite(STDOUT, "-------------------------" . PHP_EOL);
+                    $result = $this->cognitiveEngine->chat($space, $query, $prompt['content'], $prompt['context_files'], $this->writeText(...));
+                    fwrite(STDOUT, PHP_EOL . "-------------------------" . PHP_EOL);
                     SourceList::write($result);
 
                     if ($prompt['render']) {
@@ -108,6 +107,11 @@ final class InteractCommand implements CommandInterface
             fwrite(STDERR, "An unexpected error occurred during interactive session: " . $e->getMessage() . PHP_EOL);
             return 1;
         }
+    }
+
+    private function writeText(string $text): void
+    {
+        fwrite(STDOUT, $text);
     }
 
     /**

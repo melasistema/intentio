@@ -46,11 +46,12 @@ final readonly class CognitiveEngine
      *
      * @param string $promptTemplate The prompt template to use. Without one, the query itself is the prompt.
      * @param string[] $pinnedFiles Paths of knowledge files the template names, loaded in full.
+     * @param callable|null $onText Called with each piece of the answer as the model writes it.
      * @return array The 'answer' and what it was built from: 'pinned' (files given in full, as paths relative
      *               to the knowledge folder), 'retrieved' (passages, each with 'source' and 'score'),
      *               and 'warning' (null, or why the model may not have seen all of it).
      */
-    public function chat(Space $space, string $message, string $promptTemplate = '{{QUERY}}', array $pinnedFiles = []): array
+    public function chat(Space $space, string $message, string $promptTemplate = '{{QUERY}}', array $pinnedFiles = [], ?callable $onText = null): array
     {
         $pinnedPaths = [];
         foreach ($pinnedFiles as $filePath) {
@@ -67,7 +68,7 @@ final readonly class CognitiveEngine
         }
 
         return [
-            'answer' => $this->llmAdapter->generate($prompt),
+            'answer' => $this->llmAdapter->generate($prompt, $onText),
             'pinned' => $pinnedPaths,
             'retrieved' => $retrieved,
             'warning' => $this->contextWindowWarning($prompt),

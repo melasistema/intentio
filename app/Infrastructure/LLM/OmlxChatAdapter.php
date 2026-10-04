@@ -20,18 +20,28 @@ final class OmlxChatAdapter implements LLMInterface
     ) {
     }
 
-    public function generate(string $prompt): string
+    public function generate(string $prompt, ?callable $onText = null): string
     {
+        $answer = '';
+
         // Every answer is a conversation of one message: INTENTIO keeps no history between queries
-        $response = $this->client->post('/v1/chat/completions', $this->options + [
+        $request = $this->options + [
             'model' => $this->model,
             'messages' => [['role' => 'user', 'content' => $prompt]],
-        ]);
+            'stream' => true,
+        ];
 
-        $answer = $response['choices'][0]['message']['content'] ?? null;
-        if (!is_string($answer)) {
-            throw new IntentioException("The answer of oMLX for model '{$this->model}' has no message content.");
-        }
+        $this->client->stream('/v1/chat/completions', $request, function (array $event) use (&$answer, $onText): void {
+            $text = $event['choices'][0]['delta']['content'] ?? '';
+            if (!is_string($text) || $text === '') {
+                return; // The first and last events carry no text
+            }
+
+            $answer .= $text;
+            if ($onText !== null) {
+                $onText($text);
+            }
+        });
 
         if (trim($answer) === '') {
             throw new IntentioException("Model '{$this->model}' returned an empty response.");

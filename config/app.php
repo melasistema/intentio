@@ -14,7 +14,7 @@ return [
     'omlx' => [
         'base_url' => 'http://localhost:8000',
         'api_key' => '', // Set it in config/app.local.php, which is not tracked
-        'timeout' => 300, // Seconds to wait for an answer
+        'timeout' => 300, // Seconds to wait while the server sends nothing
     ],
 
     // Large Language Model (LLM) configuration

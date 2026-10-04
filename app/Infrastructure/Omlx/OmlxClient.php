@@ -47,18 +47,101 @@ final class OmlxClient
      */
     public function post(string $path, array $body): array
     {
-        $content = json_encode($body);
-        if ($content === false) {
-            throw new IntentioException("The request to oMLX could not be encoded: " . json_last_error_msg());
+        return $this->request('POST', $path, $this->encode($body));
+    }
+
+    /**
+     * Sends a request body to the server and reads the answer while the server is still writing it.
+     *
+     * @param string $path The API path, e.g. '/v1/chat/completions'.
+     * @param array $body The request, encoded as JSON. It must ask the server to stream.
+     * @param callable $onEvent Called with each decoded event of the answer, in the order they arrive.
+     */
+    public function stream(string $path, array $body, callable $onEvent): void
+    {
+        $url = $this->baseUrl . $path;
+
+        $response = @fopen($url, 'r', false, $this->context('POST', $this->encode($body)));
+        if ($response === false) {
+            throw $this->noAnswer($url);
         }
 
-        return $this->request('POST', $path, $content);
+        // PHP waits until it has read a whole block (8192 bytes) before it hands over a line, which would
+        // hold a short answer back until its end. With a block of one byte, each line is handed over as it arrives.
+        stream_set_chunk_size($response, 1);
+
+        // A streamed answer is a series of lines "data: {...}", closed by the line "data: [DONE]"
+        $complete = false;
+        $otherLines = '';
+        while (($line = fgets($response)) !== false) {
+            $line = trim($line);
+
+            if ($line === '' || str_starts_with($line, ':')) {
+                continue; // Blank lines separate events, and a line starting with a colon is a comment
+            }
+
+            if (!str_starts_with($line, 'data:')) {
+                $otherLines .= $line;
+                continue;
+            }
+
+            $data = trim(substr($line, strlen('data:')));
+            if ($data === '[DONE]') {
+                $complete = true;
+                break;
+            }
+
+            $onEvent($this->decode($data, $url));
+        }
+
+        $timedOut = stream_get_meta_data($response)['timed_out'];
+        fclose($response);
+
+        if ($complete) {
+            return;
+        }
+
+        if ($otherLines !== '') {
+            // The server refused the request: its answer is one JSON document instead of a stream
+            $this->decode($otherLines, $url);
+        }
+
+        if ($timedOut) {
+            throw new IntentioException("oMLX at {$url} wrote nothing for {$this->timeout} seconds (omlx.timeout), so the answer was given up.");
+        }
+
+        throw new IntentioException("The answer of oMLX at {$url} ended before it was complete.");
     }
 
     private function request(string $method, string $path, ?string $content): array
     {
         $url = $this->baseUrl . $path;
 
+        $result = @file_get_contents($url, false, $this->context($method, $content));
+        if ($result === false) {
+            throw $this->noAnswer($url);
+        }
+
+        return $this->decode($result, $url);
+    }
+
+    private function encode(array $body): string
+    {
+        $content = json_encode($body);
+        if ($content === false) {
+            throw new IntentioException("The request to oMLX could not be encoded: " . json_last_error_msg());
+        }
+
+        return $content;
+    }
+
+    /**
+     * Builds the HTTP settings of a request.
+     *
+     * @return resource A stream context.
+     */
+    private function context(string $method, ?string $content)
+    {
         $headers = "Content-Type: application/json\r\n";
         if ($this->apiKey !== '') {
             $headers .= "Authorization: Bearer {$this->apiKey}\r\n";
@@ -74,17 +157,15 @@ final class OmlxClient
             $http['content'] = $content;
         }
 
-        $result = @file_get_contents($url, false, stream_context_create(['http' => $http]));
+        return stream_context_create(['http' => $http]);
+    }
 
-        if ($result === false) {
-            $error = error_get_last();
-            throw new IntentioException(
-                "No answer from oMLX at {$url}. " . ($error['message'] ?? 'Unknown error')
-                . " Make sure the oMLX server is running and omlx.base_url is correct."
-            );
-        }
-
-        $response = json_decode($result, true);
+    /**
+     * Decodes what the server wrote, and reports an error the server put in it.
+     */
+    private function decode(string $json, string $url): array
+    {
+        $response = json_decode($json, true);
         if (!is_array($response)) {
             throw new IntentioException("oMLX at {$url} answered with something that is not JSON.");
         }
@@ -95,5 +176,15 @@ final class OmlxClient
         }
 
         return $response;
+    }
+
+    private function noAnswer(string $url): IntentioException
+    {
+        $error = error_get_last();
+
+        return new IntentioException(
+            "No answer from oMLX at {$url}. " . ($error['message'] ?? 'Unknown error')
+            . " Make sure the oMLX server is running and omlx.base_url is correct."
+        );
     }
 }
