@@ -55,6 +55,10 @@ final class FileProcessor
             throw new IntentioException("Failed to read file content: {$filePath}");
         }
 
+        if (preg_match('//u', $content) !== 1) {
+            throw new IntentioException("File is not valid UTF-8 text: {$filePath}");
+        }
+
         $chunks = [];
         foreach ($this->splitIntoSections($content) as $index => $section) {
             $chunks[] = [
@@ -86,12 +90,13 @@ final class FileProcessor
         $lines = [];
         $inCodeBlock = false;
 
-        foreach (preg_split('/\R/', $content) as $line) {
-            if (preg_match('/^\s{0,3}(```|~~~)/', $line)) {
+        // The 'u' modifier matters: without it, \R and \s match single bytes inside multi-byte characters and cut them in two
+        foreach (preg_split('/\R/u', $content) as $line) {
+            if (preg_match('/^\s{0,3}(```|~~~)/u', $line)) {
                 $inCodeBlock = !$inCodeBlock;
             }
 
-            if (!$inCodeBlock && preg_match('/^(#{1,6})\s+(.+?)[\s#]*$/', $line, $matches)) {
+            if (!$inCodeBlock && preg_match('/^(#{1,6})\s+(.+?)[\s#]*$/u', $line, $matches)) {
                 $sections[] = ['text' => trim(implode("\n", $lines)), 'headings' => array_values($headings)];
 
                 // A new heading closes every heading of the same or a deeper level
@@ -107,7 +112,7 @@ final class FileProcessor
 
         if (count($sections) === 1) {
             // No headings: the paragraph is the unit of meaning
-            $paragraphs = preg_split('/(\R){2,}/', $sections[0]['text'], -1, PREG_SPLIT_NO_EMPTY);
+            $paragraphs = preg_split('/(\R){2,}/u', $sections[0]['text'], -1, PREG_SPLIT_NO_EMPTY);
             return array_map(fn (string $paragraph) => ['text' => trim($paragraph), 'headings' => []], $paragraphs);
         }
 

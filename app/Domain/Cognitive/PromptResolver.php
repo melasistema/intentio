@@ -37,7 +37,7 @@ final class PromptResolver
         $contextFiles = [];
 
         // Parse YAML front-matter: everything between the opening '---' line and the next '---' line
-        if (preg_match('/^---\R(.*?)\R---\R(.*)$/s', $fileContent, $matches)) {
+        if (preg_match('/^---\R(.*?)\R---\R(.*)$/su', $fileContent, $matches)) {
             $frontMatterRaw = $matches[1];
             $mainContent = trim($matches[2]);
             // Simple YAML-like parser for front-matter (key: value)
