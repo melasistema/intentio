@@ -75,14 +75,16 @@ final class IngestionService
 
                 $chunks = $this->fileProcessor->process($space->getKnowledgePath() . DIRECTORY_SEPARATOR . $relativePath, $category);
 
-                $embeddings = [];
+                $texts = [];
                 foreach ($chunks as $index => $chunk) {
                     $chunks[$index]['metadata']['relative_path'] = $relativePath;
                     // A section is embedded together with the headings above it, so that
                     // "Examples" under "Unfair Advantage" is found by a question about unfair advantage
                     $parentHeadings = array_slice($chunk['metadata']['headings'], 0, -1);
-                    $embeddings[] = $this->embeddingAdapter->embed(implode("\n", [...$parentHeadings, $chunk['content']]));
+                    $texts[] = implode("\n", [...$parentHeadings, $chunk['content']]);
                 }
+                // The sections of a file are embedded in one request
+                $embeddings = $this->embeddingAdapter->embedAll($texts);
 
                 $this->vectorStore->replaceFile($space, $relativePath, $fingerprint, $chunks, $embeddings);
                 fwrite(STDOUT, sprintf("  Indexed: %s (%d chunks)" . PHP_EOL, $relativePath, count($chunks)));

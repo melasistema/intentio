@@ -87,7 +87,7 @@ final readonly class CognitiveEngine
         }
 
         return "the prompt is about {$estimatedTokens} tokens and the context window is {$this->contextWindow}, "
-            . "so the model did not see all of it. Pin fewer files, or raise llm.options.num_ctx in the configuration.";
+            . "so the model did not see all of it. Pin fewer files, or use a model with a larger window and set llm.context_window to it.";
     }
 
     /**

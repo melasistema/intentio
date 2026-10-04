@@ -15,8 +15,9 @@ use Intentio\Application\Console\Commands\StatusCommand;
 use Intentio\Application\Console\Commands\SpacesCommand;
 
 use Intentio\Infrastructure\Filesystem\FileProcessor;
-use Intentio\Infrastructure\LLM\OllamaAdapter;
-use Intentio\Infrastructure\Embeddings\LocalEmbeddingAdapter;
+use Intentio\Infrastructure\LLM\OmlxChatAdapter;
+use Intentio\Infrastructure\Embeddings\OmlxEmbeddingAdapter;
+use Intentio\Infrastructure\Omlx\OmlxClient;
 use Intentio\Infrastructure\Filesystem\LocalSpaceRepository;
 use Intentio\Infrastructure\Filesystem\LocalBlueprintRepository;
 use Intentio\Infrastructure\Filesystem\FileCopier;
@@ -45,22 +46,15 @@ final class Kernel
     {
         try {
             // Infrastructure dependencies
-            $ollamaConfig = $this->config['ollama'] ?? [];
-            $llmModel = $this->config['llm']['model_name'] ?? 'llama2';
-            $llmOptions = $this->config['llm']['options'] ?? [];
-            // The context window is always sent to Ollama, so the size INTENTIO checks prompts against is the size in use
-            $llmOptions += ['num_ctx' => 8192];
+            $omlxClient = new OmlxClient($this->config['omlx'] ?? []);
 
-            $ollamaAdapter = new OllamaAdapter(
-                $ollamaConfig,
-                $llmModel,
-                $llmOptions
+            $llmAdapter = new OmlxChatAdapter(
+                $omlxClient,
+                $this->config['llm']['model_name'] ?? '',
+                $this->config['llm']['options'] ?? []
             );
-            $embeddingModel = $this->config['embedding']['model_name'] ?? 'nomic-embed-text';
-            $embeddingAdapter = new LocalEmbeddingAdapter(
-                $ollamaConfig,
-                $embeddingModel
-            );
+            $embeddingModel = $this->config['embedding']['model_name'] ?? '';
+            $embeddingAdapter = new OmlxEmbeddingAdapter($omlxClient, $embeddingModel);
             $fileCopier = new FileCopier();
             $fileProcessor = new FileProcessor();
             $localSpaceRepository = new LocalSpaceRepository($this->config['spaces_base_path'] ?? __DIR__ . '/../../../spaces');
@@ -85,12 +79,12 @@ final class Kernel
             $promptResolver = new PromptResolver();
 
             $cognitiveEngine = new CognitiveEngine(
-                $ollamaAdapter,
+                $llmAdapter,
                 $ingestionService,
                 $retrievalService,
                 $vectorStore,
                 $ollamaImageRenderer,
-                $llmOptions['num_ctx']
+                $this->config['llm']['context_window'] ?? 32768
             );
 
             $consoleApplication = new ConsoleApplication($this->config['app_name'] ?? 'INTENTIO', $this->config['app_version'] ?? 'unknown');
@@ -117,6 +111,7 @@ final class Kernel
             ));
             $consoleApplication->addCommand(new StatusCommand(
                 $localSpaceRepository,
+                $omlxClient,
                 $this->config
             ));
             $consoleApplication->addCommand(new SpacesCommand($localSpaceRepository));

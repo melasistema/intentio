@@ -236,7 +236,9 @@ By leveraging configurable prompt templates, you transform INTENTIO into a truly
 
 -   **Storage:** Local SQLite database (vector index)
 
--   **Image Renderer:** Local Image Generation Models (via Ollama)
+-   **Model Server:** [oMLX](https://github.com/jundot/omlx), running on your own machine
+
+-   **Image Renderer:** Local image generation models
 
 
 No cloud calls. No silent training. No external APIs.
@@ -249,29 +251,40 @@ Your data stays where it belongs.
 
 To fully utilize INTENTIO, you need to set up a local model server and prepare your cognitive environment.
 
-### 1. Prerequisites: Install Ollama and Download Models
+### 1. Prerequisites: Install oMLX and Download Models
 
-INTENTIO uses [Ollama](https://ollama.com) to run local Large Language Models (LLMs) and embedding models.
+INTENTIO uses [oMLX](https://github.com/jundot/omlx) to run the language model and the embedding model on your own machine. oMLX runs on Macs with Apple Silicon.
 
-**a. Install Ollama:**
-   - Go to [https://ollama.com](https://ollama.com) and download the application for your operating system.
-   - Install it as you would any other application. The Ollama server typically runs in the background automatically.
+**a. Install and start oMLX:**
+   - Install it from [https://github.com/jundot/omlx](https://github.com/jundot/omlx) and start the server. By default it listens on `http://localhost:8000`.
+   - Note the API key shown in its admin page (`http://localhost:8000/admin`).
 
-**b. Download Required Models:**
-   - Open your terminal and pull the necessary models:
-     ```bash
-     ollama pull nomic-embed-text
-     ollama pull llama3.1
-     ollama pull x/z-image-turbo
-     ```
-   - Verify installation: `ollama list` should show `nomic-embed-text:latest` and `llama3.1:latest`.
+**b. Download the models:**
+   - In the oMLX admin page, download a language model and an embedding model in MLX format. The defaults in `config/app.php` are:
+     - `mlx-community/Mistral-7B-Instruct-v0.3-4bit` (language model, about 4 GB)
+     - `mlx-community/nomicai-modernbert-embed-base-bf16` (embedding model, about 300 MB)
+   - INTENTIO refers to a model by the name oMLX lists it under, which is the last part of the repository name (e.g., `Mistral-7B-Instruct-v0.3-4bit`).
+
+**c. Image rendering (optional):**
+   - oMLX does not render images. The image renderer still calls the Ollama command line, which recent Ollama versions no longer support for image models; it is being moved to another local tool.
 
 ### 2. Configure INTENTIO
 
 INTENTIO uses a configuration file located at `config/app.php` for its core settings.
 
--   Review the provided `config/app.php` file. You may need to adjust Ollama server details, default model names, or paths to match your local setup.
--   For local overrides, you can create a `config/app.local.php` file. This file will be loaded *after* `config/app.php` and its values will override existing ones. `config/app.local.php` is ignored by version control.
+-   Review the provided `config/app.php` file. You may need to adjust the oMLX server address, the model names, or paths to match your local setup.
+-   For local overrides, create a `config/app.local.php` file. It is loaded *after* `config/app.php` and its values override existing ones. `config/app.local.php` is ignored by version control, which makes it the place for your oMLX API key:
+
+    ```php
+    <?php
+
+    return [
+        'omlx' => [
+            'api_key' => 'your-key',
+        ],
+    ];
+    ```
+-   Run `./intentio status` to check the setup: it lists the models on the server and says when a configured model is missing.
 
 ### 3. Initialize a Knowledge Package (Recommended First Step)
 
@@ -314,7 +327,7 @@ INTENTIO treats your filesystem structure as a cognitive space.
 
 ### 4. Basic Usage
 
-Once Ollama is running and your knowledge environment (either package-initialized or custom) is ready, you can use INTENTIO's commands:
+Once oMLX is running and your knowledge environment (either package-initialized or custom) is ready, you can use INTENTIO's commands:
 
 **a. Ingest Your Knowledge (for Custom Spaces or after package updates):**
    Process your cognitive space to generate embeddings and build its SQLite-based vector store. This must be done for each space you want to use. **All supported files (`.md`, `.txt`) within the `knowledge/` subdirectory of your space will be ingested.** Prompt templates are not indexed. Ingestion is repeatable: only new and modified files are embedded, and files you deleted are removed from the index.
@@ -342,7 +355,7 @@ Once Ollama is running and your knowledge environment (either package-initialize
      0.76    hook_models.md > Hook Models > The PAS Model
    ```
 
-   Passages below `retrieval.min_score` (0.5 by default, in `config/app.php`) are not used, and passages of a pinned file are not retrieved a second time. When nothing is close enough, the list says `Sources: none`, and the answer does not come from the space. INTENTIO also warns when a prompt is estimated to be larger than the model's context window (`llm.options.num_ctx`, 8192 by default).
+   Passages below `retrieval.min_score` (0.5 by default, in `config/app.php`) are not used, and passages of a pinned file are not retrieved a second time. When nothing is close enough, the list says `Sources: none`, and the answer does not come from the space. INTENTIO also warns when a prompt is estimated to be larger than the model's context window (`llm.context_window`, 32768 by default).
 
 **c. Interactive Mode (Recommended for exploration and guided experience):**
    Launch a guided interactive session. Here you can easily switch between knowledge spaces, select prompt templates (commands), and chat. A space that was never ingested is ingested on entry; if its knowledge has changed since, you are asked whether to update the index.

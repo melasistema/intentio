@@ -10,35 +10,35 @@ return [
     'spaces_base_path' => __DIR__ . '/../spaces',
     'blueprints_base_path' => __DIR__ . '/../packages',
 
-    // Ollama API configuration
-    'ollama' => [
-        'base_url' => 'http://localhost:11434',
-        'api_path_embeddings' => '/api/embeddings',
-        'api_path_generate' => '/api/generate', // Corresponds to original api_path_chat for stateless generation
-        'timeout' => 120, // Default timeout, can be overridden in llm/embedding options
+    // oMLX: the local server that runs the language model and the embedding model
+    'omlx' => [
+        'base_url' => 'http://localhost:8000',
+        'api_key' => '', // Set it in config/app.local.php, which is not tracked
+        'timeout' => 300, // Seconds to wait for an answer
     ],
 
     // Large Language Model (LLM) configuration
     'llm' => [
-        'model_name' => 'llama3.1', // From original interpreter.model_name
+        'model_name' => 'Mistral-7B-Instruct-v0.3-4bit', // The model's name as oMLX lists it
+        // How many tokens the model can read at once. It is a property of the model and of oMLX's settings;
+        // INTENTIO only uses it to warn when a prompt is estimated to be larger.
+        'context_window' => 32768,
         'options' => [
-            'temperature' => 0.5, // From original interpreter.options
-            'keep_alive' => '15m', // From original interpreter.options
-            'num_ctx' => 8192, // The context window, in tokens. A prompt longer than this is cut by Ollama without notice.
+            'temperature' => 0.5,
         ],
-        'default_prompt_template_name' => 'default', // From original interpreter.default_prompt_template_name
+        'default_prompt_template_name' => 'default',
     ],
 
     // Embedding model configuration
     'embedding' => [
-        'model_name' => 'nomic-embed-text', // From original embedding.model_name
+        'model_name' => 'nomicai-modernbert-embed-base-bf16', // The model's name as oMLX lists it
     ],
 
     // Retrieval configuration
     'retrieval' => [
         'limit' => 5, // The most passages a query may bring into the prompt
         // The lowest similarity (0 to 1) a passage needs to be used. It depends on the embedding model:
-        // with nomic-embed-text, passages on the topic mostly score above 0.55 and unrelated ones mostly below 0.5.
+        // the default was measured with nomic-embed-text and has to be checked again for another model.
         'min_score' => 0.5,
     ],
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Intentio\Application\Console\Commands;
 
 use Intentio\Infrastructure\Filesystem\LocalSpaceRepository;
+use Intentio\Infrastructure\Omlx\OmlxClient;
 use Intentio\Shared\Exceptions\IntentioException;
 
 final class StatusCommand implements CommandInterface
@@ -14,6 +15,7 @@ final class StatusCommand implements CommandInterface
 
     public function __construct(
         private readonly LocalSpaceRepository $spaceRepository,
+        private readonly OmlxClient $omlxClient,
         private readonly array $config
     ) {
     }
@@ -42,18 +44,18 @@ final class StatusCommand implements CommandInterface
         fwrite(STDOUT, sprintf("  Spaces Base Path: %s" . PHP_EOL, $this->config['spaces_base_path'] ?? 'N/A'));
         fwrite(STDOUT, sprintf("  Blueprints Base Path: %s" . PHP_EOL, $this->config['blueprints_base_path'] ?? 'N/A'));
 
-        // 3. Ollama Configuration
-        $ollamaConfig = $this->config['ollama'] ?? [];
-        fwrite(STDOUT, "\nOllama Configuration:" . PHP_EOL);
-        fwrite(STDOUT, sprintf("  Base URL: %s" . PHP_EOL, $ollamaConfig['base_url'] ?? 'N/A'));
-        fwrite(STDOUT, sprintf("  Embeddings API Path: %s" . PHP_EOL, $ollamaConfig['api_path_embeddings'] ?? 'N/A'));
-        fwrite(STDOUT, sprintf("  Generate API Path: %s" . PHP_EOL, $ollamaConfig['api_path_generate'] ?? 'N/A'));
-        fwrite(STDOUT, sprintf("  Timeout: %d seconds" . PHP_EOL, $ollamaConfig['timeout'] ?? 120));
+        // 3. oMLX Configuration
+        $omlxConfig = $this->config['omlx'] ?? [];
+        fwrite(STDOUT, "\noMLX Configuration:" . PHP_EOL);
+        fwrite(STDOUT, sprintf("  Base URL: %s" . PHP_EOL, $this->omlxClient->getBaseUrl()));
+        fwrite(STDOUT, sprintf("  API Key: %s" . PHP_EOL, ($omlxConfig['api_key'] ?? '') === '' ? 'not set' : 'set'));
+        fwrite(STDOUT, sprintf("  Timeout: %d seconds" . PHP_EOL, $omlxConfig['timeout'] ?? 120));
 
         // 4. LLM Configuration
         $llmConfig = $this->config['llm'] ?? [];
         fwrite(STDOUT, "\nLLM Configuration:" . PHP_EOL);
         fwrite(STDOUT, sprintf("  Model Name: %s" . PHP_EOL, $llmConfig['model_name'] ?? 'N/A'));
+        fwrite(STDOUT, sprintf("  Context Window: %s tokens" . PHP_EOL, $llmConfig['context_window'] ?? 'N/A'));
         fwrite(STDOUT, sprintf("  Default Prompt Template: %s" . PHP_EOL, $llmConfig['default_prompt_template_name'] ?? 'N/A'));
         fwrite(STDOUT, "  Options: " . json_encode($llmConfig['options'] ?? [], JSON_PRETTY_PRINT) . PHP_EOL);
 
@@ -77,92 +79,39 @@ final class StatusCommand implements CommandInterface
             fwrite(STDERR, "  Error listing spaces: " . $e->getMessage() . PHP_EOL);
         }
 
-        // 7. Ollama Server Status & Model Availability
-        fwrite(STDOUT, "\nOllama Server Status:" . PHP_EOL);
-        $ollamaStatus = $this->checkOllamaServer($ollamaConfig['base_url'] ?? '');
-        fwrite(STDOUT, sprintf("  Server Reachable: %s" . PHP_EOL, $ollamaStatus['reachable'] ? 'Yes' : 'No'));
-
-        if ($ollamaStatus['reachable']) {
+        // 7. oMLX Server Status & Model Availability
+        fwrite(STDOUT, "\noMLX Server Status:" . PHP_EOL);
+        try {
+            $models = $this->omlxClient->get('/v1/models')['data'] ?? [];
+            fwrite(STDOUT, "  Server Reachable: Yes" . PHP_EOL);
             fwrite(STDOUT, "  Available Models on Server:" . PHP_EOL);
-            $availableModels = $this->getOllamaModels($ollamaConfig['base_url'] ?? '');
-            if (empty($availableModels)) {
-                fwrite(STDOUT, "    No models found on Ollama server." . PHP_EOL);
-            } else {
-                foreach ($availableModels as $model) {
-                    $llmStatus = ($llmConfig['model_name'] === $model['name']) ? ' (Configured LLM)' : '';
-                    $embeddingStatus = ($embeddingConfig['model_name'] === $model['name']) ? ' (Configured Embedding)' : '';
-                    fwrite(STDOUT, sprintf("    - %s%s%s" . PHP_EOL, $model['name'], $llmStatus, $embeddingStatus));
+
+            $configured = [
+                'LLM' => $llmConfig['model_name'] ?? '',
+                'Embedding' => $embeddingConfig['model_name'] ?? '',
+            ];
+            $available = [];
+            foreach ($models as $model) {
+                $available[] = $model['id'];
+                $line = "    - " . $model['id'];
+                foreach (array_keys($configured, $model['id'], true) as $role) {
+                    $line .= " (Configured {$role})";
+                }
+                fwrite(STDOUT, $line . PHP_EOL);
+            }
+
+            foreach ($configured as $role => $name) {
+                if (!in_array($name, $available, true)) {
+                    fwrite(STDOUT, "  Missing: the configured {$role} model '{$name}' is not on the server." . PHP_EOL);
                 }
             }
-        } else {
-            fwrite(STDERR, "  Error: " . $ollamaStatus['error'] . PHP_EOL);
+        } catch (IntentioException $e) {
+            fwrite(STDOUT, "  Server Reachable: No" . PHP_EOL);
+            fwrite(STDERR, "  Error: " . $e->getMessage() . PHP_EOL);
         }
-
 
         fwrite(STDOUT, "\n--- End Status Report ---" . PHP_EOL);
 
         return 0;
-    }
-
-    private function checkOllamaServer(string $baseUrl): array
-    {
-        if (empty($baseUrl)) {
-            return ['reachable' => false, 'error' => 'Ollama base URL not configured.'];
-        }
-        $url = $baseUrl; // Simple ping to base URL is usually enough to check reachability
-        $options = [
-            'http' => [
-                'method'  => 'GET',
-                'timeout' => 5, // Short timeout for ping
-            ],
-        ];
-        $context  = stream_context_create($options);
-
-        // Suppress errors with @ and handle manually
-        $result = @file_get_contents($url, false, $context);
-
-        if ($result === false) {
-            $error = error_get_last();
-            return ['reachable' => false, 'error' => $error['message'] ?? 'Unknown error'];
-        }
-        return ['reachable' => true, 'error' => null];
-    }
-
-    private function getOllamaModels(string $baseUrl): array
-    {
-        if (empty($baseUrl)) {
-            return [];
-        }
-        $url = $baseUrl . '/api/tags';
-        $options = [
-            'http' => [
-                'method'  => 'GET',
-                'timeout' => 10,
-            ],
-        ];
-        $context  = stream_context_create($options);
-
-        $result = @file_get_contents($url, false, $context);
-        if ($result === false) {
-            $error = error_get_last();
-            fwrite(STDERR, "  Error fetching Ollama models: " . ($error['message'] ?? 'Unknown error') . PHP_EOL);
-            return [];
-        }
-
-        $response = json_decode($result, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($response['models'])) {
-            fwrite(STDERR, "  Error decoding Ollama models response: " . json_last_error_msg() . PHP_EOL);
-            return [];
-        }
-
-        $models = [];
-        foreach ($response['models'] as $modelData) {
-            $models[] = [
-                'name' => $modelData['name'],
-                'size' => $modelData['size'],
-                'digest' => $modelData['digest'],
-            ];
-        }
-        return $models;
     }
 }
