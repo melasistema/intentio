@@ -22,7 +22,7 @@ use Intentio\Infrastructure\Filesystem\LocalSpaceRepository;
 use Intentio\Infrastructure\Filesystem\LocalBlueprintRepository;
 use Intentio\Infrastructure\Filesystem\FileCopier;
 use Intentio\Infrastructure\Storage\SQLiteVectorStore;
-use Intentio\Infrastructure\ImageRenderer\OllamaImageRenderer;
+use Intentio\Infrastructure\ImageRenderer\MfluxImageRenderer;
 use Intentio\Domain\Cognitive\VectorStoreInterface;
 use Intentio\Domain\Model\ImageRendererInterface;
 
@@ -60,7 +60,7 @@ final class Kernel
             $localSpaceRepository = new LocalSpaceRepository($this->config['spaces_base_path'] ?? __DIR__ . '/../../../spaces');
             $localBlueprintRepository = new LocalBlueprintRepository($this->config['blueprints_base_path'] ?? __DIR__ . '/../../../packages');
             $vectorStore = new SQLiteVectorStore();
-            $ollamaImageRenderer = new OllamaImageRenderer($this->config['image_renderer']);
+            $imageRenderer = new MfluxImageRenderer($this->config['image_renderer'] ?? []);
 
             // Domain dependencies
             $spaceFactory = new SpaceFactory();
@@ -85,7 +85,7 @@ final class Kernel
                 $ingestionService,
                 $retrievalService,
                 $vectorStore,
-                $ollamaImageRenderer,
+                $imageRenderer,
                 $this->config['llm']['context_window'] ?? 32768
             );
 

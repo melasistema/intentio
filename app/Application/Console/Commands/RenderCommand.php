@@ -53,7 +53,7 @@ class RenderCommand implements CommandInterface
 
             fwrite(STDOUT, "Initiating render with space: {$space->getName()}" . PHP_EOL);
 
-            $this->cognitiveEngine->render($space, $query, $options);
+            $this->cognitiveEngine->render($space, $query);
 
             fwrite(STDOUT, "Render command completed." . PHP_EOL);
 

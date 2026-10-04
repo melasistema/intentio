@@ -238,7 +238,7 @@ By leveraging configurable prompt templates, you transform INTENTIO into a truly
 
 -   **Model Server:** [oMLX](https://github.com/jundot/omlx), running on your own machine
 
--   **Image Renderer:** Local image generation models
+-   **Image Renderer:** Local image generation models, run by [mflux](https://github.com/filipstrand/mflux)
 
 
 No cloud calls. No silent training. No external APIs.
@@ -251,7 +251,7 @@ Your data stays where it belongs.
 
 To fully utilize INTENTIO, you need to set up a local model server and prepare your cognitive environment.
 
-### 1. Prerequisites: Install oMLX and Download Models
+### 1. Prerequisites: Install oMLX, Download Models, Install mflux
 
 INTENTIO uses [oMLX](https://github.com/jundot/omlx) to run the language model and the embedding model on your own machine. oMLX runs on Macs with Apple Silicon.
 
@@ -266,7 +266,9 @@ INTENTIO uses [oMLX](https://github.com/jundot/omlx) to run the language model a
    - INTENTIO refers to a model by the name oMLX lists it under, which is the last part of the repository name (e.g., `Mistral-7B-Instruct-v0.3-4bit`).
 
 **c. Image rendering (optional):**
-   - oMLX does not render images. The image renderer still calls the Ollama command line, which recent Ollama versions no longer support for image models; it is being moved to another local tool.
+   - Images are rendered by [mflux](https://github.com/filipstrand/mflux), a command line tool that runs image models locally on Apple Silicon. Install it with `pipx install mflux`.
+   - The default model is `mflux-community/flux2-klein-4b-mflux-q4`. mflux downloads it on the first render (about 4.5 GB), so that render takes much longer than the following ones. If you already have the model on disk, set `model_name` to the path of its folder and nothing is downloaded.
+   - The command, the model and its options (steps, width, height) are set under `image_renderer` in `config/app.php`. Each model family has its own mflux command, e.g. `mflux-generate-z-image-turbo` for Z-Image Turbo.
 
 ### 2. Configure INTENTIO
 

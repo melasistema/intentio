@@ -174,7 +174,7 @@ final class InteractCommand implements CommandInterface
             $choice = strtolower($this->readChoice());
 
             if (in_array($choice, ['yes', 'y'])) {
-                $this->cognitiveEngine->render($space, trim($matches[1]), []);
+                $this->cognitiveEngine->render($space, trim($matches[1]));
                 fwrite(STDOUT, "Image rendering complete." . PHP_EOL);
                 return;
             }

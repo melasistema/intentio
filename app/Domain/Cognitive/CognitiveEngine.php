@@ -136,13 +136,14 @@ final readonly class CognitiveEngine
         return implode("\n\n", $sections);
     }
 
-    public function render(Space $space, string $query, array $options): string
+    /**
+     * Renders an image from a prompt into the space's own image folder.
+     *
+     * @return string The path to the rendered image.
+     */
+    public function render(Space $space, string $prompt): string
     {
-        // Construct space-specific renderer folder path
-        $spaceRendererFolder = $space->getPath() . '/renderer_images';
-
-        // Now use the dedicated image renderer
-        return $this->imageRenderer->render($query, $spaceRendererFolder, $options);
+        return $this->imageRenderer->render($prompt, $space->getPath() . '/renderer_images');
     }
 
     public function clear(Space $space): void

@@ -46,9 +46,17 @@ return [
         'min_score' => 0.32,
     ],
 
-    // Image renderer configuration
+    // Image renderer configuration: mflux, a command line tool that runs image models locally
     'image_renderer' => [
-        'model_name' => 'x/z-image-turbo',
+        // The mflux command of the model's family. Give its full path if it is not on your PATH.
+        'command' => 'mflux-generate-flux2',
+        'model_name' => 'mflux-community/flux2-klein-4b-mflux-q4', // A repository mflux downloads on the first render (about 4.5 GB), or the path of a model folder
+        // Passed to the command as --name value
+        'options' => [
+            'steps' => 4,
+            'width' => 1024,
+            'height' => 1024,
+        ],
     ],
 
     // Vision model configuration

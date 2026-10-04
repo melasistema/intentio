@@ -7,11 +7,11 @@ namespace Intentio\Domain\Model;
 interface ImageRendererInterface
 {
     /**
-     * Renders an image based on the provided prompt and options.
+     * Renders an image from a prompt.
      *
      * @param string $prompt The image generation prompt.
-     * @param array $options Additional options for rendering (e.g., model name, output format).
-     * @return string The path to the rendered image or a unique identifier.
+     * @param string $rendererFolder The folder the image is saved in.
+     * @return string The path to the rendered image.
      */
-    public function render(string $prompt, string $rendererFolder, array $options = []): string;
+    public function render(string $prompt, string $rendererFolder): string;
 }
