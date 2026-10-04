@@ -1,7 +1,7 @@
 # Product Pitch Lab – Manifest
 
 name: Product Pitch Lab
-version: 0.0.1
+version: 0.0.2
 domain: business validation / product strategy / visual mockups
 default_prompt: validate_idea
 recommended_generators:

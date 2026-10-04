@@ -1,36 +1,44 @@
 ---
-instruction: "Enter product name, industry, and brand personality (e.g., 'HydraTrack, wellness tech, modern and clean'):"
+instruction: "Describe your brand briefly (e.g., 'Vortex, urban backpacks, bold and modern'):"
 ---
-# Professional Logo Concept: {{QUERY}}
+# Logo Concept: {{QUERY}}
 
-You are creating a brand identity logo. Follow this exact structure:
+Your task: Transform the user's brief into a professional logo concept by applying design principles from the context.
 
-## Step 1: Determine Logo Strategy
-Analyze from context (`logo_design.md`):
-- **Logo Type**: Wordmark / Lettermark / Symbol / Combination Mark / Emblem
-- **Industry**: Determines appropriateness
-- **Personality**: (e.g., modern, professional, playful, elegant)
-- **Colors**: 1-3 colors based on psychology (blue=trust, red=energy, etc.)
+## Phase 1: Interpret the Brand
 
-## Step 2: Define Visual Elements
-- **Primary Element**: Icon/symbol OR typography style
-- **Shape Language**: Circles (friendly) / Squares (stable) / Triangles (dynamic)
-- **Style**: Geometric / Organic / Minimalist / Bold
-- **Constraints**: Vector-style, no gradients, high contrast, simple
+From the user's input, determine:
+- **Industry context** → What logo type is most appropriate?
+- **Brand personality** → What colors convey this feeling?
+- **Visual essence** → What symbol or typography style fits?
 
-## Step 3: Assemble Render Prompt
+Reference `logo_design.md` to inform every decision:
+- Logo types (wordmark, symbol, combination, emblem)
+- Color psychology (blue=trust, orange=energy, black=sophistication)
+- Typography guidelines (serif=traditional, sans-serif=modern)
+- Shape language (circles=friendly, angles=dynamic)
 
-You MUST output a single detailed paragraph wrapped in these exact tags. The tags are NOT optional.
+## Phase 2: Design the Logo
 
-### Required Output Format:
+Synthesize your analysis into a clear visual concept:
+- Choose 1-2 colors based on psychology and industry
+- Define the primary visual element (icon OR distinctive typography)
+- Apply simplicity, memorability, and versatility principles
+- Consider how it works at small sizes and in black & white
+
+## Phase 3: Assemble the Final Render Prompt
+
+Create a single cohesive description that integrates all elements: logo type, brand name IN QUOTES, detailed visual element description, specific colors, style characteristics, and brand personality.
+
+**CRITICAL**: The brand name text must be enclosed in quotes (e.g., text "PULSE" or reading "Ember") for the diffusion model to render it correctly.
+
+The prompt must be wrapped within the tags shown below:
 
 <<<RENDER_PROMPT>>>
-[Logo type] logo design for [brand name], [describe icon/symbol OR typography], [specific colors], [style characteristics], clean vector-style, high contrast, legible at small sizes, isolated on white background, no gradients or effects, conveying [brand personality], simple and memorable.
+[{Logo type} logo design with text "{BRAND NAME IN CAPS}", {detailed description of icon/symbol OR typography style}, {specific colors}, {style: geometric/organic/minimalist/bold}, clean vector illustration, high contrast, simple and memorable, professional brand identity, isolated on white background, conveying {brand personality}]
 <<<END_RENDER_PROMPT>>>
-
-**Replace the bracketed placeholders with specific details. The tags themselves must appear exactly as shown.**
 
 ---
 
 Context: {{CONTEXT}}
-Brand: {{QUERY}}
+User Input: {{QUERY}}
