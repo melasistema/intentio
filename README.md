@@ -1,4 +1,4 @@
-![image README-banner.png](/resources/images/intentio-header-image.png)
+![INTENTIO: design the space a small model works in](/resources/images/intentio-header-image.png)
 
 # INTENTIO
 
