@@ -64,7 +64,7 @@ if [ "$dry_run" = true ]; then
   exit 0
 fi
 
-version="$(php -r 'echo json_decode(file_get_contents("composer.json"), true)["version"];')"
+version="$(php -r 'echo (require "config/app.php")["app_version"];')"
 tag="v$version"
 
 if git rev-parse --quiet --verify "refs/tags/$tag" >/dev/null; then
@@ -73,7 +73,7 @@ if git rev-parse --quiet --verify "refs/tags/$tag" >/dev/null; then
 fi
 
 echo "Committing and tagging $tag..."
-git add CHANGELOG.md composer.json config/app.php
+git add CHANGELOG.md config/app.php
 git commit -m "chore(release): $version"
 git tag -a "$tag" -m "Release $version"
 

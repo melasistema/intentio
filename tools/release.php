@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Prepares a release: works out the next version from the conventional commits since the last tag,
- * writes the release section of CHANGELOG.md, and sets the version in composer.json and config/app.php.
+ * writes the release section of CHANGELOG.md, and sets the version in config/app.php.
  *
  * It touches no git state. release.sh calls it, then commits, tags and publishes.
  *
@@ -14,6 +14,9 @@ declare(strict_types=1);
  */
 
 const UNRELEASED_HEADING = '## [unreleased]';
+
+// The line of config/app.php that holds the version
+const VERSION_LINE = '/(\'app_version\'\s*=>\s*\')([^\']*)(\')/';
 
 // Commit types that reach the changelog, and the heading each one is listed under
 const SECTIONS = [
@@ -75,8 +78,7 @@ function main(array $arguments): void
     }
 
     writeFileOrFail('CHANGELOG.md', withSection($changelog, $section));
-    setVersion('composer.json', '/("version":\s*")[^"]*(")/', $version);
-    setVersion('config/app.php', '/(\'app_version\'\s*=>\s*\')[^\']*(\')/', $version);
+    setVersion($version);
 }
 
 function optionValue(array $arguments, string $name): ?string
@@ -92,14 +94,17 @@ function optionValue(array $arguments, string $name): ?string
     return $arguments[$position + 1];
 }
 
+/**
+ * The version lives in config/app.php only. composer.json carries none: a version there is part of
+ * what composer.lock is checked against, so every release would leave the lock file out of date.
+ */
 function currentVersion(): string
 {
-    $composer = json_decode(readFileOrFail('composer.json'), true);
-    if (!is_array($composer) || !isset($composer['version'])) {
-        throw new RuntimeException('composer.json has no version.');
+    if (preg_match(VERSION_LINE, readFileOrFail('config/app.php'), $matches) !== 1) {
+        throw new RuntimeException('config/app.php has no app_version.');
     }
 
-    return $composer['version'];
+    return $matches[2];
 }
 
 /**
@@ -120,13 +125,13 @@ function lastTag(): ?string
 function commitsSince(?string $tag): array
 {
     $range = $tag === null ? 'HEAD' : escapeshellarg($tag . '..HEAD');
-    $log = shell_exec("git log --no-merges --format=%h%x1f%s%x1f%b%x1e {$range}");
-    if (!is_string($log)) {
+    exec("git log --no-merges --format=%h%x1f%s%x1f%b%x1e {$range}", $lines, $exitCode);
+    if ($exitCode !== 0) {
         throw new RuntimeException('git log failed.');
     }
 
     $commits = [];
-    foreach (explode("\x1e", $log) as $record) {
+    foreach (explode("\x1e", implode("\n", $lines)) as $record) {
         $fields = explode("\x1f", trim($record));
         if (count($fields) !== 3) {
             continue;
@@ -239,14 +244,14 @@ function withSection(string $changelog, string $section): string
     return substr($changelog, 0, $firstRelease + 1) . $section . "\n" . substr($changelog, $firstRelease + 1);
 }
 
-function setVersion(string $path, string $pattern, string $version): void
+function setVersion(string $version): void
 {
-    $content = preg_replace($pattern, '${1}' . $version . '${2}', readFileOrFail($path), 1, $count);
+    $content = preg_replace(VERSION_LINE, '${1}' . $version . '${3}', readFileOrFail('config/app.php'), 1, $count);
     if ($content === null || $count !== 1) {
-        throw new RuntimeException("No version line found in {$path}.");
+        throw new RuntimeException('config/app.php has no app_version.');
     }
 
-    writeFileOrFail($path, $content);
+    writeFileOrFail('config/app.php', $content);
 }
 
 /**
