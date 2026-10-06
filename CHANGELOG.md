@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Special thanks to [Luca Visciola](https://github.com/melasistema) for the original work and ongoing vision.
 
-## [unreleased]
+## [0.3.0] - 2026-10-06
 
 ### Added
 -   **Product Pitch Lab Blueprint:** Introduced the `@packages/product_pitch_lab` cognitive environment (`version: 0.1.0`), which validates product ideas against business frameworks, drafts elevator pitches, competitive analyses and Lean Canvases, and renders product mockups, logo concepts and landing page designs. The landing page and the `brand_product` command reuse the logo and the product image you keep.
