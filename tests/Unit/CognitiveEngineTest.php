@@ -12,6 +12,7 @@ use Intentio\Domain\Model\EmbeddingInterface;
 use Intentio\Domain\Model\ImageRendererInterface;
 use Intentio\Domain\Model\LLMInterface;
 use Intentio\Infrastructure\Filesystem\FileProcessor;
+use Intentio\Shared\Exceptions\IntentioException;
 use Intentio\Tests\SpaceTestCase;
 
 /**
@@ -22,6 +23,9 @@ final class CognitiveEngineTest extends SpaceTestCase
 {
     /** The prompt the engine last sent to the language model. */
     private string $sentPrompt = '';
+
+    /** The reference images the engine last gave to the image renderer. */
+    private array $referenceImages = [];
 
     public function testWithoutATemplateOrKnowledgeTheQueryIsThePrompt(): void
     {
@@ -186,14 +190,46 @@ final class CognitiveEngineTest extends SpaceTestCase
             return 'the answer';
         });
 
+        $imageRenderer = $this->createStub(ImageRendererInterface::class);
+        $imageRenderer->method('render')->willReturnCallback(function (string $prompt, string $folder, array $referenceImages = []): string {
+            $this->referenceImages = $referenceImages;
+
+            return $folder . '/render.png';
+        });
+
         return new CognitiveEngine(
             $llm,
             new IngestionService(new FileProcessor(), $embedding, $store, 'test-embedding-model', ''),
             new RetrievalService($embedding, $store, 5, 0.32, ''),
             $store,
-            $this->createStub(ImageRendererInterface::class),
+            $imageRenderer,
             $contextWindow
         );
+    }
+
+    public function testARenderIsShownTheKeptImagesItUsesInTheOrderGiven(): void
+    {
+        $engine = $this->engine();
+        $logo = $engine->keepImage($this->space, $this->writeFile('renderer_images/render_1.png', 'logo'), 'logo');
+        $product = $engine->keepImage($this->space, $this->writeFile('renderer_images/render_2.png', 'product'), 'product');
+
+        $engine->render($this->space, 'a page', ['product', 'logo']);
+
+        $this->assertSame([$product, $logo], $this->referenceImages);
+        $this->assertFileExists($this->space->getPath() . '/renderer_images/render_1.png');
+    }
+
+    public function testARenderThatUsesAnImageTheSpaceHasNotKeptIsRefused(): void
+    {
+        $engine = $this->engine();
+        $engine->keepImage($this->space, $this->writeFile('renderer_images/render_1.png', 'logo'), 'logo');
+
+        $this->assertSame(['product'], $engine->missingImages($this->space, ['product', 'logo']));
+
+        $this->expectException(IntentioException::class);
+        $this->expectExceptionMessage("no kept image named 'product'");
+
+        $engine->render($this->space, 'a page', ['product', 'logo']);
     }
 
     /**

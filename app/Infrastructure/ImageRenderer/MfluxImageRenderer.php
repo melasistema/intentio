@@ -13,20 +13,31 @@ use Intentio\Shared\Exceptions\IntentioException;
 final class MfluxImageRenderer implements ImageRendererInterface
 {
     private string $command;
+    private string $editCommand;
     private string $model;
     private array $options;
 
     public function __construct(array $imageRendererConfig)
     {
         $this->command = $imageRendererConfig['command'] ?? '';
+        $this->editCommand = $imageRendererConfig['edit_command'] ?? '';
         $this->model = $imageRendererConfig['model_name'] ?? '';
         $this->options = $imageRendererConfig['options'] ?? [];
     }
 
-    public function render(string $prompt, string $rendererFolder): string
+    public function render(string $prompt, string $rendererFolder, array $referenceImages = []): string
     {
         if ($this->command === '' || $this->model === '') {
             throw new IntentioException("Image rendering is not configured: set image_renderer.command and image_renderer.model_name.");
+        }
+
+        // A render from reference images needs the model family's edit command
+        $program = $this->command;
+        if (!empty($referenceImages)) {
+            if ($this->editCommand === '') {
+                throw new IntentioException("Rendering from kept images is not configured: set image_renderer.edit_command.");
+            }
+            $program = $this->editCommand;
         }
 
         if (!is_dir($rendererFolder) && !mkdir($rendererFolder, 0777, true)) {
@@ -35,10 +46,13 @@ final class MfluxImageRenderer implements ImageRendererInterface
 
         $targetPath = rtrim($rendererFolder, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'render_' . $this->localTime()->format('Ymd-His') . '.png';
 
-        $command = escapeshellarg($this->command)
+        $command = escapeshellarg($program)
             . ' --model ' . escapeshellarg($this->model)
             . ' --prompt ' . escapeshellarg($prompt)
             . ' --output ' . escapeshellarg($targetPath);
+        if (!empty($referenceImages)) {
+            $command .= ' --image-paths ' . implode(' ', array_map('escapeshellarg', $referenceImages));
+        }
         foreach ($this->options as $name => $value) {
             $command .= ' --' . $name . ' ' . escapeshellarg((string) $value);
         }
@@ -48,12 +62,12 @@ final class MfluxImageRenderer implements ImageRendererInterface
 
         if ($exitCode === 127) {
             throw new IntentioException(
-                "The command '{$this->command}' was not found. Install mflux, or set image_renderer.command to the full path of the command."
+                "The command '{$program}' was not found. Install mflux, or set its full path under image_renderer."
             );
         }
 
         if ($exitCode !== 0 || !file_exists($targetPath)) {
-            throw new IntentioException("Image rendering with '{$this->command}' failed (exit code {$exitCode}). Its own messages are above.");
+            throw new IntentioException("Image rendering with '{$program}' failed (exit code {$exitCode}). Its own messages are above.");
         }
 
         fwrite(STDOUT, "Image rendered and saved to: {$targetPath}" . PHP_EOL);

@@ -1,6 +1,7 @@
 ---
 instruction: "Describe your brand briefly (e.g., 'Vortex, urban backpacks, bold and modern'):"
 render: true
+keep_as: logo
 ---
 # Logo Concept: {{QUERY}}
 

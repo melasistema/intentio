@@ -210,7 +210,7 @@ Prompts are not merely instructions; they are fundamental tools for **agent desi
 ### How it Works:
 
 1.  **Template Files**: Prompt templates are simple Markdown (`.md`) files located within the `prompts/` directory of your **specific knowledge package** (e.g., `packages/hook_analyzer/prompts/`). Each file defines a distinct "stance" or "command" for the AI.
-2.  **Self-Describing Commands**: Each prompt template can include YAML front matter at the top to provide a user-facing `instruction` (e.g., `--- instruction: "Enter the hook you want to analyze:" ---`). This instruction is automatically displayed in interactive mode to guide your input. It is shown to you only and is never sent to the model. A template whose answers describe an image adds `render: true` to its front matter: after such a template answers, interactive mode offers to render the text the model wrote between `<<<RENDER_PROMPT>>>` and `<<<END_RENDER_PROMPT>>>`.
+2.  **Self-Describing Commands**: Each prompt template can include YAML front matter at the top to provide a user-facing `instruction` (e.g., `--- instruction: "Enter the hook you want to analyze:" ---`). This instruction is automatically displayed in interactive mode to guide your input. It is shown to you only and is never sent to the model. A template whose answers describe an image adds `render: true` to its front matter: after such a template answers, interactive mode offers to render the text the model wrote between `<<<RENDER_PROMPT>>>` and `<<<END_RENDER_PROMPT>>>`. Two more lines let renders build on each other: `keep_as: logo` makes interactive mode offer to keep the rendered image under that name, and `uses: product, logo` shows the image model the images kept under those names, in that order, so the template's image prompt can refer to "the first image" and "the second image". A template with `uses` refuses to run until the space has every image it names.
 3.  **Flexible Design**: These templates allow you to:
     *   Guide the LLM to adopt specific personas (e.g., `analytical`, `creative`, `skeptical`).
     *   Provide task-specific instructions (e.g., summarize, extract facts, generate narratives).
@@ -281,6 +281,7 @@ INTENTIO uses [oMLX](https://github.com/jundot/omlx) to run the language model a
    - Images are rendered by [mflux](https://github.com/filipstrand/mflux), a command line tool that runs image models locally on Apple Silicon. Install it with `pipx install mflux`.
    - The default model is `mflux-community/flux2-klein-4b-mflux-q4`. mflux downloads it on the first render (about 4.5 GB), so that render takes much longer than the following ones. If you already have the model on disk, set `model_name` to the path of its folder and nothing is downloaded.
    - The command, the model and its options (steps, width, height) are set under `image_renderer` in `config/app.php`. Each model family has its own mflux command, e.g. `mflux-generate-z-image-turbo` for Z-Image Turbo.
+   - `edit_command` is the command used when a prompt template renders from kept images (`mflux-generate-flux2-edit` by default). It runs the same model.
 
 ### 3. Configure INTENTIO
 
@@ -398,7 +399,7 @@ Once oMLX is running and your knowledge environment (either package-initialized 
    # After the answer, the system asks: "Render this image? (yes/no):"
    # Type 'yes' to generate the image.
    ```
-   *The generated image is saved to the `renderer_images/` folder of the space.*
+   *The generated image is saved to the `renderer_images/` folder of the space. An image you choose to keep is copied to `renderer_images/kept/<name>.png`.*
 
 **f. Get General Help:**
    ```bash

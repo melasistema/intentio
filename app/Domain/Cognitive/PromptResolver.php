@@ -16,7 +16,9 @@ final class PromptResolver
      *
      * @param Space $space The cognitive space.
      * @param string $promptKey The key of the prompt to resolve (e.g., 'default', 'analyze_hook').
-     * @return array An associative array with 'content', 'instruction', 'render' (whether its answers describe an image to render), and 'context_files'.
+     * @return array An associative array with 'content', 'instruction', 'render' (whether its answers describe an image to render),
+     *               'uses' (the names of the kept images its render needs), 'keep_as' (the name its render can be kept under, or null),
+     *               and 'context_files'.
      * @throws IntentioException If the prompt cannot be resolved.
      */
     public function resolve(Space $space, string $promptKey = 'default'): array
@@ -34,6 +36,8 @@ final class PromptResolver
 
         $instruction = '';
         $render = false;
+        $uses = [];
+        $keepAs = null;
         $mainContent = $fileContent;
         $contextFiles = [];
 
@@ -51,6 +55,15 @@ final class PromptResolver
             }
             $instruction = $frontMatter['instruction'] ?? '';
             $render = ($frontMatter['render'] ?? '') === 'true';
+            // 'uses: product, logo' names the kept images a render needs, in the order the image model receives them
+            foreach (explode(',', $frontMatter['uses'] ?? '') as $name) {
+                if (trim($name) !== '') {
+                    $uses[] = $this->imageName(trim($name), $promptKey);
+                }
+            }
+            if (($frontMatter['keep_as'] ?? '') !== '') {
+                $keepAs = $this->imageName($frontMatter['keep_as'], $promptKey);
+            }
         }
 
         // Identify referenced .md files within the prompt content for contextual knowledge
@@ -69,8 +82,22 @@ final class PromptResolver
             'content' => $mainContent,
             'instruction' => $instruction,
             'render' => $render,
+            'uses' => $uses,
+            'keep_as' => $keepAs,
             'context_files' => array_values($contextFiles), // Return just the paths
         ];
+    }
+
+    /**
+     * Checks the name of a kept image. The name becomes a file name, so it is limited to what is safe in one.
+     */
+    private function imageName(string $name, string $promptKey): string
+    {
+        if (!preg_match('/^[a-z0-9_\-]+$/', $name)) {
+            throw new IntentioException("Prompt '{$promptKey}' names the kept image '{$name}'. Use lowercase letters, digits, hyphens and underscores.");
+        }
+
+        return $name;
     }
 
     /**

@@ -1,6 +1,7 @@
 ---
 instruction: "Describe your product and what it does (e.g., 'a lunch box that heats a meal' or 'a pen for architects with a scale ruler in the barrel'):"
 render: true
+keep_as: product
 ---
 # Product Visualization: {{QUERY}}
 

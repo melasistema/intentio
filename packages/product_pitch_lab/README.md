@@ -2,7 +2,7 @@
 
 A cognitive instrument for validating, refining, and visualizing product ideas, grounded in a small knowledge base of business frameworks and visual design principles.
 
-This package operates as a suite of "commands" that you run from the INTENTIO interactive mode. Five of them reason in text; three of them write a prompt for the local image model and render it. It is designed for founders, product managers, and students who want to stress-test an idea before investing in it.
+This package operates as a suite of "commands" that you run from the INTENTIO interactive mode. Five of them reason in text; four of them write a prompt for the local image model and render it. A logo and a product image you keep are used again by the later image commands. It is designed for founders, product managers, and students who want to stress-test an idea before investing in it.
 
 ## Quick Start
 
@@ -62,8 +62,12 @@ After each answer you choose the command for your next step, so a session natura
     *   Grounded in `logo_design.md`.
     *   *Instruction: Describe your brand briefly (e.g., 'Vortex, urban backpacks, bold and modern'):*
 
+*   **`brand_product`**
+    *   Prints the logo on the product. It needs a kept `product` and a kept `logo`.
+    *   *Instruction: Say where the logo goes on the product, how large, and in which color (e.g., 'small, in white, on the front of the lid'):*
+
 *   **`landing_page`**
-    *   Designs the first screen of a landing page (the name, a headline of at most five words, one button, the product photograph), then offers to render it.
+    *   Designs the first screen of a landing page (the logo, a headline of at most five words, one button, the product photograph), then offers to render it. It needs a kept `product` and a kept `logo`, and places both on the page.
     *   Grounded in `landing_page.md`.
     *   *Instruction: Enter your product name, what it does for its user, and how it looks (e.g., 'Lumo, a reading lamp that clips to a book so you can read in bed without waking anyone. A slim white aluminium arm with a warm light.'):*
 
@@ -88,22 +92,23 @@ A command stays active until you change it. Type `switch_prompt` and choose `cra
 [validate_idea] > switch_prompt
 
 Available Prompt Templates for 'product_pitch_lab':
-  1. business_model
-  2. competitor_analysis
-  3. craft_pitch
-  4. default
-  5. landing_page
-  6. logo_concept
-  7. validate_idea
-  8. visualize_product
-Enter the number of the prompt template to use: 3
+  1. brand_product
+  2. business_model
+  3. competitor_analysis
+  4. craft_pitch
+  5. default
+  6. landing_page
+  7. logo_concept
+  8. validate_idea
+  9. visualize_product
+Enter the number of the prompt template to use: 4
 
 [craft_pitch] > HydraTrack - a smart water bottle for busy professionals that tracks how much they drink and sends gentle reminders through a mobile app.
 ```
 
 ### Phase 3: Visualization
 
-Type `switch_prompt`, choose `visualize_product`, `logo_concept` or `landing_page`, and describe what you want to see:
+Type `switch_prompt`, choose `visualize_product` or `logo_concept`, and describe what you want to see:
 
 ```
 [visualize_product] > A sleek, modern water bottle with an LED ring at the base showing hydration progress in blue. Minimalist design, brushed steel finish.
@@ -120,9 +125,26 @@ Not happy with the result? Answer `no`, choose the same command again, and descr
 
 Lettering is where a small image model fails most often. Render a logo or a landing page more than once and check the spelling.
 
+### Phase 4: One Product Across the Images
+
+After a render from `visualize_product` or `logo_concept`, the system asks one more question:
+
+```
+Keep this image as the 'logo' of this space, for later renders? (yes/no):
+```
+
+On `yes`, the image is copied to `renderer_images/kept/logo.png`. The space holds one kept `product` and one kept `logo`; keeping a new one replaces the copy, and every render stays in `renderer_images/`.
+
+The two commands that follow are shown the kept images, so they draw your product and your logo, not new ones:
+
+1. `brand_product` prints the logo on the product. Keep the result as the `product` if you want the page to show it.
+2. `landing_page` places the logo at the top of the page and the product in its photograph.
+
+Without a kept `product` and a kept `logo`, these two commands refuse and name the command that makes the missing image. A render from kept images takes a few times longer than one from text alone.
+
 ## Notes
 
-*   **The session has no memory between commands.** Each command sees only what you type into it, so repeat the product description when you move from one phase to the next.
+*   **The session has no memory of text between commands.** Each command sees only what you type into it, so repeat the product description when you move from one phase to the next. Only the images you keep are carried over.
 *   **Images are saved in the space, not in this package.** The `renderer_images/` folder is created on the first render.
 *   **Changing the knowledge.** A space is a copy of this package. To change what the space knows, edit the files under `spaces/<your_space>/knowledge/`, then run `./intentio ingest --space=<your_space>`. Only the files you changed are re-indexed.
 *   **Context window.** `validate_idea` and `business_model` each load two knowledge files in full. If answers seem to ignore the frameworks, the prompt is probably larger than your model's context window. INTENTIO prints a warning when it estimates so; about 8,000 tokens are enough for this package.

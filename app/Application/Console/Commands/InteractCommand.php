@@ -61,7 +61,7 @@ final class InteractCommand implements CommandInterface
             fwrite(STDOUT, "\n--- Interactive Session with '{$space->getName()}' ---" . PHP_EOL);
             fwrite(STDOUT, "Type your query and press Enter. Type 'exit' to end the session." . PHP_EOL);
             fwrite(STDOUT, "Use 'switch_prompt' to change the active prompt template." . PHP_EOL);
-            $this->showActivePrompt($prompt);
+            $this->showActivePrompt($space, $prompt);
 
             while (true) {
                 // The active prompt template stays in view, and stays active until it is switched
@@ -75,11 +75,18 @@ final class InteractCommand implements CommandInterface
 
                 if (strtolower($query) === 'switch_prompt') {
                     $prompt = $this->selectPromptTemplate($space, null);
-                    $this->showActivePrompt($prompt);
+                    $this->showActivePrompt($space, $prompt);
                     continue;
                 }
 
                 if ($query === '') {
+                    continue;
+                }
+
+                // A template that renders from kept images does not answer without them
+                $missing = $this->cognitiveEngine->missingImages($space, $prompt['uses']);
+                if (!empty($missing)) {
+                    $this->explainMissingImages($space, $missing);
                     continue;
                 }
 
@@ -91,7 +98,7 @@ final class InteractCommand implements CommandInterface
                     SourceList::write($result);
 
                     if ($prompt['render']) {
-                        $this->offerRender($space, $result['answer']);
+                        $this->offerRender($space, $prompt, $result['answer']);
                     }
                 } catch (IntentioException $e) {
                     // A failed answer or image does not end the session
@@ -139,10 +146,44 @@ final class InteractCommand implements CommandInterface
         return $line;
     }
 
-    private function showActivePrompt(array $prompt): void
+    private function showActivePrompt(Space $space, array $prompt): void
     {
         fwrite(STDOUT, "(Active Prompt Template: {$prompt['key']})" . PHP_EOL);
+
+        if (!empty($prompt['uses'])) {
+            fwrite(STDOUT, "Renders from the kept images: " . implode(', ', $prompt['uses']) . PHP_EOL);
+            $missing = $this->cognitiveEngine->missingImages($space, $prompt['uses']);
+            if (!empty($missing)) {
+                $this->explainMissingImages($space, $missing);
+                return;
+            }
+        }
+
         fwrite(STDOUT, "Instruction: {$prompt['instruction']}" . PHP_EOL);
+    }
+
+    /**
+     * Says which kept images a template needs and the space does not have, and which templates make them.
+     *
+     * @param string[] $missing
+     */
+    private function explainMissingImages(Space $space, array $missing): void
+    {
+        foreach ($missing as $name) {
+            $makers = [];
+            foreach ($this->promptResolver->listPromptKeys($space) as $key) {
+                $candidate = $this->promptResolver->resolve($space, $key);
+                // A template that itself starts from this image cannot make the first one
+                if ($candidate['keep_as'] === $name && !in_array($name, $candidate['uses'])) {
+                    $makers[] = $key;
+                }
+            }
+
+            $advice = empty($makers)
+                ? "No prompt template of this space keeps an image under that name."
+                : "Render one with " . implode(' or ', $makers) . " and keep it.";
+            fwrite(STDERR, "This prompt template needs the kept image '{$name}', and the space has none. {$advice}" . PHP_EOL);
+        }
     }
 
     /**
@@ -166,7 +207,7 @@ final class InteractCommand implements CommandInterface
      * After an answer from a prompt template marked 'render: true': offers to turn the answer into an image.
      * The image prompt is the text the model wrote between the render tags.
      */
-    private function offerRender(Space $space, string $answer): void
+    private function offerRender(Space $space, array $prompt, string $answer): void
     {
         if (!preg_match('/<<<RENDER_PROMPT>>>(.*?)<<<END_RENDER_PROMPT>>>/su', $answer, $matches) || trim($matches[1]) === '') {
             fwrite(STDERR, "Nothing to render: the answer has no text between <<<RENDER_PROMPT>>> and <<<END_RENDER_PROMPT>>>." . PHP_EOL);
@@ -178,8 +219,11 @@ final class InteractCommand implements CommandInterface
             $choice = strtolower($this->readChoice());
 
             if (in_array($choice, ['yes', 'y'])) {
-                $this->cognitiveEngine->render($space, trim($matches[1]));
+                $imagePath = $this->cognitiveEngine->render($space, trim($matches[1]), $prompt['uses']);
                 fwrite(STDOUT, "Image rendering complete." . PHP_EOL);
+                if ($prompt['keep_as'] !== null) {
+                    $this->offerKeep($space, $imagePath, $prompt['keep_as']);
+                }
                 return;
             }
 
@@ -190,6 +234,24 @@ final class InteractCommand implements CommandInterface
 
             fwrite(STDERR, "Invalid choice. Please enter 'yes' or 'no'." . PHP_EOL);
         }
+    }
+
+    /**
+     * After a render from a prompt template with 'keep_as': offers to keep the image under that name.
+     * Nothing is kept without a yes, because a render can have faults only the user sees.
+     */
+    private function offerKeep(Space $space, string $imagePath, string $name): void
+    {
+        $replaces = empty($this->cognitiveEngine->missingImages($space, [$name])) ? " It replaces the one kept before." : "";
+        fwrite(STDOUT, "\nKeep this image as the '{$name}' of this space, for later renders?{$replaces} (yes/no): ");
+
+        if (!in_array(strtolower($this->readChoice()), ['yes', 'y'])) {
+            fwrite(STDOUT, "Not kept." . PHP_EOL);
+            return;
+        }
+
+        $keptPath = $this->cognitiveEngine->keepImage($space, $imagePath, $name);
+        fwrite(STDOUT, "Kept as: {$keptPath}" . PHP_EOL);
     }
 
     private function selectOrCreateSpace(?string $spaceName): Space

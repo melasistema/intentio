@@ -50,6 +50,8 @@ return [
     'image_renderer' => [
         // The mflux command of the model's family. Give its full path if it is not on your PATH.
         'command' => 'mflux-generate-flux2',
+        // The command used when a prompt template renders from kept images ('uses' in its front matter)
+        'edit_command' => 'mflux-generate-flux2-edit',
         'model_name' => 'mflux-community/flux2-klein-4b-mflux-q4', // A repository mflux downloads on the first render (about 4.5 GB), or the path of a model folder
         // Passed to the command as --name value
         'options' => [

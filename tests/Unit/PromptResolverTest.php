@@ -49,6 +49,29 @@ final class PromptResolverTest extends SpaceTestCase
         $this->assertFalse($resolver->resolve($this->space, 'yes')['render']);
     }
 
+    public function testATemplateNamesTheKeptImagesItUsesAndTheNameItsRenderIsKeptUnder(): void
+    {
+        $this->writeFile('prompts/page.md', "---\nrender: true\nuses: product, logo\nkeep_as: page\n---\n{{QUERY}}");
+        $this->writeFile('prompts/plain.md', "---\nrender: true\n---\n{{QUERY}}");
+
+        $resolver = new PromptResolver();
+
+        $this->assertSame(['product', 'logo'], $resolver->resolve($this->space, 'page')['uses']);
+        $this->assertSame('page', $resolver->resolve($this->space, 'page')['keep_as']);
+        $this->assertSame([], $resolver->resolve($this->space, 'plain')['uses']);
+        $this->assertNull($resolver->resolve($this->space, 'plain')['keep_as']);
+    }
+
+    public function testAKeptImageNameThatIsNotAFileNameIsAnError(): void
+    {
+        $this->writeFile('prompts/page.md', "---\nuses: ../logo\n---\n{{QUERY}}");
+
+        $this->expectException(IntentioException::class);
+        $this->expectExceptionMessage("names the kept image '../logo'");
+
+        (new PromptResolver())->resolve($this->space, 'page');
+    }
+
     public function testFrontMatterWithWindowsLineEndingsIsRead(): void
     {
         $this->writeFile('prompts/logo.md', "---\r\ninstruction: Describe the brand:\r\nrender: true\r\n---\r\n{{QUERY}}");

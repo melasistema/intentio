@@ -9,7 +9,8 @@ Special thanks to [Luca Visciola](https://github.com/melasistema) for the origin
 ## [unreleased]
 
 ### Added
--   **Product Pitch Lab Blueprint:** Introduced the `@packages/product_pitch_lab` cognitive environment (`version: 0.1.0`), which validates product ideas against business frameworks, drafts elevator pitches, competitive analyses and Lean Canvases, and renders product mockups, logo concepts and landing page designs.
+-   **Product Pitch Lab Blueprint:** Introduced the `@packages/product_pitch_lab` cognitive environment (`version: 0.1.0`), which validates product ideas against business frameworks, drafts elevator pitches, competitive analyses and Lean Canvases, and renders product mockups, logo concepts and landing page designs. The landing page and the `brand_product` command reuse the logo and the product image you keep.
+-   **Kept Images (package format addition):** A rendering prompt template can say `keep_as: <name>` in its front matter: after a render, `interact` offers to keep the image as `renderer_images/kept/<name>.png`. A template that says `uses: <name>, <name>` renders from those kept images, through the new `image_renderer.edit_command` (`mflux-generate-flux2-edit` by default), and refuses to run while one is missing. Nothing is kept or reused without the user's answer.
 -   **Sources Under Each Answer:** `chat` and `interact` list what an answer was built from: the knowledge files pinned by the prompt template and the retrieved passages, each with its similarity score. When nothing was used, the list says so.
 -   **Retrieval Settings:** `retrieval.limit` and `retrieval.min_score` in `config/app.php`.
 -   **Embedding Prefixes:** `embedding.document_prefix` and `embedding.query_prefix` put the words an embedding model expects in front of knowledge sections and queries (`search_document: ` and `search_query: ` for the default model).

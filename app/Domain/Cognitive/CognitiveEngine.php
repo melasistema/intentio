@@ -7,6 +7,7 @@ namespace Intentio\Domain\Cognitive;
 use Intentio\Domain\Space\Space;
 use Intentio\Domain\Model\LLMInterface;
 use Intentio\Domain\Model\ImageRendererInterface;
+use Intentio\Shared\Exceptions\IntentioException;
 
 final readonly class CognitiveEngine
 {
@@ -140,11 +141,65 @@ final readonly class CognitiveEngine
     /**
      * Renders an image from a prompt into the space's own image folder.
      *
+     * @param string[] $uses Names of kept images the image model is shown, in the order the prompt refers to them.
      * @return string The path to the rendered image.
      */
-    public function render(Space $space, string $prompt): string
+    public function render(Space $space, string $prompt, array $uses = []): string
     {
-        return $this->imageRenderer->render($prompt, $space->getPath() . '/renderer_images');
+        $missing = $this->missingImages($space, $uses);
+        if (!empty($missing)) {
+            throw new IntentioException("The space has no kept image named '" . implode("', '", $missing) . "'.");
+        }
+
+        $referenceImages = [];
+        foreach ($uses as $name) {
+            $referenceImages[] = $this->keptImagePath($space, $name);
+        }
+
+        return $this->imageRenderer->render($prompt, $space->getPath() . '/renderer_images', $referenceImages);
+    }
+
+    /**
+     * Keeps a rendered image under a name, so that later renders in this space can use it.
+     * The image is copied: the render itself stays where it is, and so does every render kept under this name before.
+     *
+     * @return string The path of the kept image.
+     */
+    public function keepImage(Space $space, string $imagePath, string $name): string
+    {
+        $keptPath = $this->keptImagePath($space, $name);
+
+        if (!is_dir(dirname($keptPath)) && !mkdir(dirname($keptPath), 0777, true)) {
+            throw new IntentioException("Failed to create the folder for kept images: '" . dirname($keptPath) . "'.");
+        }
+        if (!copy($imagePath, $keptPath)) {
+            throw new IntentioException("Failed to keep '{$imagePath}' as '{$name}'.");
+        }
+
+        return $keptPath;
+    }
+
+    /**
+     * Tells which of the named images the space has not kept yet.
+     *
+     * @param string[] $names
+     * @return string[]
+     */
+    public function missingImages(Space $space, array $names): array
+    {
+        $missing = [];
+        foreach ($names as $name) {
+            if (!file_exists($this->keptImagePath($space, $name))) {
+                $missing[] = $name;
+            }
+        }
+
+        return $missing;
+    }
+
+    private function keptImagePath(Space $space, string $name): string
+    {
+        return $space->getPath() . '/renderer_images/kept/' . $name . '.png';
     }
 
     public function clear(Space $space): void
