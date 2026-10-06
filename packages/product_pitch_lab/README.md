@@ -4,6 +4,20 @@ A cognitive instrument for validating, refining, and visualizing product ideas, 
 
 This package operates as a suite of "commands" that you run from the INTENTIO interactive mode. Five of them reason in text; four of them write a prompt for the local image model and render it. A logo and a product image you keep are used again by the later image commands. It is designed for founders, product managers, and students who want to stress-test an idea before investing in it.
 
+## From an Idea to a Landing Page
+
+One idea, taken through the package: a self-watering pot for kitchen herbs. Each image was rendered locally from a prompt the package wrote.
+
+| The product | The logo |
+| :---: | :---: |
+| ![A terracotta orange pot with a basil plant](output-examples/tend-product.png) | ![The Tend logo: a green leaf above the word TEND](output-examples/tend-logo.png) |
+| `visualize_product` | `logo_concept` |
+| **The logo on the product** | **The landing page** |
+| ![The same pot with the Tend logo printed on it](output-examples/tend-branded.png) | ![A landing page with the Tend logo, a headline, a button and the pot](output-examples/tend-landing.png) |
+| `brand_product` | `landing_page` |
+
+The last two images are not drawn from words alone. They reuse the first two, which is why the pot and the logo stay the same across them. The steps are in [Example Usage](#example-usage).
+
 ## Quick Start
 
 ```bash
@@ -73,16 +87,27 @@ After each answer you choose the command for your next step, so a session natura
 
 ## Example Usage
 
+The example follows one idea through the package: **Tend**, a self-watering pot for kitchen herbs. Every answer and image below came from the default models (Mistral 7B and FLUX.2 klein) on a laptop.
+
 ### Phase 1: Validation
 
 ```
 (Active Prompt Template: validate_idea)
 Instruction: "Describe your product idea in 2-3 sentences (what it is, who it is for, what problem it solves):"
 
-[validate_idea] > A smart water bottle that tracks hydration and reminds busy professionals to drink water throughout the day.
+[validate_idea] > A self-watering plant pot for people who love fresh herbs in the kitchen but forget to water them. A hidden water tank keeps a herb plant alive for three weeks, and a window on the side shows when to refill.
 ```
 
-The system answers with a structured critique. It names the red flags that apply and ends with a verdict: **Promising**, **Needs rework**, or **Fatal flaw**.
+The system answers with a structured critique. It names the red flags that apply and ends with a verdict: **Promising**, **Needs rework**, or **Fatal flaw**. For Tend it ended like this:
+
+```
+#### 4. Red Flags
+- Solution looking for a problem: It's not clear if the problem of forgetting to water plants is widespread.
+- Solving only part of a workflow: Users might still need to replenish the herbs when they run out.
+
+#### Verdict
+**Needs rework**: [...] It's essential to validate that the problem is widespread and that the product addresses the entire workflow before moving forward.
+```
 
 ### Phase 2: Refinement
 
@@ -103,15 +128,15 @@ Available Prompt Templates for 'product_pitch_lab':
   9. visualize_product
 Enter the number of the prompt template to use: 4
 
-[craft_pitch] > HydraTrack - a smart water bottle for busy professionals that tracks how much they drink and sends gentle reminders through a mobile app.
+[craft_pitch] > Tend, a self-watering plant pot that keeps a kitchen herb alive for three weeks without watering, for home cooks who forget to water their plants.
 ```
 
 ### Phase 3: Visualization
 
-Type `switch_prompt`, choose `visualize_product` or `logo_concept`, and describe what you want to see:
+Type `switch_prompt`, choose `visualize_product`, and describe the product:
 
 ```
-[visualize_product] > A sleek, modern water bottle with an LED ring at the base showing hydration progress in blue. Minimalist design, brushed steel finish.
+[visualize_product] > Tend, a self-watering plant pot that keeps a kitchen herb alive for three weeks. Matte terracotta orange ceramic, with a narrow clear window on its side that shows the water level. A basil plant grows in it.
 ```
 
 The system will:
@@ -121,7 +146,17 @@ The system will:
 4. On `yes`, generate the image with the local image model
 5. Save it to `spaces/<your_space>/renderer_images/`
 
-Not happy with the result? Answer `no`, choose the same command again, and describe the product differently.
+![A round terracotta orange pot with a narrow window on its side and a basil plant growing in it, on a white background](output-examples/tend-product.png)
+
+`logo_concept` works the same way, from a short brand brief:
+
+```
+[logo_concept] > Tend, self-watering plant pots for kitchen herbs, warm and natural
+```
+
+![A logo: a green leaf with a water drop above the word TEND in brown capital letters](output-examples/tend-logo.png)
+
+Not happy with a result? Answer `no`, or render again: each render starts from a different random seed, so the same prompt gives a different image.
 
 Lettering is where a small image model fails most often. Render a logo or a landing page more than once and check the spelling.
 
@@ -135,10 +170,31 @@ Keep this image as the 'logo' of this space, for later renders? (yes/no):
 
 On `yes`, the image is copied to `renderer_images/kept/logo.png`. The space holds one kept `product` and one kept `logo`; keeping a new one replaces the copy, and every render stays in `renderer_images/`.
 
-The two commands that follow are shown the kept images, so they draw your product and your logo, not new ones:
+The two commands that follow are shown the kept images, so they draw your product and your logo, not new ones.
 
-1. `brand_product` prints the logo on the product. Keep the result as the `product` if you want the page to show it.
-2. `landing_page` places the logo at the top of the page and the product in its photograph.
+`brand_product` prints the logo on the product:
+
+```
+[brand_product] > medium, in white, on the front of the pot
+```
+
+![The same terracotta pot and basil plant, now with the leaf and the word TEND printed in white on its front](output-examples/tend-branded.png)
+
+Keep the result as the `product` if you want the page to show it. `landing_page` then places the logo at the top of the page and the product in its photograph, and writes the headline and the button itself:
+
+```
+[landing_page] > Tend, a self-watering plant pot that waters your kitchen herbs for three weeks, so you always have fresh basil. A round matte terracotta orange ceramic pot with a basil plant.
+```
+
+```
+**Headline**: Fresh basil, always
+**Button**: Order now
+**Page**: On the right, warm off-white background, orange button
+```
+
+![A landing page: the Tend logo at the top left, the headline "Fresh basil, always", an orange button reading "Order now", and the branded pot on the right](output-examples/tend-landing.png)
+
+This is the best of four renders: the other three misspelled a word or added a scribbled menu. A headline of short, common words is drawn right far more often than a long one.
 
 Without a kept `product` and a kept `logo`, these two commands refuse and name the command that makes the missing image. A render from kept images takes a few times longer than one from text alone.
 
