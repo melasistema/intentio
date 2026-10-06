@@ -1,0 +1,49 @@
+# Continuous integration. Proves that INTENTIO installs and passes its tests on a clean
+# machine, on the oldest PHP version it supports and on the newest.
+#
+# The tests need no model and no server, so nothing here talks to oMLX or mflux.
+#
+# This workflow does NOT release. A release is cut by hand with ./release.sh, from
+# Luca's machine, so nothing here can write to the repository.
+name: CI
+
+on:
+  push:
+    branches: [master, development]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.4']
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ctype, readline, sqlite3, curl, mbstring
+          coverage: none
+
+      - name: Check composer.json
+        run: composer validate --no-check-version
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Check the PHP syntax
+        run: |
+          set -euo pipefail
+          find app config tests tools intentio -type f \( -name '*.php' -o -name intentio \) -print0 \
+            | xargs -0 -n 1 php -l > /dev/null
+
+      - name: Run the tests
+        run: composer test
